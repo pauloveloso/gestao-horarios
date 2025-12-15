@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // Importação para o redirecionamento
 import { supabase } from "@/lib/supabase";
 
 // 1. Definições de Tipos
 type Tabela = "professores" | "disciplinas" | "salas" | "turmas";
 
-// Esta interface resolve o erro: dizemos que labelExtra é opcional (?)
 interface ConfigAba {
   titulo: string;
   label: string;
@@ -15,6 +15,8 @@ interface ConfigAba {
 }
 
 export default function CadastrosPage() {
+  const router = useRouter(); // Hook de navegação
+
   const [abaAtiva, setAbaAtiva] = useState<Tabela>("professores");
   const [lista, setLista] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -23,19 +25,34 @@ export default function CadastrosPage() {
   const [nome, setNome] = useState("");
   const [extra, setExtra] = useState(""); // Serve para 'tipo' (sala) ou 'curso' (turma)
 
+  // === 1. PROTEÇÃO DE ROTA (SEGURANÇA) ===
+  useEffect(() => {
+    // Verifica se o usuário tem o "crachá" de admin
+    const adminToken = localStorage.getItem("usuario_admin");
+    if (adminToken !== "true") {
+      router.push("/login"); // Se não tiver, expulsa para o login
+    }
+  }, []);
+
+  // === 2. LÓGICA DE DADOS ===
+
   // Carregar dados ao mudar de aba
   useEffect(() => {
     carregarLista();
+    // Limpa o formulário visualmente ao trocar de aba
     setNome("");
     setExtra("");
   }, [abaAtiva]);
 
   async function carregarLista() {
     setLoading(true);
+    // Ordena por codigo se for turma, ou por nome nos outros casos
+    const campoOrdem = abaAtiva === "turmas" ? "codigo" : "nome";
+
     const { data } = await supabase
       .from(abaAtiva)
       .select("*")
-      .order(abaAtiva === "turmas" ? "codigo" : "nome");
+      .order(campoOrdem);
     if (data) setLista(data);
     setLoading(false);
   }
@@ -47,7 +64,7 @@ export default function CadastrosPage() {
 
     const payload: any = {};
 
-    // Monta o objeto dependendo da tabela
+    // Monta o objeto dependendo da tabela (Turmas usam campos diferentes)
     if (abaAtiva === "turmas") {
       payload.codigo = nome;
       if (extra) payload.curso = extra;
@@ -78,14 +95,14 @@ export default function CadastrosPage() {
 
     if (error) {
       alert(
-        "Não foi possível excluir. Verifique se este item já tem aulas cadastradas."
+        "Não foi possível excluir. Verifique se este item já tem aulas vinculadas na grade."
       );
     } else {
       carregarLista();
     }
   }
 
-  // 2. Objeto de Configuração com Tipagem Explícita
+  // === 3. CONFIGURAÇÃO VISUAL DAS ABAS ===
   const config: Record<Tabela, ConfigAba> = {
     professores: {
       titulo: "Professores",

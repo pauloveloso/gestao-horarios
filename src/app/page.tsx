@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Aula, Disciplina, Professor, Sala, SlotHorario, Turma } from "@/types";
 import NovoHorarioModal from "@/components/NovoHorarioModal";
+import Link from "next/link";
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
 
@@ -23,11 +24,15 @@ export default function Home() {
     horarioId: string;
     horarioRotulo: string;
   } | null>(null);
-
-  // ESTADO PARA A CÓPIA
   const [aulaCopiada, setAulaCopiada] = useState<Aula | null>(null);
 
+  // === ESTADO DE SEGURANÇA ===
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
+    const adminToken = localStorage.getItem("usuario_admin");
+    setIsAdmin(adminToken === "true");
+
     async function carregarDadosBasicos() {
       const { data: listaTurmas } = await supabase
         .from("turmas")
@@ -84,6 +89,12 @@ export default function Home() {
     setAulaCopiada(null);
   }, [turmaSelecionada]);
 
+  function handleLogout() {
+    localStorage.removeItem("usuario_admin");
+    setIsAdmin(false);
+    setAulaCopiada(null);
+  }
+
   async function deletarAula(aulaId: string) {
     if (!confirm("Tem certeza que deseja remover esta aula?")) return;
     const { error } = await supabase
@@ -138,6 +149,9 @@ export default function Home() {
   }
 
   function handleCelulaClick(dia: string, horarioId: string, rotulo: string) {
+    // SÓ PERMITE CLICK SE FOR ADMIN
+    if (!isAdmin) return;
+
     if (aulaCopiada) {
       colarAulaNoSlot(dia, horarioId);
     } else {
@@ -156,7 +170,11 @@ export default function Home() {
     );
   };
 
-  const getTurmaObj = () => turmas.find((t) => t.id === turmaSelecionada);
+  // === ESTA FOI A FUNÇÃO QUE FALTOU ANTES ===
+  const getTurmaObj = () => {
+    return turmas.find((t) => t.id === turmaSelecionada);
+  };
+  // ===========================================
 
   if (loading)
     return (
@@ -164,22 +182,37 @@ export default function Home() {
     );
 
   return (
-    // Removi padding excessivo da tela principal
     <main className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
-      {/* HEADER MAIS FINO */}
+      {/* HEADER */}
       <header className="flex justify-between items-center bg-gray-100 px-4 py-3 border-b border-gray-300">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-blue-900 flex items-center gap-2">
             🏫 <span className="hidden md:inline">Gestão de Horários</span>
           </h1>
 
-          {/* NOVO BOTÃO DE ADMINISTRAÇÃO */}
-          <a
-            href="/cadastros"
-            className="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-50 transition flex items-center gap-1"
-          >
-            ⚙️ <span className="hidden sm:inline">Cadastros</span>
-          </a>
+          {isAdmin ? (
+            <div className="flex gap-2">
+              <Link
+                href="/cadastros"
+                className="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-50 flex items-center gap-1"
+              >
+                ⚙️ <span className="hidden sm:inline">Cadastros</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-sm bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200"
+              >
+                Sair
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 flex items-center gap-1"
+            >
+              🔒 <span className="hidden sm:inline">Sou Professor</span>
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -199,18 +232,16 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ÁREA DA GRADE (Sem scroll se possível, ou scroll suave) */}
+      {/* ÁREA DA GRADE */}
       <div className="flex-1 overflow-auto p-2">
         {!turmaSelecionada ? (
           <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-lg m-4">
             <p className="text-gray-400 text-lg">Selecione uma turma acima.</p>
           </div>
         ) : (
-          // TABLE-FIXED: Obriga as colunas a terem tamanho igual e respeitar a largura da tela
           <table className="w-full table-fixed border-collapse border border-gray-300">
             <thead>
               <tr className="bg-blue-800 text-white text-xs uppercase tracking-wider">
-                {/* Coluna Horário mais estreita (w-20) */}
                 <th className="p-2 border-r border-blue-700 w-20 text-center">
                   Horário
                 </th>
@@ -227,7 +258,6 @@ export default function Home() {
             <tbody className="divide-y divide-gray-200">
               {horarios.map((slot) => (
                 <tr key={slot.id} className="hover:bg-gray-50">
-                  {/* Célula do Horário */}
                   <td className="p-1 border-r border-gray-300 bg-gray-100 text-center align-middle">
                     <div className="flex flex-col justify-center h-full">
                       <span className="font-bold text-gray-800 text-sm">
@@ -239,11 +269,9 @@ export default function Home() {
                     </div>
                   </td>
 
-                  {/* Células dos Dias */}
                   {DIAS_SEMANA.map((dia) => {
                     const aula = getAulaCelular(dia, slot.id);
                     return (
-                      // Padding mínimo (p-1) para aproveitar espaço
                       <td
                         key={dia}
                         className="p-0.5 border-r border-gray-300 align-top h-20 relative group"
@@ -256,25 +284,25 @@ export default function Home() {
                                 : "bg-blue-50 border-l-4 border-blue-600"
                             }`}
                           >
-                            {/* BOTOES FLUTUANTES MENORES */}
-                            <div className="absolute top-0 right-0 flex bg-white/90 rounded-bl shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                              <button
-                                onClick={() => setAulaCopiada(aula)}
-                                className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                                title="Copiar"
-                              >
-                                📄
-                              </button>
-                              <button
-                                onClick={() => deletarAula(aula.id)}
-                                className="p-1 text-red-400 hover:text-red-700 hover:bg-red-50"
-                                title="Remover"
-                              >
-                                🗑️
-                              </button>
-                            </div>
+                            {isAdmin && (
+                              <div className="absolute top-0 right-0 flex bg-white/90 rounded-bl shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                <button
+                                  onClick={() => setAulaCopiada(aula)}
+                                  className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                                  title="Copiar"
+                                >
+                                  📄
+                                </button>
+                                <button
+                                  onClick={() => deletarAula(aula.id)}
+                                  className="p-1 text-red-400 hover:text-red-700 hover:bg-red-50"
+                                  title="Remover"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            )}
 
-                            {/* CONTEÚDO DA AULA - FONTES MAIORES */}
                             <div className="leading-tight">
                               <strong className="block text-blue-900 text-base font-bold truncate">
                                 {aula.disciplina?.nome}
@@ -293,26 +321,28 @@ export default function Home() {
                             </div>
                           </div>
                         ) : (
-                          // SLOT VAZIO
                           <div
                             onClick={() =>
                               handleCelulaClick(dia, slot.id, slot.rotulo)
                             }
-                            className={`w-full h-full flex items-center justify-center rounded cursor-pointer transition-colors ${
-                              aulaCopiada
-                                ? "bg-yellow-50 border-2 border-dashed border-yellow-400 hover:bg-yellow-100"
-                                : "hover:bg-gray-100"
+                            className={`w-full h-full flex items-center justify-center rounded transition-colors ${
+                              isAdmin
+                                ? aulaCopiada
+                                  ? "cursor-pointer bg-yellow-50 border-2 border-dashed border-yellow-400 hover:bg-yellow-100"
+                                  : "cursor-pointer hover:bg-gray-100"
+                                : "bg-transparent"
                             }`}
                           >
-                            {aulaCopiada ? (
-                              <span className="text-[10px] text-yellow-700 font-bold uppercase tracking-wider">
-                                Colar
-                              </span>
-                            ) : (
-                              <span className="text-gray-200 text-2xl font-light opacity-0 group-hover:opacity-100">
-                                +
-                              </span>
-                            )}
+                            {isAdmin &&
+                              (aulaCopiada ? (
+                                <span className="text-[10px] text-yellow-700 font-bold uppercase tracking-wider">
+                                  Colar
+                                </span>
+                              ) : (
+                                <span className="text-gray-200 text-2xl font-light opacity-0 group-hover:opacity-100">
+                                  +
+                                </span>
+                              ))}
                           </div>
                         )}
                       </td>
@@ -325,8 +355,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* BARRA FLUTUANTE DE AVISO DE CÓPIA */}
-      {aulaCopiada && (
+      {isAdmin && aulaCopiada && (
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-xl flex items-center gap-3 z-50">
           <div className="text-sm">
             <span className="text-yellow-400 font-bold mr-1">COPIANDO:</span>
