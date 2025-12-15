@@ -1,14 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import {
-  Aula,
-  Disciplina,
-  Professor,
-  Sala,
-  SlotHorario,
-  Turma,
-} from "@/types/index";
+import { Aula, Disciplina, Professor, Sala, SlotHorario, Turma } from "@/types";
 import NovoHorarioModal from "@/components/NovoHorarioModal";
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
@@ -23,12 +16,16 @@ export default function Home() {
 
   const [turmaSelecionada, setTurmaSelecionada] = useState<string>("");
   const [loading, setLoading] = useState(true);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [celulaSelecionada, setCelulaSelecionada] = useState<{
     dia: string;
     horarioId: string;
     horarioRotulo: string;
   } | null>(null);
+
+  // ESTADO PARA A CÓPIA
+  const [aulaCopiada, setAulaCopiada] = useState<Aula | null>(null);
 
   useEffect(() => {
     async function carregarDadosBasicos() {
@@ -70,7 +67,7 @@ export default function Home() {
       .from("grade_aulas")
       .select(
         `
-        id, dia_semana, horario_id,
+        id, dia_semana, horario_id, professor_id, sala_id, disciplina_id, turma_id,
         professor:professores(nome),
         sala:salas(nome),
         disciplina:disciplinas(nome),
@@ -84,21 +81,67 @@ export default function Home() {
 
   useEffect(() => {
     carregarGrade();
+    setAulaCopiada(null);
   }, [turmaSelecionada]);
 
-  // === NOVA FUNÇÃO DE DELETAR ===
   async function deletarAula(aulaId: string) {
     if (!confirm("Tem certeza que deseja remover esta aula?")) return;
-
     const { error } = await supabase
       .from("grade_aulas")
       .delete()
       .eq("id", aulaId);
+    if (error) alert("Erro ao deletar: " + error.message);
+    else carregarGrade();
+  }
 
-    if (error) {
-      alert("Erro ao deletar: " + error.message);
+  async function colarAulaNoSlot(dia: string, horarioId: string) {
+    if (!aulaCopiada) return;
+
+    const { data: conflitos, error: erroValidacao } = await supabase.rpc(
+      "verificar_conflito",
+      {
+        p_dia: dia,
+        p_horario_id: horarioId,
+        p_professor_id:
+          aulaCopiada.professor?.id || (aulaCopiada as any).professor_id,
+        p_sala_id: aulaCopiada.sala?.id || (aulaCopiada as any).sala_id,
+        p_turma_id: turmaSelecionada,
+      }
+    );
+
+    if (erroValidacao) {
+      alert("Erro técnico ao validar.");
+      return;
+    }
+
+    if (conflitos && conflitos.length > 0) {
+      alert(`NÃO FOI POSSÍVEL COLAR:\n${conflitos[0].descricao}`);
+      return;
+    }
+
+    const { error: erroInsert } = await supabase.from("grade_aulas").insert({
+      dia_semana: dia,
+      horario_id: horarioId,
+      turma_id: turmaSelecionada,
+      professor_id:
+        aulaCopiada.professor?.id || (aulaCopiada as any).professor_id,
+      sala_id: aulaCopiada.sala?.id || (aulaCopiada as any).sala_id,
+      disciplina_id:
+        aulaCopiada.disciplina?.id || (aulaCopiada as any).disciplina_id,
+    });
+
+    if (erroInsert) {
+      alert("Erro ao salvar: " + erroInsert.message);
     } else {
-      carregarGrade(); // Recarrega a tela
+      carregarGrade();
+    }
+  }
+
+  function handleCelulaClick(dia: string, horarioId: string, rotulo: string) {
+    if (aulaCopiada) {
+      colarAulaNoSlot(dia, horarioId);
+    } else {
+      abrirModal(dia, horarioId, rotulo);
     }
   }
 
@@ -121,49 +164,60 @@ export default function Home() {
     );
 
   return (
-    <main className="min-h-screen p-4 md:p-8 bg-gray-50 text-gray-800 font-sans">
-      <header className="mb-8 flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h1 className="text-2xl md:text-3xl font-bold text-blue-900 mb-4 md:mb-0">
-          🏫 Gestão de Horários
-        </h1>
+    // Removi padding excessivo da tela principal
+    <main className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
+      {/* HEADER MAIS FINO */}
+      <header className="flex justify-between items-center bg-gray-100 px-4 py-3 border-b border-gray-300">
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-bold text-blue-900 flex items-center gap-2">
+            🏫 <span className="hidden md:inline">Gestão de Horários</span>
+          </h1>
 
-        <div className="w-full md:w-1/3">
-          <label className="block text-sm font-semibold text-gray-600 mb-1">
-            Visualizar Turma:
-          </label>
+          {/* NOVO BOTÃO DE ADMINISTRAÇÃO */}
+          <a
+            href="/cadastros"
+            className="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-50 transition flex items-center gap-1"
+          >
+            ⚙️ <span className="hidden sm:inline">Cadastros</span>
+          </a>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-semibold text-gray-700">Turma:</label>
           <select
-            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+            className="p-1.5 border border-gray-300 rounded text-sm min-w-[150px] font-medium"
             value={turmaSelecionada}
             onChange={(e) => setTurmaSelecionada(e.target.value)}
           >
-            <option value="">-- Selecione uma Turma --</option>
+            <option value="">-- Selecione --</option>
             {turmas.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.codigo} {t.curso ? `- ${t.curso}` : ""}
+                {t.codigo}
               </option>
             ))}
           </select>
         </div>
       </header>
 
-      {!turmaSelecionada ? (
-        <div className="text-center py-20 bg-white rounded-lg border border-dashed border-gray-300">
-          <p className="text-gray-500 text-lg">
-            Selecione uma turma acima para ver a grade.
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto shadow-lg rounded-lg bg-white border border-gray-200">
-          <table className="w-full border-collapse min-w-[1000px]">
+      {/* ÁREA DA GRADE (Sem scroll se possível, ou scroll suave) */}
+      <div className="flex-1 overflow-auto p-2">
+        {!turmaSelecionada ? (
+          <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-lg m-4">
+            <p className="text-gray-400 text-lg">Selecione uma turma acima.</p>
+          </div>
+        ) : (
+          // TABLE-FIXED: Obriga as colunas a terem tamanho igual e respeitar a largura da tela
+          <table className="w-full table-fixed border-collapse border border-gray-300">
             <thead>
-              <tr className="bg-blue-800 text-white text-sm uppercase tracking-wider">
-                <th className="p-4 text-left border-r border-blue-700 w-32 sticky left-0 bg-blue-800 z-10">
+              <tr className="bg-blue-800 text-white text-xs uppercase tracking-wider">
+                {/* Coluna Horário mais estreita (w-20) */}
+                <th className="p-2 border-r border-blue-700 w-20 text-center">
                   Horário
                 </th>
                 {DIAS_SEMANA.map((dia) => (
                   <th
                     key={dia}
-                    className="p-4 border-r border-blue-700 min-w-[180px]"
+                    className="p-2 border-r border-blue-700 last:border-0"
                   >
                     {dia}
                   </th>
@@ -172,63 +226,93 @@ export default function Home() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {horarios.map((slot) => (
-                <tr
-                  key={slot.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="p-3 font-bold text-gray-700 border-r bg-gray-100 text-xs md:text-sm sticky left-0 z-10">
-                    <div className="flex flex-col">
-                      <span>{slot.rotulo}</span>
-                      <span className="text-[10px] text-gray-500 font-normal uppercase mt-1">
+                <tr key={slot.id} className="hover:bg-gray-50">
+                  {/* Célula do Horário */}
+                  <td className="p-1 border-r border-gray-300 bg-gray-100 text-center align-middle">
+                    <div className="flex flex-col justify-center h-full">
+                      <span className="font-bold text-gray-800 text-sm">
+                        {slot.rotulo}
+                      </span>
+                      <span className="text-[10px] text-gray-500 font-bold uppercase">
                         {slot.periodo}
                       </span>
                     </div>
                   </td>
 
+                  {/* Células dos Dias */}
                   {DIAS_SEMANA.map((dia) => {
                     const aula = getAulaCelular(dia, slot.id);
                     return (
+                      // Padding mínimo (p-1) para aproveitar espaço
                       <td
                         key={dia}
-                        className="p-2 border-r border-gray-100 align-top h-28 relative group"
+                        className="p-0.5 border-r border-gray-300 align-top h-20 relative group"
                       >
                         {aula ? (
-                          <div className="bg-blue-50 p-2 rounded-md border-l-4 border-blue-500 h-full flex flex-col shadow-sm relative">
-                            {/* BOTÃO DE DELETAR (Só aparece quando passa o mouse) */}
-                            <button
-                              onClick={() => deletarAula(aula.id)}
-                              className="absolute top-1 right-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Remover aula"
-                            >
-                              🗑️
-                            </button>
+                          <div
+                            className={`w-full h-full p-1.5 rounded flex flex-col justify-between relative transition-all ${
+                              aulaCopiada?.id === aula.id
+                                ? "bg-yellow-100 border-2 border-yellow-500"
+                                : "bg-blue-50 border-l-4 border-blue-600"
+                            }`}
+                          >
+                            {/* BOTOES FLUTUANTES MENORES */}
+                            <div className="absolute top-0 right-0 flex bg-white/90 rounded-bl shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                              <button
+                                onClick={() => setAulaCopiada(aula)}
+                                className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                                title="Copiar"
+                              >
+                                📄
+                              </button>
+                              <button
+                                onClick={() => deletarAula(aula.id)}
+                                className="p-1 text-red-400 hover:text-red-700 hover:bg-red-50"
+                                title="Remover"
+                              >
+                                🗑️
+                              </button>
+                            </div>
 
-                            <div className="mb-1 pr-4">
-                              {" "}
-                              {/* Padding Right para não bater no botão deletar */}
-                              <strong className="block text-blue-900 text-sm leading-tight">
+                            {/* CONTEÚDO DA AULA - FONTES MAIORES */}
+                            <div className="leading-tight">
+                              <strong className="block text-blue-900 text-base font-bold truncate">
                                 {aula.disciplina?.nome}
                               </strong>
                             </div>
-                            <div className="mt-auto">
-                              <span className="text-xs text-gray-600 block mb-1">
-                                👨‍🏫 {aula.professor?.nome}
+
+                            <div className="mt-1 flex flex-col gap-0.5">
+                              <span className="text-xs font-medium text-gray-700 truncate">
+                                {aula.professor?.nome}
                               </span>
-                              <div className="text-[10px] bg-white text-gray-500 border rounded px-1 py-0.5 inline-block">
-                                📍 {aula.sala?.nome}
+                              <div className="flex justify-between items-end">
+                                <span className="text-[11px] bg-white text-gray-600 border border-gray-300 rounded px-1 truncate max-w-[80px]">
+                                  {aula.sala?.nome}
+                                </span>
                               </div>
                             </div>
                           </div>
                         ) : (
+                          // SLOT VAZIO
                           <div
                             onClick={() =>
-                              abrirModal(dia, slot.id, slot.rotulo)
+                              handleCelulaClick(dia, slot.id, slot.rotulo)
                             }
-                            className="h-full flex items-center justify-center rounded hover:bg-gray-200 transition-colors cursor-pointer border border-transparent hover:border-gray-300"
+                            className={`w-full h-full flex items-center justify-center rounded cursor-pointer transition-colors ${
+                              aulaCopiada
+                                ? "bg-yellow-50 border-2 border-dashed border-yellow-400 hover:bg-yellow-100"
+                                : "hover:bg-gray-100"
+                            }`}
                           >
-                            <span className="text-gray-300 hover:text-gray-500 text-3xl font-light">
-                              +
-                            </span>
+                            {aulaCopiada ? (
+                              <span className="text-[10px] text-yellow-700 font-bold uppercase tracking-wider">
+                                Colar
+                              </span>
+                            ) : (
+                              <span className="text-gray-200 text-2xl font-light opacity-0 group-hover:opacity-100">
+                                +
+                              </span>
+                            )}
                           </div>
                         )}
                       </td>
@@ -238,6 +322,22 @@ export default function Home() {
               ))}
             </tbody>
           </table>
+        )}
+      </div>
+
+      {/* BARRA FLUTUANTE DE AVISO DE CÓPIA */}
+      {aulaCopiada && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-xl flex items-center gap-3 z-50">
+          <div className="text-sm">
+            <span className="text-yellow-400 font-bold mr-1">COPIANDO:</span>
+            <span>{aulaCopiada.disciplina?.nome}</span>
+          </div>
+          <button
+            onClick={() => setAulaCopiada(null)}
+            className="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-gray-200"
+          >
+            Cancelar
+          </button>
         </div>
       )}
 
