@@ -1,7 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Aula, Disciplina, Professor, Sala, SlotHorario, Turma } from "@/types";
+import {
+  Aula,
+  Disciplina,
+  Professor,
+  Sala,
+  SlotHorario,
+  Turma,
+} from "@/types/index";
 import NovoHorarioModal from "@/components/NovoHorarioModal";
 
 const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
