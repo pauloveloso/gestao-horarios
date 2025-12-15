@@ -6,6 +6,7 @@ export interface Professor {
 export interface Sala {
   id: string;
   nome: string;
+  tipo?: string;
 }
 export interface Turma {
   id: string;
