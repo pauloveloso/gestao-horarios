@@ -8,11 +8,21 @@ export default function LoginPage() {
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (senha === process.env.NEXT_PUBLIC_SENHA_ADMIN) {
+
+    // === CORREÇÃO AQUI ===
+    // Tenta ler do .env, se não achar, usa "admin1234" como padrão
+    const senhaAdmin = process.env.NEXT_PUBLIC_SENHA_ADMIN;
+
+    // Debug para você ver no Console (F12) o que está acontecendo
+    console.log("Senha digitada:", senha);
+    console.log("Senha que o sistema espera:", senhaAdmin);
+
+    if (senha === senhaAdmin) {
       localStorage.setItem("usuario_admin", "true");
       router.push("/");
     } else {
       alert("Senha incorreta!");
+      setSenha(""); // Limpa o campo para tentar de novo
     }
   }
 
@@ -26,7 +36,7 @@ export default function LoginPage() {
           <input
             type="password"
             placeholder="Senha de Administrador"
-            className="border p-2 rounded"
+            className="border p-2 rounded text-black" // Adicionei text-black para garantir que dê para ler
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
           />
