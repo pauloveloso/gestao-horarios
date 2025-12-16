@@ -26,6 +26,7 @@ export default function Home() {
   } | null>(null);
   const [aulaCopiada, setAulaCopiada] = useState<Aula | null>(null);
 
+  // === ESTADO DE SEGURANÇA ===
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -148,6 +149,7 @@ export default function Home() {
   }
 
   function handleCelulaClick(dia: string, horarioId: string, rotulo: string) {
+    // SÓ PERMITE CLICK SE FOR ADMIN
     if (!isAdmin) return;
 
     if (aulaCopiada) {
@@ -168,9 +170,11 @@ export default function Home() {
     );
   };
 
+  // === ESTA FOI A FUNÇÃO QUE FALTOU ANTES ===
   const getTurmaObj = () => {
     return turmas.find((t) => t.id === turmaSelecionada);
   };
+  // ===========================================
 
   if (loading)
     return (
@@ -235,161 +239,119 @@ export default function Home() {
             <p className="text-gray-400 text-lg">Selecione uma turma acima.</p>
           </div>
         ) : (
-          <div className="w-full">
-            <div className="hidden mb-4 text-center border-b pb-2">
-              <h1 className="text-2xl font-bold text-gray-900">
-                Horário Escolar - {getTurmaObj()?.codigo}
-              </h1>
-              <p className="text-sm text-gray-500">
-                Curso: {getTurmaObj()?.curso}
-              </p>
-            </div>
-
-            <table className="w-full table-fixed border-collapse border border-gray-300 text-sm">
-              <thead>
-                <tr className="bg-blue-800 text-white text-xs uppercase tracking-wider">
-                  <th className="p-2 border-r border-blue-700 w-20 text-center">
-                    Horário
+          <table className="w-full table-fixed border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-blue-800 text-white text-xs uppercase tracking-wider">
+                <th className="p-2 border-r border-blue-700 w-20 text-center">
+                  Horário
+                </th>
+                {DIAS_SEMANA.map((dia) => (
+                  <th
+                    key={dia}
+                    className="p-2 border-r border-blue-700 last:border-0"
+                  >
+                    {dia}
                   </th>
-                  {DIAS_SEMANA.map((dia) => (
-                    <th
-                      key={dia}
-                      className="p-2 border-r border-blue-700 last:border-0"
-                    >
-                      {dia}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {horarios.map((slot) => (
-                  <tr key={slot.id} className="hover:bg-gray-50">
-                    <td className="p-1 border-r border-gray-300 bg-gray-100 text-center align-middle">
-                      <div className="flex flex-col justify-center h-full">
-                        <span className="font-bold text-gray-800 text-sm">
-                          {slot.rotulo}
-                        </span>
-                        <span className="text-[10px] text-gray-500 font-bold uppercase">
-                          {slot.periodo}
-                        </span>
-                      </div>
-                    </td>
-
-                    {DIAS_SEMANA.map((dia) => {
-                      const aula = getAulaCelular(dia, slot.id);
-                      return (
-                        <td
-                          key={dia}
-                          className="p-0.5 border-r border-gray-300 align-top h-20 relative group"
-                        >
-                          {aula ? (
-                            <div
-                              className={`w-full h-full p-1.5 rounded flex flex-col justify-between relative transition-all ${
-                                aulaCopiada?.id === aula.id
-                                  ? "bg-yellow-100 border-2 border-yellow-500"
-                                  : "bg-blue-50 border-l-4 border-blue-600"
-                              }`}
-                            >
-                              {isAdmin && (
-                                <div className="absolute top-0 right-0 flex bg-white/90 rounded-bl shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                  {/* ÍCONE DE COPIAR (Duas Folhas SVG) */}
-                                  <button
-                                    onClick={() => setAulaCopiada(aula)}
-                                    className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                                    title="Copiar"
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      strokeWidth={1.5}
-                                      stroke="currentColor"
-                                      className="w-4 h-4"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5"
-                                      />
-                                    </svg>
-                                  </button>
-
-                                  {/* ÍCONE DE DELETAR (Lixeira SVG) */}
-                                  <button
-                                    onClick={() => deletarAula(aula.id)}
-                                    className="p-1 text-red-400 hover:text-red-700 hover:bg-red-50"
-                                    title="Remover"
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      strokeWidth={1.5}
-                                      stroke="currentColor"
-                                      className="w-4 h-4"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-                                      />
-                                    </svg>
-                                  </button>
-                                </div>
-                              )}
-
-                              <div className="leading-tight">
-                                <strong className="block text-blue-900 text-base font-bold truncate">
-                                  {aula.disciplina?.nome}
-                                </strong>
-                              </div>
-
-                              <div className="mt-1 flex flex-col gap-0.5">
-                                <span className="text-xs font-medium text-gray-700 truncate">
-                                  {aula.professor?.nome}
-                                </span>
-
-                                {/* SALA - AGORA OCUPA LARGURA TOTAL */}
-                                <div className="mt-1 flex w-full">
-                                  <span className="text-xs w-full text-center bg-white text-gray-600 border border-gray-300 rounded px-1 truncate">
-                                    {aula.sala?.nome}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              onClick={() =>
-                                handleCelulaClick(dia, slot.id, slot.rotulo)
-                              }
-                              className={`w-full h-full flex items-center justify-center rounded transition-colors ${
-                                isAdmin
-                                  ? aulaCopiada
-                                    ? "cursor-pointer bg-yellow-50 border-2 border-dashed border-yellow-400 hover:bg-yellow-100"
-                                    : "cursor-pointer hover:bg-gray-100"
-                                  : "bg-transparent"
-                              }`}
-                            >
-                              {isAdmin &&
-                                (aulaCopiada ? (
-                                  <span className="text-[10px] text-yellow-700 font-bold uppercase tracking-wider">
-                                    Colar
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-200 text-2xl font-light opacity-0 group-hover:opacity-100">
-                                    +
-                                  </span>
-                                ))}
-                            </div>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {horarios.map((slot) => (
+                <tr key={slot.id} className="hover:bg-gray-50">
+                  <td className="p-1 border-r border-gray-300 bg-gray-100 text-center align-middle">
+                    <div className="flex flex-col justify-center h-full">
+                      <span className="font-bold text-gray-800 text-sm">
+                        {slot.rotulo}
+                      </span>
+                      <span className="text-[10px] text-gray-500 font-bold uppercase">
+                        {slot.periodo}
+                      </span>
+                    </div>
+                  </td>
+
+                  {DIAS_SEMANA.map((dia) => {
+                    const aula = getAulaCelular(dia, slot.id);
+                    return (
+                      <td
+                        key={dia}
+                        className="p-0.5 border-r border-gray-300 align-top h-20 relative group"
+                      >
+                        {aula ? (
+                          <div
+                            className={`w-full h-full p-1.5 rounded flex flex-col justify-between relative transition-all ${
+                              aulaCopiada?.id === aula.id
+                                ? "bg-yellow-100 border-2 border-yellow-500"
+                                : "bg-blue-50 border-l-4 border-blue-600"
+                            }`}
+                          >
+                            {isAdmin && (
+                              <div className="absolute top-0 right-0 flex bg-white/90 rounded-bl shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                <button
+                                  onClick={() => setAulaCopiada(aula)}
+                                  className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                                  title="Copiar"
+                                >
+                                  📄
+                                </button>
+                                <button
+                                  onClick={() => deletarAula(aula.id)}
+                                  className="p-1 text-red-400 hover:text-red-700 hover:bg-red-50"
+                                  title="Remover"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            )}
+
+                            <div className="leading-tight">
+                              <strong className="block text-blue-900 text-base font-bold truncate">
+                                {aula.disciplina?.nome}
+                              </strong>
+                            </div>
+
+                            <div className="mt-1 flex flex-col gap-0.5">
+                              <span className="text-xs font-medium text-gray-700 truncate">
+                                {aula.professor?.nome}
+                              </span>
+                              <div className="flex justify-between items-end">
+                                <span className="text-[11px] bg-white text-gray-600 border border-gray-300 rounded px-1 truncate max-w-[80px]">
+                                  {aula.sala?.nome}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() =>
+                              handleCelulaClick(dia, slot.id, slot.rotulo)
+                            }
+                            className={`w-full h-full flex items-center justify-center rounded transition-colors ${
+                              isAdmin
+                                ? aulaCopiada
+                                  ? "cursor-pointer bg-yellow-50 border-2 border-dashed border-yellow-400 hover:bg-yellow-100"
+                                  : "cursor-pointer hover:bg-gray-100"
+                                : "bg-transparent"
+                            }`}
+                          >
+                            {isAdmin &&
+                              (aulaCopiada ? (
+                                <span className="text-[10px] text-yellow-700 font-bold uppercase tracking-wider">
+                                  Colar
+                                </span>
+                              ) : (
+                                <span className="text-gray-200 text-2xl font-light opacity-0 group-hover:opacity-100">
+                                  +
+                                </span>
+                              ))}
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
 
