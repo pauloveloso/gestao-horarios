@@ -18,8 +18,13 @@ export default function CadastrosPage() {
   const [abaAtiva, setAbaAtiva] = useState<Tabela>("professores");
   const [lista, setLista] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // ESTADOS DO FORMULÁRIO
   const [nome, setNome] = useState("");
   const [extra, setExtra] = useState("");
+
+  // ESTADO DE EDIÇÃO (Se tiver algo aqui, estamos editando)
+  const [itemEditando, setItemEditando] = useState<any | null>(null);
 
   useEffect(() => {
     const adminToken = localStorage.getItem("usuario_admin");
@@ -28,11 +33,17 @@ export default function CadastrosPage() {
     }
   }, []);
 
+  // Quando troca de aba, limpa tudo
   useEffect(() => {
     carregarLista();
+    cancelarEdicao();
+  }, [abaAtiva]);
+
+  function cancelarEdicao() {
+    setItemEditando(null);
     setNome("");
     setExtra("");
-  }, [abaAtiva]);
+  }
 
   async function carregarLista() {
     setLoading(true);
@@ -45,10 +56,26 @@ export default function CadastrosPage() {
     setLoading(false);
   }
 
+  function handlePreencherEdicao(item: any) {
+    setItemEditando(item);
+    // Preenche os campos baseados no tipo de tabela
+    if (abaAtiva === "turmas") {
+      setNome(item.codigo);
+      setExtra(item.curso || "");
+    } else {
+      setNome(item.nome);
+      if (abaAtiva === "salas") setExtra(item.tipo || "");
+    }
+
+    // Leva a tela para o topo para ver o formulário
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function handleSalvar(e: React.FormEvent) {
     e.preventDefault();
     if (!nome) return;
 
+    // Monta o objeto de dados
     const payload: any = {};
     if (abaAtiva === "turmas") {
       payload.codigo = nome;
@@ -58,14 +85,26 @@ export default function CadastrosPage() {
       if (abaAtiva === "salas" && extra) payload.tipo = extra;
     }
 
-    const { error } = await supabase.from(abaAtiva).insert(payload);
+    let error;
+
+    if (itemEditando) {
+      // === MODO ATUALIZAR ===
+      const response = await supabase
+        .from(abaAtiva)
+        .update(payload)
+        .eq("id", itemEditando.id);
+      error = response.error;
+    } else {
+      // === MODO CRIAR ===
+      const response = await supabase.from(abaAtiva).insert(payload);
+      error = response.error;
+    }
 
     if (error) {
       alert("Erro ao salvar: " + error.message);
     } else {
-      setNome("");
-      setExtra("");
-      carregarLista();
+      cancelarEdicao(); // Limpa o form e sai do modo edição
+      carregarLista(); // Recarrega a tabela
     }
   }
 
@@ -80,6 +119,10 @@ export default function CadastrosPage() {
         "Não foi possível excluir. Verifique se este item já tem aulas vinculadas na grade."
       );
     } else {
+      // Se deletou o item que estava sendo editado, limpa o form
+      if (itemEditando && itemEditando.id === id) {
+        cancelarEdicao();
+      }
       carregarLista();
     }
   }
@@ -124,6 +167,7 @@ export default function CadastrosPage() {
           </Link>
         </div>
 
+        {/* ABAS */}
         <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-300 pb-1">
           {(Object.keys(config) as Tabela[]).map((chave) => (
             <button
@@ -140,10 +184,34 @@ export default function CadastrosPage() {
           ))}
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
-          <h2 className="text-lg font-bold text-gray-700 mb-4">
-            Novo Cadastro em {atual.titulo}
-          </h2>
+        {/* FORMULÁRIO */}
+        <div
+          className={`p-6 rounded-lg shadow-sm border mb-8 transition-colors ${
+            itemEditando
+              ? "bg-orange-50 border-orange-200"
+              : "bg-white border-gray-200"
+          }`}
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h2
+              className={`text-lg font-bold ${
+                itemEditando ? "text-orange-700" : "text-gray-700"
+              }`}
+            >
+              {itemEditando
+                ? `✏️ Editando: ${itemEditando.nome || itemEditando.codigo}`
+                : `Novo Cadastro em ${atual.titulo}`}
+            </h2>
+            {itemEditando && (
+              <button
+                onClick={cancelarEdicao}
+                className="text-sm text-gray-500 hover:underline"
+              >
+                Cancelar Edição
+              </button>
+            )}
+          </div>
+
           <form
             onSubmit={handleSalvar}
             className="flex flex-col md:flex-row gap-4 items-end"
@@ -178,13 +246,18 @@ export default function CadastrosPage() {
 
             <button
               type="submit"
-              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-bold w-full md:w-auto"
+              className={`text-white px-6 py-2 rounded font-bold w-full md:w-auto transition-colors ${
+                itemEditando
+                  ? "bg-orange-500 hover:bg-orange-600"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
             >
-              Salvar
+              {itemEditando ? "Atualizar" : "Salvar"}
             </button>
           </form>
         </div>
 
+        {/* LISTAGEM */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs font-semibold">
@@ -209,7 +282,12 @@ export default function CadastrosPage() {
                 </tr>
               ) : (
                 lista.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 group">
+                  <tr
+                    key={item.id}
+                    className={`hover:bg-gray-50 group ${
+                      itemEditando?.id === item.id ? "bg-orange-50" : ""
+                    }`}
+                  >
                     <td className="p-4 text-gray-800 font-medium">
                       {item.nome || item.codigo}
                     </td>
@@ -219,6 +297,16 @@ export default function CadastrosPage() {
                       </td>
                     )}
                     <td className="p-4 text-right">
+                      {/* BOTÃO EDITAR */}
+                      <button
+                        onClick={() => handlePreencherEdicao(item)}
+                        className="text-orange-400 hover:text-orange-600 font-bold px-2 py-1 rounded hover:bg-orange-50 mr-2"
+                        title="Editar"
+                      >
+                        ✏️
+                      </button>
+
+                      {/* BOTÃO EXCLUIR */}
                       <button
                         onClick={() => handleDeletar(item.id)}
                         className="text-red-400 hover:text-red-600 font-bold px-2 py-1 rounded hover:bg-red-50"
