@@ -1,10 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Importação para o redirecionamento
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-// 1. Definições de Tipos
 type Tabela = "professores" | "disciplinas" | "salas" | "turmas";
 
 interface ConfigAba {
@@ -15,40 +14,29 @@ interface ConfigAba {
 }
 
 export default function CadastrosPage() {
-  const router = useRouter(); // Hook de navegação
-
+  const router = useRouter();
   const [abaAtiva, setAbaAtiva] = useState<Tabela>("professores");
   const [lista, setLista] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // Estados do Formulário
   const [nome, setNome] = useState("");
-  const [extra, setExtra] = useState(""); // Serve para 'tipo' (sala) ou 'curso' (turma)
+  const [extra, setExtra] = useState("");
 
-  // === 1. PROTEÇÃO DE ROTA (SEGURANÇA) ===
   useEffect(() => {
-    // Verifica se o usuário tem o "crachá" de admin
     const adminToken = localStorage.getItem("usuario_admin");
     if (adminToken !== "true") {
-      router.push("/login"); // Se não tiver, expulsa para o login
+      router.push("/login");
     }
   }, []);
 
-  // === 2. LÓGICA DE DADOS ===
-
-  // Carregar dados ao mudar de aba
   useEffect(() => {
     carregarLista();
-    // Limpa o formulário visualmente ao trocar de aba
     setNome("");
     setExtra("");
   }, [abaAtiva]);
 
   async function carregarLista() {
     setLoading(true);
-    // Ordena por codigo se for turma, ou por nome nos outros casos
     const campoOrdem = abaAtiva === "turmas" ? "codigo" : "nome";
-
     const { data } = await supabase
       .from(abaAtiva)
       .select("*")
@@ -57,14 +45,11 @@ export default function CadastrosPage() {
     setLoading(false);
   }
 
-  // Salvar novo item
   async function handleSalvar(e: React.FormEvent) {
     e.preventDefault();
     if (!nome) return;
 
     const payload: any = {};
-
-    // Monta o objeto dependendo da tabela (Turmas usam campos diferentes)
     if (abaAtiva === "turmas") {
       payload.codigo = nome;
       if (extra) payload.curso = extra;
@@ -84,15 +69,12 @@ export default function CadastrosPage() {
     }
   }
 
-  // Deletar item
   async function handleDeletar(id: string) {
     if (
       !confirm("Tem certeza? Se este item estiver em uso na grade, dará erro.")
     )
       return;
-
     const { error } = await supabase.from(abaAtiva).delete().eq("id", id);
-
     if (error) {
       alert(
         "Não foi possível excluir. Verifique se este item já tem aulas vinculadas na grade."
@@ -102,7 +84,6 @@ export default function CadastrosPage() {
     }
   }
 
-  // === 3. CONFIGURAÇÃO VISUAL DAS ABAS ===
   const config: Record<Tabela, ConfigAba> = {
     professores: {
       titulo: "Professores",
@@ -133,7 +114,6 @@ export default function CadastrosPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
       <div className="max-w-4xl mx-auto">
-        {/* CABEÇALHO */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold text-blue-900">⚙️ Administração</h1>
           <Link
@@ -144,7 +124,6 @@ export default function CadastrosPage() {
           </Link>
         </div>
 
-        {/* ABAS DE NAVEGAÇÃO */}
         <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-300 pb-1">
           {(Object.keys(config) as Tabela[]).map((chave) => (
             <button
@@ -161,7 +140,6 @@ export default function CadastrosPage() {
           ))}
         </div>
 
-        {/* FORMULÁRIO DE CADASTRO */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
           <h2 className="text-lg font-bold text-gray-700 mb-4">
             Novo Cadastro em {atual.titulo}
@@ -184,7 +162,6 @@ export default function CadastrosPage() {
               />
             </div>
 
-            {/* Renderização Condicional do Campo Extra */}
             {atual.temExtra && (
               <div className="w-full md:w-1/3">
                 <label className="block text-sm text-gray-600 mb-1">
@@ -208,7 +185,6 @@ export default function CadastrosPage() {
           </form>
         </div>
 
-        {/* LISTAGEM */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-100 text-gray-600 uppercase text-xs font-semibold">

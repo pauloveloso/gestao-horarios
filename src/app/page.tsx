@@ -15,6 +15,8 @@ export default function Home() {
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [aulas, setAulas] = useState<Aula[]>([]);
 
+  const [conflitos, setConflitos] = useState<Record<string, string>>({});
+
   const [turmaSelecionada, setTurmaSelecionada] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
@@ -24,7 +26,11 @@ export default function Home() {
     horarioId: string;
     horarioRotulo: string;
   } | null>(null);
+
+  // AULA COPIADA (Para Colar)
   const [aulaCopiada, setAulaCopiada] = useState<Aula | null>(null);
+  // AULA EDITANDO (Para Alterar)
+  const [aulaEditando, setAulaEditando] = useState<Aula | null>(null);
 
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -67,25 +73,43 @@ export default function Home() {
 
   async function carregarGrade() {
     if (!turmaSelecionada) return;
+
     const { data } = await supabase
       .from("grade_aulas")
       .select(
         `
         id, dia_semana, horario_id, professor_id, sala_id, disciplina_id, turma_id,
-        professor:professores(nome),
-        sala:salas(nome),
-        disciplina:disciplinas(nome),
+        professor:professores(nome, id),
+        sala:salas(nome, id),
+        disciplina:disciplinas(nome, id),
         turma:turmas(codigo)
       `
       )
       .eq("turma_id", turmaSelecionada);
 
-    if (data) setAulas(data as any);
+    if (data) {
+      setAulas(data as any);
+
+      const { data: dadosConflitos } = await supabase.rpc(
+        "buscar_conflitos_turma",
+        { p_turma_id: turmaSelecionada }
+      );
+
+      const mapaConflitos: Record<string, string> = {};
+      if (dadosConflitos) {
+        dadosConflitos.forEach((c: any) => {
+          mapaConflitos[c.aula_id] = c.descricao;
+        });
+      }
+      setConflitos(mapaConflitos);
+    }
   }
 
   useEffect(() => {
     carregarGrade();
     setAulaCopiada(null);
+    setAulaEditando(null);
+    setConflitos({});
   }, [turmaSelecionada]);
 
   function handleLogout() {
@@ -104,30 +128,19 @@ export default function Home() {
     else carregarGrade();
   }
 
+  function handleEditarAula(
+    aula: Aula,
+    dia: string,
+    horarioId: string,
+    horarioRotulo: string
+  ) {
+    setAulaEditando(aula);
+    setCelulaSelecionada({ dia, horarioId, horarioRotulo });
+    setModalOpen(true);
+  }
+
   async function colarAulaNoSlot(dia: string, horarioId: string) {
     if (!aulaCopiada) return;
-
-    const { data: conflitos, error: erroValidacao } = await supabase.rpc(
-      "verificar_conflito",
-      {
-        p_dia: dia,
-        p_horario_id: horarioId,
-        p_professor_id:
-          aulaCopiada.professor?.id || (aulaCopiada as any).professor_id,
-        p_sala_id: aulaCopiada.sala?.id || (aulaCopiada as any).sala_id,
-        p_turma_id: turmaSelecionada,
-      }
-    );
-
-    if (erroValidacao) {
-      alert("Erro técnico ao validar.");
-      return;
-    }
-
-    if (conflitos && conflitos.length > 0) {
-      alert(`NÃO FOI POSSÍVEL COLAR:\n${conflitos[0].descricao}`);
-      return;
-    }
 
     const { error: erroInsert } = await supabase.from("grade_aulas").insert({
       dia_semana: dia,
@@ -149,10 +162,10 @@ export default function Home() {
 
   function handleCelulaClick(dia: string, horarioId: string, rotulo: string) {
     if (!isAdmin) return;
-
     if (aulaCopiada) {
       colarAulaNoSlot(dia, horarioId);
     } else {
+      setAulaEditando(null); // Garante que é um novo cadastro
       abrirModal(dia, horarioId, rotulo);
     }
   }
@@ -168,9 +181,7 @@ export default function Home() {
     );
   };
 
-  const getTurmaObj = () => {
-    return turmas.find((t) => t.id === turmaSelecionada);
-  };
+  const getTurmaObj = () => turmas.find((t) => t.id === turmaSelecionada);
 
   if (loading)
     return (
@@ -179,7 +190,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
-      {/* HEADER */}
       <header className="flex justify-between items-center bg-gray-100 px-4 py-3 border-b border-gray-300">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-blue-900 flex items-center gap-2">
@@ -194,6 +204,15 @@ export default function Home() {
               >
                 ⚙️ <span className="hidden sm:inline">Cadastros</span>
               </Link>
+
+              {/* BOTÃO DE RELATÓRIOS */}
+              <Link
+                href="/relatorios"
+                className="text-sm bg-white border border-gray-300 text-blue-700 px-3 py-1 rounded hover:bg-blue-50 flex items-center gap-1 font-bold"
+              >
+                📊 <span className="hidden sm:inline">Relatórios</span>
+              </Link>
+
               <button
                 onClick={handleLogout}
                 className="text-sm bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200"
@@ -277,6 +296,8 @@ export default function Home() {
 
                     {DIAS_SEMANA.map((dia) => {
                       const aula = getAulaCelular(dia, slot.id);
+                      const msgConflito = aula ? conflitos[aula.id] : null;
+
                       return (
                         <td
                           key={dia}
@@ -284,15 +305,47 @@ export default function Home() {
                         >
                           {aula ? (
                             <div
-                              className={`w-full h-full p-1.5 rounded flex flex-col justify-between relative transition-all ${
+                              className={`w-full h-full p-1.5 rounded flex flex-col justify-between relative transition-all border-l-4 ${
                                 aulaCopiada?.id === aula.id
-                                  ? "bg-yellow-100 border-2 border-yellow-500"
-                                  : "bg-blue-50 border-l-4 border-blue-600"
+                                  ? "bg-yellow-100 border-yellow-500"
+                                  : msgConflito
+                                  ? "bg-red-100 border-red-600 animate-pulse"
+                                  : "bg-blue-50 border-blue-600"
                               }`}
+                              title={msgConflito || ""}
                             >
                               {isAdmin && (
                                 <div className="absolute top-0 right-0 flex bg-white/90 rounded-bl shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                  {/* ÍCONE DE COPIAR (Duas Folhas SVG) */}
+                                  {/* EDITAR (Lápis) */}
+                                  <button
+                                    onClick={() =>
+                                      handleEditarAula(
+                                        aula,
+                                        dia,
+                                        slot.id,
+                                        slot.rotulo
+                                      )
+                                    }
+                                    className="p-1 text-orange-500 hover:text-orange-700 hover:bg-orange-50"
+                                    title="Editar"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      strokeWidth={1.5}
+                                      stroke="currentColor"
+                                      className="w-4 h-4"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
+                                      />
+                                    </svg>
+                                  </button>
+
+                                  {/* COPIAR (Duas Folhas) */}
                                   <button
                                     onClick={() => setAulaCopiada(aula)}
                                     className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
@@ -314,7 +367,7 @@ export default function Home() {
                                     </svg>
                                   </button>
 
-                                  {/* ÍCONE DE DELETAR (Lixeira SVG) */}
+                                  {/* DELETAR (Lixeira) */}
                                   <button
                                     onClick={() => deletarAula(aula.id)}
                                     className="p-1 text-red-400 hover:text-red-700 hover:bg-red-50"
@@ -339,23 +392,48 @@ export default function Home() {
                               )}
 
                               <div className="leading-tight">
-                                <strong className="block text-blue-900 text-base font-bold truncate">
+                                <strong
+                                  className={`block text-base font-bold truncate ${
+                                    msgConflito
+                                      ? "text-red-900"
+                                      : "text-blue-900"
+                                  }`}
+                                >
                                   {aula.disciplina?.nome}
                                 </strong>
                               </div>
 
                               <div className="mt-1 flex flex-col gap-0.5">
-                                <span className="text-xs font-medium text-gray-700 truncate">
-                                  {aula.professor?.nome}
+                                <span
+                                  className={`text-xs font-medium truncate ${
+                                    msgConflito
+                                      ? "text-red-800 font-bold"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  {aula.professor?.nome}{" "}
+                                  {msgConflito ? "⚠️" : ""}
                                 </span>
 
-                                {/* SALA - AGORA OCUPA LARGURA TOTAL */}
                                 <div className="mt-1 flex w-full">
-                                  <span className="text-xs w-full text-center bg-white text-gray-600 border border-gray-300 rounded px-1 truncate">
+                                  <span
+                                    className={`text-xs w-full text-center bg-white border rounded px-1 truncate ${
+                                      msgConflito
+                                        ? "border-red-400 text-red-700"
+                                        : "border-gray-300 text-gray-600"
+                                    }`}
+                                  >
                                     {aula.sala?.nome}
                                   </span>
                                 </div>
                               </div>
+
+                              {/* MENSAGEM DE ERRO (Tooltip) */}
+                              {msgConflito && (
+                                <div className="absolute -bottom-8 left-0 z-50 bg-red-800 text-white text-[10px] p-1 rounded opacity-0 group-hover:opacity-100 w-[200px] pointer-events-none transition-opacity shadow-lg">
+                                  {msgConflito}
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div
@@ -420,6 +498,8 @@ export default function Home() {
           professores={professores}
           salas={salas}
           disciplinas={disciplinas}
+          // PASSANDO A AULA PARA EDIÇÃO
+          aulaEditando={aulaEditando}
         />
       )}
     </main>

@@ -1,12 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Disciplina, Professor, Sala, Turma } from "@/types";
+import { Aula, Disciplina, Professor, Sala, Turma } from "@/types";
 
-interface Props {
+interface NovoHorarioModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSucesso: () => void; // Para recarregar a grade ao salvar
+  onSucesso: () => void;
   dia: string;
   horarioId: string;
   horarioRotulo: string;
@@ -14,6 +14,8 @@ interface Props {
   professores: Professor[];
   salas: Sala[];
   disciplinas: Disciplina[];
+  // NOVA PROPRIEDADE: AULA PARA EDIÇÃO (OPCIONAL)
+  aulaEditando?: Aula | null;
 }
 
 export default function NovoHorarioModal({
@@ -27,105 +29,97 @@ export default function NovoHorarioModal({
   professores,
   salas,
   disciplinas,
-}: Props) {
-  const [profId, setProfId] = useState("");
+  aulaEditando,
+}: NovoHorarioModalProps) {
+  const [professorId, setProfessorId] = useState("");
   const [salaId, setSalaId] = useState("");
-  const [discId, setDiscId] = useState("");
-  const [erro, setErro] = useState("");
+  const [disciplinaId, setDisciplinaId] = useState("");
   const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (aulaEditando) {
+        // MODO EDIÇÃO: Preenche com os dados existentes
+        setProfessorId(
+          (aulaEditando as any).professor_id || aulaEditando.professor?.id || ""
+        );
+        setSalaId((aulaEditando as any).sala_id || aulaEditando.sala?.id || "");
+        setDisciplinaId(
+          (aulaEditando as any).disciplina_id ||
+            aulaEditando.disciplina?.id ||
+            ""
+        );
+      } else {
+        // MODO CRIAÇÃO: Limpa tudo
+        setProfessorId("");
+        setSalaId("");
+        setDisciplinaId("");
+      }
+      setSalvando(false);
+    }
+  }, [isOpen, aulaEditando]);
 
   if (!isOpen) return null;
 
-  async function handleSalvar() {
-    setErro("");
+  async function handleSalvar(e: React.FormEvent) {
+    e.preventDefault();
     setSalvando(true);
 
-    if (!profId || !salaId || !discId) {
-      setErro("Preencha todos os campos.");
-      setSalvando(false);
-      return;
+    const payload = {
+      dia_semana: dia,
+      horario_id: horarioId,
+      turma_id: turma.id,
+      professor_id: professorId,
+      sala_id: salaId,
+      disciplina_id: disciplinaId,
+    };
+
+    let error;
+
+    if (aulaEditando) {
+      // === ATUALIZAR (UPDATE) ===
+      const response = await supabase
+        .from("grade_aulas")
+        .update(payload)
+        .eq("id", aulaEditando.id);
+      error = response.error;
+    } else {
+      // === CRIAR NOVO (INSERT) ===
+      const response = await supabase.from("grade_aulas").insert(payload);
+      error = response.error;
     }
 
-    try {
-      // 1. CHAMA A VALIDAÇÃO NO BANCO (Sua função SQL inteligente)
-      const { data: conflitos, error: erroValidacao } = await supabase.rpc(
-        "verificar_conflito",
-        {
-          p_dia: dia,
-          p_horario_id: horarioId,
-          p_professor_id: profId,
-          p_sala_id: salaId,
-          p_turma_id: turma.id,
-        }
-      );
-
-      if (erroValidacao) throw erroValidacao;
-
-      // 2. SE TIVER CONFLITO, MOSTRA O ERRO E PARA
-      if (conflitos && conflitos.length > 0) {
-        setErro(`ERRO: ${conflitos[0].descricao}`); // Mostra a mensagem exata do banco
-        setSalvando(false);
-        return;
-      }
-
-      // 3. SE NÃO TIVER ERRO, SALVA!
-      const { error: erroInsert } = await supabase.from("grade_aulas").insert({
-        dia_semana: dia,
-        horario_id: horarioId,
-        turma_id: turma.id,
-        professor_id: profId,
-        sala_id: salaId,
-        disciplina_id: discId,
-      });
-
-      if (erroInsert) throw erroInsert;
-
-      // Sucesso!
+    if (error) {
+      alert("Erro ao salvar: " + error.message);
+    } else {
       onSucesso();
       onClose();
-      // Limpa os campos
-      setProfId("");
-      setSalaId("");
-      setDiscId("");
-    } catch (err: any) {
-      console.error(err);
-      setErro("Erro técnico ao salvar. Veja o console.");
-    } finally {
-      setSalvando(false);
     }
+
+    setSalvando(false);
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4 text-blue-900 border-b pb-2">
-          Adicionar Aula
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+        <h2 className="text-xl font-bold text-blue-900 mb-1">
+          {aulaEditando ? "Editar Aula" : "Novo Horário"}
         </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          {dia} às {horarioRotulo} - Turma {turma.codigo}
+        </p>
 
-        <div className="mb-4 bg-gray-100 p-3 rounded text-sm text-gray-700">
-          <p>
-            <strong>Turma:</strong> {turma.codigo}
-          </p>
-          <p>
-            <strong>Quando:</strong> {dia} às {horarioRotulo}
-          </p>
-        </div>
-
-        {erro && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 text-sm rounded border border-red-200">
-            {erro}
-          </div>
-        )}
-
-        <div className="space-y-4">
+        <form onSubmit={handleSalvar} className="flex flex-col gap-4">
+          {/* DISCIPLINA */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Disciplina
             </label>
             <select
-              className="w-full border p-2 rounded"
-              value={discId}
-              onChange={(e) => setDiscId(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded p-2 text-gray-800"
+              value={disciplinaId}
+              onChange={(e) => setDisciplinaId(e.target.value)}
             >
               <option value="">Selecione...</option>
               {disciplinas.map((d) => (
@@ -136,14 +130,16 @@ export default function NovoHorarioModal({
             </select>
           </div>
 
+          {/* PROFESSOR */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Professor
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Professor(a)
             </label>
             <select
-              className="w-full border p-2 rounded"
-              value={profId}
-              onChange={(e) => setProfId(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded p-2 text-gray-800"
+              value={professorId}
+              onChange={(e) => setProfessorId(e.target.value)}
             >
               <option value="">Selecione...</option>
               {professores.map((p) => (
@@ -154,40 +150,47 @@ export default function NovoHorarioModal({
             </select>
           </div>
 
+          {/* SALA */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Sala
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Sala / Lab
             </label>
             <select
-              className="w-full border p-2 rounded"
+              required
+              className="w-full border border-gray-300 rounded p-2 text-gray-800"
               value={salaId}
               onChange={(e) => setSalaId(e.target.value)}
             >
               <option value="">Selecione...</option>
               {salas.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.nome} ({s.tipo || "Sala"})
+                  {s.nome} {s.tipo ? `(${s.tipo})` : ""}
                 </option>
               ))}
             </select>
           </div>
-        </div>
 
-        <div className="mt-6 flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSalvar}
-            disabled={salvando}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {salvando ? "Validando..." : "Salvar Aula"}
-          </button>
-        </div>
+          <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-gray-100 text-gray-700 py-2 rounded hover:bg-gray-200 font-medium"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={salvando}
+              className={`flex-1 text-white py-2 rounded font-bold disabled:opacity-50 ${
+                aulaEditando
+                  ? "bg-orange-500 hover:bg-orange-600"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {salvando ? "Salvando..." : aulaEditando ? "Atualizar" : "Salvar"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

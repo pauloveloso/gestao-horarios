@@ -8,15 +8,9 @@ export default function LoginPage() {
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    // === ADICIONE ESTA LINHA PARA TESTAR ===
-    console.log("Senha Digitada:", senha);
-    console.log("Senha Esperada:", process.env.NEXT_PUBLIC_SENHA_ADMIN);
-    // =======================================
-    // Verifica se a senha bate com a do arquivo .env
-    if (senha === "admin123") {
-      // Salva no navegador que o usuário é admin
+    if (senha === process.env.NEXT_PUBLIC_SENHA_ADMIN) {
       localStorage.setItem("usuario_admin", "true");
-      router.push("/"); // Manda para a home
+      router.push("/");
     } else {
       alert("Senha incorreta!");
     }
