@@ -30,7 +30,6 @@ export default function FichasMatriculaPage() {
     { id: "SEXTA", nome: "SEXTA" },
   ];
 
-  // INTELIGÊNCIA DE CABEÇALHO: Lê o nome do curso para saber se é Anual ou Semestral
   const formatarSemestreInteligente = (sem: string, nomeCurso: string) => {
     if (!sem || !sem.includes(".")) return sem;
     const [ano, periodo] = sem.split(".");
@@ -63,7 +62,6 @@ export default function FichasMatriculaPage() {
 
       if (versoesData && versoesData.length > 0) {
         setVersoes(versoesData);
-        // Volta a extrair os semestres organizacionais unificados (ex: 2026.1)
         const semestresUnicos = Array.from(
           new Set(versoesData.map((v) => v.semestre)),
         ).filter(Boolean) as string[];
@@ -241,7 +239,7 @@ export default function FichasMatriculaPage() {
         if (!folhaElement) continue;
 
         const canvas = await html2canvas(folhaElement, {
-          scale: 3, // Qualidade altíssima
+          scale: 3,
           useCORS: true,
           logging: false,
           scrollY: 0,
@@ -275,16 +273,16 @@ export default function FichasMatriculaPage() {
     return (
       <div
         id={`folha-pdf-${index}`}
-        className="bg-white text-black font-sans relative print-page-container p-8 border border-gray-300 my-4 shadow-md box-border overflow-hidden"
+        className="bg-white text-black font-sans relative print-page-container border border-gray-300 my-4 shadow-md box-border overflow-hidden p-6"
       >
         <div className="flex flex-col h-full">
           <div>
             {/* CABEÇALHO PADRÃO IFNMG */}
-            <div className="flex items-center justify-center gap-6 mb-3 border-b border-gray-400 pb-2">
+            <div className="flex items-center justify-center gap-6 mb-2 border-b border-gray-400 pb-1">
               <img
                 src="/logo-ifnmg.png"
                 alt="Logo IFNMG"
-                className="h-12 w-auto object-contain block"
+                className="h-10 w-auto object-contain block"
               />
               <div className="text-center">
                 <h1 className="font-black text-xs uppercase leading-tight">
@@ -299,27 +297,26 @@ export default function FichasMatriculaPage() {
               </div>
             </div>
 
-            <div className="text-center mb-3 flex flex-col gap-0.5 text-xs text-gray-900">
-              <h4 className="font-black text-xs uppercase tracking-wide">
+            <div className="text-center mb-2 flex flex-col text-xs text-gray-900">
+              <h4 className="font-black text-[11px] uppercase tracking-wide">
                 REQUERIMENTO DE RENOVAÇÃO DE MATRÍCULA
               </h4>
-              <p className="font-bold uppercase">
+              <p className="font-bold uppercase text-[10px]">
                 COORDENAÇÃO DO CURSO DE {pagina.turma.curso_nome}
               </p>
-              <p className="font-bold uppercase">
+              <p className="font-bold uppercase text-[10px]">
                 {formatarSemestreInteligente(
                   versaoAtivaDetalhes?.semestre,
                   pagina.turma.curso_nome,
                 )}
               </p>
-              <p className="font-black text-xl mt-0.5 tracking-wider text-black">
+              <p className="font-black text-lg mt-0.5 tracking-wider text-black">
                 {pagina.turma.codigo}
               </p>
             </div>
 
             {/* TABELA DE HORÁRIOS COM MARCA D'ÁGUA RESTRITA */}
             <div className="mb-2 relative overflow-hidden">
-              {/* MARCA D'ÁGUA SOBRE O QUADRO */}
               <div className="absolute top-1/2 left-1/2 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none z-50 opacity-[0.25] transform -rotate-45 flex flex-col justify-center items-center gap-16">
                 {Array.from({ length: 20 }).map((_, rowIndex) => (
                   <div
@@ -347,9 +344,11 @@ export default function FichasMatriculaPage() {
               </div>
 
               {/* TABELA PROPRIAMENTE DITA */}
-              <table className="w-full border-collapse border border-black text-[10px] bg-white relative z-10">
+              {/* Ajuste: h-[125mm] para manter o tamanho fixo da tabela sem ultrapassar a folha */}
+              <table className="w-full border-collapse border border-black table-fixed h-[125mm] text-[10px] bg-white relative z-10">
                 <thead>
-                  <tr className="bg-gray-200 font-bold">
+                  <tr className="bg-gray-200 font-bold h-auto">
+                    {/* Restaurada a largura fixa (w-24) e a fonte (text-xs) original */}
                     <th className="border border-black p-1 w-24 text-center text-xs">
                       HORÁRIO
                     </th>
@@ -372,11 +371,11 @@ export default function FichasMatriculaPage() {
                         intervalo = (
                           <tr
                             key={`intervalo-${index}`}
-                            className="bg-gray-100 font-bold"
+                            className="bg-gray-100 font-bold h-auto"
                           >
                             <td
                               colSpan={6}
-                              className="border border-black p-1 text-center uppercase tracking-widest text-[9px]"
+                              className="border border-black p-1 text-center uppercase tracking-widest text-[10px]"
                             >
                               INTERVALO: {formatarHora(fimAnterior)} às{" "}
                               {formatarHora(slot.hora_inicio)}
@@ -389,7 +388,8 @@ export default function FichasMatriculaPage() {
                     return (
                       <React.Fragment key={slot.id}>
                         {intervalo}
-                        <tr>
+                        <tr className="h-auto">
+                          {/* Restaurada a formatação do bloco de horas com o "às" e a fonte text-xs */}
                           <td className="border border-black p-1 text-center font-bold align-middle bg-gray-50 text-xs">
                             {formatarHora(slot.hora_inicio)}
                             <br />
@@ -407,23 +407,24 @@ export default function FichasMatriculaPage() {
                             return (
                               <td
                                 key={dia.id}
-                                className="border border-black p-1 align-middle text-center w-1/5 bg-white"
+                                className="border border-black p-1 align-middle text-center overflow-hidden bg-white"
                               >
                                 {aula ? (
-                                  <div className="flex flex-col h-full justify-center items-center text-center py-1">
-                                    <div className="font-bold uppercase leading-tight text-xs mb-1">
-                                      (&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;){" "}
+                                  <div className="flex flex-col h-full justify-center items-center gap-0.5">
+                                    {/* Ajuste: Fontes normais, mas com limitação de linhas para não empurrar a altura da célula */}
+                                    <div className="font-bold uppercase leading-tight text-[10px] line-clamp-3">
+                                      (&nbsp;&nbsp;&nbsp;&nbsp;){" "}
                                       {aula.disciplina_nome}
                                     </div>
-                                    <div className="text-[10px] uppercase leading-tight text-gray-800">
+                                    <div className="text-[10px] uppercase text-gray-800 line-clamp-1 w-full">
                                       {aula.espaco_nome}
                                     </div>
-                                    <div className="text-[10px] uppercase leading-tight text-gray-800">
+                                    <div className="text-[10px] uppercase text-gray-800 line-clamp-1 w-full">
                                       {aula.professor_nome}
                                     </div>
                                   </div>
                                 ) : (
-                                  <div className="min-h-[4.5rem]"></div>
+                                  <div className="h-full w-full min-h-[2rem]"></div>
                                 )}
                               </td>
                             );
@@ -437,7 +438,7 @@ export default function FichasMatriculaPage() {
             </div>
 
             {/* INSTRUÇÕES E LEGENDA */}
-            <div className="mb-2 text-xs text-justify border border-black p-2 leading-tight bg-gray-50">
+            <div className="mb-2 text-[10px] text-justify border border-black p-1.5 leading-tight bg-gray-50">
               <p className="mb-0.5">
                 A matrícula é responsabilidade do acadêmico. Antes de
                 efetivá-la, leia os Regulamentos dos Cursos Superiores do IFNMG.
@@ -455,24 +456,24 @@ export default function FichasMatriculaPage() {
           </div>
 
           {/* CONTÊINER DE ASSINATURAS */}
-          <div className="pt-2 text-sm mt-4 dynamic-footer">
+          <div className="pt-1 text-sm mt-auto dynamic-footer">
             <div className="grid grid-cols-2 gap-12 mt-1">
               <div>
-                <div className="border-b border-black h-5 mb-1"></div>
-                <p className="text-[10px] font-bold uppercase text-center text-gray-800">
+                <div className="border-b border-black h-4 mb-1"></div>
+                <p className="text-[9px] font-bold uppercase text-center text-gray-800">
                   Assinatura do Acadêmico/Responsável
                 </p>
               </div>
               <div className="flex gap-6">
                 <div className="flex-1">
-                  <div className="border-b border-black h-5 mb-1 flex items-end text-[11px] text-gray-500 pl-2"></div>
-                  <p className="text-[10px] font-bold uppercase text-gray-800 pl-2">
+                  <div className="border-b border-black h-4 mb-1 flex items-end text-[11px] text-gray-500 pl-2"></div>
+                  <p className="text-[9px] font-bold uppercase text-gray-800 pl-2">
                     Data
                   </p>
                 </div>
                 <div className="flex-1">
-                  <div className="border-b border-black h-5 mb-1 flex items-end text-[11px] text-gray-500 pl-2"></div>
-                  <p className="text-[10px] font-bold uppercase text-gray-800 pl-2">
+                  <div className="border-b border-black h-4 mb-1 flex items-end text-[11px] text-gray-500 pl-2"></div>
+                  <p className="text-[9px] font-bold uppercase text-gray-800 pl-2">
                     Turma
                   </p>
                 </div>
@@ -505,7 +506,6 @@ export default function FichasMatriculaPage() {
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
           }
           .dynamic-footer {
             margin-top: auto;
@@ -542,7 +542,7 @@ export default function FichasMatriculaPage() {
                 <select
                   value={semestreSelecionado}
                   onChange={(e) => setSemestreSelecionado(e.target.value)}
-                  className="bg-green-800 border border-green-700 text-white rounded px-3 py-2 text-sm font-bold outline-none cursor-pointer focus:border-green-400 max-w-[200px] truncate"
+                  className="bg-green-800 border border-green-700 text-white rounded px-3 py-2 text-sm font-bold outline-none cursor-pointer focus:border-green-400 max-w-50 truncate"
                 >
                   {semestres.map((s) => (
                     <option key={s} value={s}>
@@ -559,7 +559,7 @@ export default function FichasMatriculaPage() {
                 <select
                   value={cursoSelecionado}
                   onChange={(e) => setCursoSelecionado(e.target.value)}
-                  className="bg-green-800 border border-green-700 text-white rounded px-3 py-2 text-sm font-bold outline-none cursor-pointer focus:border-green-400 max-w-[250px] truncate"
+                  className="bg-green-800 border border-green-700 text-white rounded px-3 py-2 text-sm font-bold outline-none cursor-pointer focus:border-green-400 max-w-64 truncate"
                 >
                   <option value="">Selecione um curso...</option>
                   {cursos.map((c) => (
