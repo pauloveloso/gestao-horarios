@@ -1,11 +1,6 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+import { createClient } from "../supabase/server";
 
 export interface ValidacaoResultado {
   regra: string;
@@ -57,6 +52,7 @@ export async function executarValidacoes(
 async function validarChoqueTurma(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
+  const supabase = await createClient();
   // A própria constraint UNIQUE do banco já impede isso na maioria dos casos,
   // mas podemos verificar se houve alguma falha de concorrência rara.
   const { count } = await supabase
@@ -82,6 +78,7 @@ async function validarChoqueTurma(
 async function validarChoqueEspaco(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
+  const supabase = await createClient();
   if (!aula.espaco_id) return null;
 
   const { count } = await supabase
@@ -112,6 +109,7 @@ async function validarChoqueEspaco(
 async function validarChoqueDocente(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
+  const supabase = await createClient();
   const { count } = await supabase
     .from("aulas")
     .select("*", { head: true, count: "exact" })
@@ -140,6 +138,7 @@ async function validarChoqueDocente(
 async function validarDescansoDocente(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
+  const supabase = await createClient();
   // Regra: Professor tem aulas nos dois últimos horários de um dia e nos dois primeiros do seguinte.
   // Mapeamento de dias
   const diasMap: Record<string, number> = {
@@ -204,6 +203,7 @@ async function validarDescansoDocente(
 async function validarLimiteTurnos(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
+  const supabase = await createClient();
   // Definir faixas de turnos (ajustar IDs conforme seus slots)
   // Exemplo simplificado: Manhã (slots 1-5), Tarde (6-10), Noite (11+)
   const { data: slotAtual } = await supabase
@@ -257,6 +257,7 @@ async function validarLimiteTurnos(
 async function validarDiaPlanejamento(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
+  const supabase = await createClient();
   // Esta regra exigiria um campo "dia_planejamento" na tabela professores ou uma tabela de configuração.
   // Simulação: Supondo que cada professor tenha um dia fixo (ex: baseado no ID % 5)
   // Na prática, você deve buscar de uma tabela de configurações.
@@ -266,6 +267,7 @@ async function validarDiaPlanejamento(
 async function validarAulasGeminadas(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
+  const supabase = await createClient();
   // Alerta se a turma tem mais de 2 aulas da mesma disciplina no mesmo dia
   const { data: aulasMesmoDia } = await supabase
     .from("aulas")
@@ -304,6 +306,7 @@ async function validarAulasGeminadas(
 async function validarCargaHoraria(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
+  const supabase = await createClient();
   // Verificar se a quantidade de aulas semanais da disciplina não excede o previsto
   // Requer campo 'carga_horaria_semanal' na tabela disciplinas
   const { data: disciplina } = await supabase
@@ -341,6 +344,7 @@ async function validarCargaHoraria(
 async function validarFimDeSemana(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
+  const supabase = await createClient();
   // Alerta: Sexta à noite + Segunda manhã
   const diasMap: Record<string, number> = { SEGUNDA: 1, SEXTA: 5 };
 

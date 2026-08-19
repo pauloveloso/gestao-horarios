@@ -202,7 +202,8 @@ export default function ModoGrade({
     }
 
     if (error) {
-      alert("Erro ao salvar: " + error.message);
+      console.error("Erro no upsert ModoGrade:", error, payload);
+      alert("Erro ao salvar: " + error.message + "\nDetalhes: " + JSON.stringify(error));
     } else {
       setModalAberto(false);
       recarregarAulas();

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import LinhaPlanilha from "./LinhaPlanilha";
 
 export default function ModoPlanilha({
   versaoId,
@@ -17,12 +18,24 @@ export default function ModoPlanilha({
   recarregarAulas,
 }: any) {
   const [isProcessando, setIsProcessando] = useState(true);
-  const [linhas, setLinhas] = useState<any[]>([
-    { id: "1" },
-    { id: "2" },
-    { id: "3" },
-  ]);
+  const [linhas, setLinhas] = useState<any[]>([]);
+  const [linhasVisualizadas, setLinhasVisualizadas] = useState<any[]>([]);
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>("");
+
+  const limiteVisualizacaoRef = useRef<number>(30);
+  const [linhaSendoEditada, setLinhaSendoEditada] = useState<string | null>(null);
+  const timerDestaqueRef = useRef<NodeJS.Timeout | null>(null);
+  const linhaSendoEditadaRef = useRef<string | null>(null);
+
+  const aulasRef = useRef(aulas);
+  useEffect(() => {
+    aulasRef.current = aulas;
+  }, [aulas]);
+
+  const linhasRef = useRef(linhas);
+  useEffect(() => {
+    linhasRef.current = linhas;
+  }, [linhas]);
 
   // ESTADOS DO MODAL DE LIMPEZA GERAL
   const [modalLimpezaAberto, setModalLimpezaAberto] = useState(false);
@@ -99,6 +112,13 @@ export default function ModoPlanilha({
     }
   }, [categoriasDisponiveis, categoriaFiltro]);
 
+  // ========================================================
+  // MAPAS DE ALTA PERFORMANCE O(1)
+  // ========================================================
+  const turmasMap = useMemo(() => new Map(turmas.map((t: any) => [String(t.id), t])), [turmas]);
+  const slotsMap = useMemo(() => new Map(slots.map((s: any) => [String(s.id), s])), [slots]);
+  const cursosMap = useMemo(() => new Map(cursos.map((c: any) => [String(c.id), c])), [cursos]);
+
   const disciplinasPorCurso = useMemo(() => {
     const mapa = new Map();
     cursos.forEach((c: any) => {
@@ -113,15 +133,17 @@ export default function ModoPlanilha({
   const mapaCoresTurma = useMemo(() => {
     const mapa = new Map();
     turmas.forEach((t: any) => {
-      const c = cursos.find((c: any) => String(c.id) === String(t.curso_id));
+      const c = cursosMap.get(String(t.curso_id));
       if (c?.cor_identificacao) mapa.set(String(t.id), c.cor_identificacao);
     });
     return mapa;
-  }, [turmas, cursos]);
+  }, [turmas, cursosMap]);
 
   const mudarCategoria = (cat: string) => {
     setIsProcessando(true);
-    setLinhas([criarLinhaVazia(), criarLinhaVazia(), criarLinhaVazia()]);
+    limiteVisualizacaoRef.current = 30;
+    setLinhasVisualizadas([]);
+    setLinhas([]);
     setCategoriaFiltro(cat);
   };
 
@@ -138,21 +160,25 @@ export default function ModoPlanilha({
         SEXTA: 5,
       };
 
+      // Agrupar aulas por turma (O(n))
+      const aulasPorTurma = new Map();
+      aulasMapeadas.forEach((a: any) => {
+        const tid = String(a.turma_id);
+        if (!aulasPorTurma.has(tid)) aulasPorTurma.set(tid, []);
+        aulasPorTurma.get(tid).push(a);
+      });
+
       const ordenarInterno = (a: any, b: any) => {
-        const tA = turmas.find((t: any) => String(t.id) === String(a.turma_id));
-        const tB = turmas.find((t: any) => String(t.id) === String(b.turma_id));
+        const tA = turmasMap.get(String(a.turma_id));
+        const tB = turmasMap.get(String(b.turma_id));
         const nomeA = (tA?.codigo || "").toUpperCase();
         const nomeB = (tB?.codigo || "").toUpperCase();
         if (nomeA !== nomeB) return nomeA.localeCompare(nomeB);
         const diaA = mapaDiasOrdenacao[a.dia_semana] || 99;
         const diaB = mapaDiasOrdenacao[b.dia_semana] || 99;
         if (diaA !== diaB) return diaA - diaB;
-        const sA = slots.find(
-          (s: any) => String(s.id) === String(a.slot_horario_id),
-        );
-        const sB = slots.find(
-          (s: any) => String(s.id) === String(b.slot_horario_id),
-        );
+        const sA = slotsMap.get(String(a.slot_horario_id));
+        const sB = slotsMap.get(String(b.slot_horario_id));
         return (sA?.hora_inicio || "99:99").localeCompare(
           sB?.hora_inicio || "99:99",
         );
@@ -174,9 +200,7 @@ export default function ModoPlanilha({
               .filter((t: any) => String(t.curso_id) === String(curso.id))
               .sort((a: any, b: any) => a.codigo.localeCompare(b.codigo));
             turmasDesteCurso.forEach((turma: any) => {
-              const aulasDestaTurma = aulasMapeadas.filter(
-                (a: any) => String(a.turma_id) === String(turma.id),
-              );
+              const aulasDestaTurma = aulasPorTurma.get(String(turma.id)) || [];
               if (aulasDestaTurma.length > 0) {
                 aulasDestaTurma.sort(ordenarInterno);
                 novasLinhas.push(...aulasDestaTurma);
@@ -186,11 +210,10 @@ export default function ModoPlanilha({
           });
         } else {
           cursosDaCategoria.forEach((curso: any) => {
-            const aulasDesteCurso = aulasMapeadas.filter((a: any) => {
-              const t = turmas.find(
-                (turma: any) => String(turma.id) === String(a.turma_id),
-              );
-              return String(t?.curso_id) === String(curso.id);
+            const turmasDesteCurso = turmas.filter((t: any) => String(t.curso_id) === String(curso.id));
+            const aulasDesteCurso: any[] = [];
+            turmasDesteCurso.forEach((t: any) => {
+              aulasDesteCurso.push(...(aulasPorTurma.get(String(t.id)) || []));
             });
             if (aulasDesteCurso.length > 0) {
               aulasDesteCurso.sort(ordenarInterno);
@@ -201,13 +224,8 @@ export default function ModoPlanilha({
         }
       } else {
         const aulasSemCurso = aulasMapeadas.filter((a: any) => {
-          const t = turmas.find(
-            (turma: any) => String(turma.id) === String(a.turma_id),
-          );
-          return (
-            !t?.curso_id ||
-            !cursos.some((c: any) => String(c.id) === String(t.curso_id))
-          );
+          const t = turmasMap.get(String(a.turma_id));
+          return !t?.curso_id || !cursosMap.has(String(t.curso_id));
         });
         if (aulasSemCurso.length > 0) {
           aulasSemCurso.sort(ordenarInterno);
@@ -219,23 +237,110 @@ export default function ModoPlanilha({
         for (let i = 0; i < 5; i++) novasLinhas.push(criarLinhaVazia());
       }
 
-      setLinhas(novasLinhas);
+      setLinhas((linhasAnteriores) => {
+        if (linhasAnteriores.length === novasLinhas.length) {
+          let iguais = true;
+          for (let i = 0; i < novasLinhas.length; i++) {
+            if (JSON.stringify(novasLinhas[i]) !== JSON.stringify(linhasAnteriores[i])) {
+              iguais = false;
+              break;
+            }
+          }
+          if (iguais) return linhasAnteriores;
+        }
+
+        let limite = Math.max(30, limiteVisualizacaoRef.current);
+        if (linhaSendoEditadaRef.current) {
+          const alvo = linhaSendoEditadaRef.current;
+          const idx = novasLinhas.findIndex((l: any) => l.id === alvo);
+          if (idx !== -1) limite = Math.max(limite, idx + 20);
+          
+          // Rola para a nova posição após a renderização
+          setTimeout(() => {
+            const el = document.getElementById(`linha-${alvo}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            // Conta 1 segundo APÓS a rolagem para remover o destaque
+            if (timerDestaqueRef.current) clearTimeout(timerDestaqueRef.current);
+            timerDestaqueRef.current = setTimeout(() => {
+              setLinhaSendoEditada(null);
+              if (linhaSendoEditadaRef.current === alvo) {
+                linhaSendoEditadaRef.current = null;
+              }
+            }, 1000);
+          }, 150);
+        }
+
+        limiteVisualizacaoRef.current = limite;
+        setLinhasVisualizadas(novasLinhas.slice(0, limite));
+        return novasLinhas;
+      });
       setIsProcessando(false);
     }, 50);
 
     return () => clearTimeout(timer);
   }, [aulas, turmas, cursos, slots, categoriaFiltro]);
 
-  const adicionarLinha = () => setLinhas([...linhas, criarLinhaVazia()]);
+  // Efeito global para limpar o destaque ao clicar em qualquer lugar
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      // Qualquer clique na tela desativa o destaque imediatamente
+      setLinhaSendoEditada(null);
+      linhaSendoEditadaRef.current = null;
+    };
+    
+    document.addEventListener('mousedown', handleGlobalClick);
+    document.addEventListener('touchstart', handleGlobalClick);
+    return () => {
+      document.removeEventListener('mousedown', handleGlobalClick);
+      document.removeEventListener('touchstart', handleGlobalClick);
+    };
+  }, []);
 
-  const duplicarLinha = (id_original: string) => {
-    const linhaParaCopiar = linhas.find((l: any) => l.id === id_original);
+  // Efeito de renderização progressiva: adiciona linhas em blocos até terminar
+  useEffect(() => {
+    if (!isProcessando && linhasVisualizadas.length < linhas.length) {
+      const timer = setTimeout(() => {
+        setLinhasVisualizadas((prev) => {
+          const nextChunk = linhas.slice(prev.length, prev.length + 50);
+          const newLength = prev.length + nextChunk.length;
+          limiteVisualizacaoRef.current = newLength;
+          return [...prev, ...nextChunk];
+        });
+      }, 30); // Intervalo curto para não travar a interface
+      return () => clearTimeout(timer);
+    }
+  }, [linhas, linhasVisualizadas.length, isProcessando]);
+
+  const adicionarLinha = useCallback(() => {
+    const nova = criarLinhaVazia();
+    setLinhas((prev) => [...prev, nova]);
+    setLinhasVisualizadas((prev) => [...prev, nova]);
+  }, []);
+
+  const duplicarLinha = useCallback((id_original: string) => {
+    const linhaParaCopiar = linhasRef.current.find((l: any) => l.id === id_original);
     if (!linhaParaCopiar) return;
+    
     const novaLinha = { ...linhaParaCopiar, id: crypto.randomUUID() };
-    const indexOriginal = linhas.findIndex((l: any) => l.id === id_original);
-    const novasLinhas = [...linhas];
-    novasLinhas.splice(indexOriginal + 1, 0, novaLinha);
-    setLinhas(novasLinhas);
+    
+    setLinhas((prev) => {
+      const idx = prev.findIndex((l: any) => l.id === id_original);
+      if (idx === -1) return prev;
+      const n = [...prev];
+      n.splice(idx + 1, 0, novaLinha);
+      return n;
+    });
+    setLinhasVisualizadas((prev) => {
+      const idx = prev.findIndex((l: any) => l.id === id_original);
+      if (idx === -1) return prev;
+      const n = [...prev];
+      n.splice(idx + 1, 0, novaLinha);
+      return n;
+    });
+
     if (
       novaLinha.turma_id &&
       novaLinha.disciplina_id &&
@@ -244,21 +349,29 @@ export default function ModoPlanilha({
     ) {
       salvarLinhaNoBanco(novaLinha);
     }
-  };
+  }, []);
 
-  const atualizarCampo = async (id: string, campo: string, valor: string) => {
-    const novasLinhas = linhas.map((linha: any) => {
-      if (linha.id === id) {
-        const linhaAtualizada = { ...linha, [campo]: valor };
-        if (campo === "turma_id") linhaAtualizada.disciplina_id = "";
-        return linhaAtualizada;
-      }
-      return linha;
+  const atualizarCampo = useCallback(async (id: string, campo: string, valor: string) => {
+    const linhaAtual = linhasRef.current.find((l: any) => l.id === id);
+    if (!linhaAtual) return;
+
+    // Destacar a linha atualizada apenas se afetar a ordenação
+    if (campo === "dia_semana" || campo === "slot_horario_id") {
+      setLinhaSendoEditada(id);
+      linhaSendoEditadaRef.current = id;
+    }
+    
+    const linhaAtualizada = { ...linhaAtual, [campo]: valor };
+    if (campo === "turma_id") linhaAtualizada.disciplina_id = "";
+    
+    setLinhas((prev) => {
+      return prev.map((linha: any) => (linha.id === id ? linhaAtualizada : linha));
     });
-    setLinhas(novasLinhas);
-    const linhaAtualizada = novasLinhas.find((l: any) => l.id === id);
+    setLinhasVisualizadas((prev) => {
+      return prev.map((linha: any) => (linha.id === id ? linhaAtualizada : linha));
+    });
+
     if (
-      linhaAtualizada &&
       linhaAtualizada.turma_id &&
       linhaAtualizada.disciplina_id &&
       linhaAtualizada.dia_semana &&
@@ -266,7 +379,7 @@ export default function ModoPlanilha({
     ) {
       await salvarLinhaNoBanco(linhaAtualizada);
     }
-  };
+  }, []);
 
   const salvarLinhaNoBanco = async (linha: any) => {
     const payload = {
@@ -279,15 +392,31 @@ export default function ModoPlanilha({
       dia_semana: linha.dia_semana,
       slot_horario_id: linha.slot_horario_id,
     };
-    const { error } = await supabase.from("aulas").upsert(payload);
-    if (!error) recarregarAulas();
+    const jaExiste = aulasRef.current.some((a: any) => String(a.id) === String(linha.id));
+    
+    let error;
+    if (jaExiste) {
+      const { error: e } = await supabase.from("aulas").update(payload).eq("id", linha.id);
+      error = e;
+    } else {
+      const { error: e } = await supabase.from("aulas").insert(payload);
+      error = e;
+    }
+
+    if (error) {
+      console.error("Erro no salvar ModoPlanilha:", error, payload);
+      alert("Falha ao salvar na planilha: " + error.message + "\nDetalhes: " + JSON.stringify(error));
+    } else {
+      recarregarAulas();
+    }
   };
 
-  const removerLinha = async (id: string) => {
-    setLinhas(linhas.filter((l: any) => l.id !== id));
+  const removerLinha = useCallback(async (id: string) => {
+    setLinhas((prev) => prev.filter((l: any) => l.id !== id));
+    setLinhasVisualizadas((prev) => prev.filter((l: any) => l.id !== id));
     const { error } = await supabase.from("aulas").delete().eq("id", id);
     if (!error) recarregarAulas();
-  };
+  }, []);
 
   // FUNÇÃO PARA LIMPAR TODAS AS AULAS DA CATEGORIA SELECIONADA
   const limparCategoria = async (e: React.FormEvent) => {
@@ -388,354 +517,128 @@ export default function ModoPlanilha({
         </div>
       </div>
 
-      <div className="w-full overflow-x-auto overflow-y-auto max-h-[calc(100vh-280px)] relative">
-        {isProcessando && (
-          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-50 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-2 bg-white p-4 rounded-xl shadow-lg border">
-              <div className="w-8 h-8 border-4 border-gray-200 border-t-green-700 rounded-full animate-spin"></div>
-              <span className="text-xs font-bold text-green-800 uppercase tracking-widest">
-                A organizar...
-              </span>
-            </div>
+      <div className="w-full overflow-x-auto overflow-y-auto max-h-[calc(100vh-280px)] relative bg-white">
+        {isProcessando ? (
+          <div className="flex items-center justify-center h-48 flex-col gap-3">
+            <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-gray-500 font-medium">
+              Desenhando grade...
+            </span>
+          </div>
+        ) : (
+          <table className="w-full border-collapse table-fixed min-w-[1200px]">
+            <thead className="sticky top-0 z-[100] shadow-md">
+                  <tr className="bg-green-800 text-white text-sm uppercase tracking-wider text-center">
+                    <th className="p-3 border-r border-green-700 w-[14%] font-black">
+                      Turma
+                    </th>
+                    <th className="p-3 border-r border-green-700 w-[22%] font-black">
+                      Disciplina
+                    </th>
+                    <th className="p-3 border-r border-green-700 w-[20%] font-black">
+                      Professor
+                    </th>
+                    <th className="p-3 border-r border-green-700 w-[11%] font-black">
+                      Sala
+                    </th>
+                    <th className="p-3 border-r border-green-700 w-[11%] font-black">
+                      Dia
+                    </th>
+                    <th className="p-3 border-r border-green-700 w-[12%] font-black">
+                      Horário
+                    </th>
+                    <th className="p-3 w-[10%] font-black">Ação</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm text-left">
+                  {linhasVisualizadas.map((linha: any) => {
+                    const temDado =
+                      linha.turma_id ||
+                      linha.disciplina_id ||
+                      linha.professor_id ||
+                      linha.dia_semana ||
+                      linha.slot_horario_id;
+                    const estaCompleta =
+                      linha.turma_id &&
+                      linha.disciplina_id &&
+                      linha.dia_semana &&
+                      linha.slot_horario_id;
+                    const linhaRascunho = temDado && !estaCompleta;
+                    const corHexadecimal =
+                      mapaCoresTurma.get(String(linha.turma_id)) || "";
+
+                    const problemas = choques.filter(
+                      (c: any) =>
+                        c.id_aula_foco === linha.id &&
+                        c.tipo_choque !== "CARGA_INCOMPLETA" &&
+                        c.tipo_choque !== "EXCESSO_CARGA",
+                    );
+
+                    const temCritico = problemas.some((c: any) =>
+                      [
+                        "CHOQUE_TURMA",
+                        "CHOQUE_ESPACO",
+                        "CHOQUE_DOCENTE",
+                        "DESCANSO_DOCENTE",
+                        "LIMITE_TURNOS",
+                        "INDISPONIBILIDADE",
+                      ].includes(c.tipo_choque),
+                    );
+                    const temAlerta = problemas.some((c: any) =>
+                      [
+                        "DIA_PLANEJAMENTO",
+                        "AULAS_GEMINADAS",
+                        "FIM_DE_SEMANA",
+                      ].includes(c.tipo_choque),
+                    );
+
+                    let classeLinha =
+                      "border-b border-gray-200 transition-all group hover:brightness-95 ";
+                    if (temCritico)
+                      classeLinha +=
+                        " outline outline-2 outline-offset-[-2px] outline-red-600 z-0 relative";
+                    else if (temAlerta)
+                      classeLinha +=
+                        " outline outline-2 outline-offset-[-2px] outline-yellow-400 z-0 relative";
+                    else if (linhaRascunho)
+                      classeLinha += " border-l-4 border-l-yellow-400";
+
+                    const tObj = turmasMap.get(String(linha.turma_id));
+                    const dFiltradas = tObj?.curso_id
+                      ? disciplinasPorCurso.get(String(tObj.curso_id)) || []
+                      : [];
+
+                    return (
+                      <LinhaPlanilha
+                        key={linha.id}
+                        linha={linha}
+                        turmas={turmas}
+                        cursos={cursos}
+                        disciplinas={disciplinas}
+                        professores={professores}
+                        espacos={espacos}
+                        slots={slots}
+                        categorias={categorias}
+                        problemas={problemas}
+                        dFiltradas={dFiltradas}
+                        corHexadecimal={corHexadecimal}
+                        categoriaFiltro={categoriaFiltro}
+                        atualizarCampo={atualizarCampo}
+                        duplicarLinha={duplicarLinha}
+                        removerLinha={removerLinha}
+                        getCategoriaCurso={getCategoriaCurso}
+                        linhaSendoEditada={linhaSendoEditada}
+                      />
+                    );
+                  })}
+                </tbody>
+              </table>
+        )}
+        {!isProcessando && linhasVisualizadas.length < linhas.length && (
+          <div className="p-4 text-center text-gray-400 text-sm animate-pulse font-medium">
+            Carregando mais linhas silenciosamente...
           </div>
         )}
-
-        <table className="w-full border-collapse table-fixed min-w-[800px]">
-          <thead className="sticky top-0 z-10 shadow-md">
-            <tr className="bg-green-800 text-white text-sm uppercase tracking-wider text-center">
-              <th className="p-3 border-r border-green-700 w-[14%] font-black">
-                Turma
-              </th>
-              <th className="p-3 border-r border-green-700 w-[22%] font-black">
-                Disciplina
-              </th>
-              <th className="p-3 border-r border-green-700 w-[20%] font-black">
-                Professor
-              </th>
-              <th className="p-3 border-r border-green-700 w-[11%] font-black">
-                Sala
-              </th>
-              <th className="p-3 border-r border-green-700 w-[11%] font-black">
-                Dia
-              </th>
-              <th className="p-3 border-r border-green-700 w-[12%] font-black">
-                Horário
-              </th>
-              <th className="p-3 w-[10%] font-black">Ação</th>
-            </tr>
-          </thead>
-          <tbody className="text-sm text-left">
-            {linhas.map((linha: any) => {
-              const temDado =
-                linha.turma_id ||
-                linha.disciplina_id ||
-                linha.professor_id ||
-                linha.dia_semana ||
-                linha.slot_horario_id;
-              const estaCompleta =
-                linha.turma_id &&
-                linha.disciplina_id &&
-                linha.dia_semana &&
-                linha.slot_horario_id;
-              const linhaRascunho = temDado && !estaCompleta;
-              const corHexadecimal =
-                mapaCoresTurma.get(String(linha.turma_id)) || "";
-
-              const problemas = choques.filter(
-                (c: any) =>
-                  c.id_aula_foco === linha.id &&
-                  c.tipo_choque !== "CARGA_INCOMPLETA" &&
-                  c.tipo_choque !== "EXCESSO_CARGA",
-              );
-
-              const temCritico = problemas.some((c: any) =>
-                [
-                  "CHOQUE_TURMA",
-                  "CHOQUE_ESPACO",
-                  "CHOQUE_DOCENTE",
-                  "DESCANSO_DOCENTE",
-                  "LIMITE_TURNOS",
-                  "INDISPONIBILIDADE",
-                ].includes(c.tipo_choque),
-              );
-              const temAlerta = problemas.some((c: any) =>
-                [
-                  "DIA_PLANEJAMENTO",
-                  "AULAS_GEMINADAS",
-                  "FIM_DE_SEMANA",
-                ].includes(c.tipo_choque),
-              );
-
-              let classeLinha =
-                "border-b border-gray-200 transition-all group hover:brightness-95 ";
-              if (temCritico)
-                classeLinha +=
-                  " outline outline-2 outline-offset-[-2px] outline-red-600 z-0 relative";
-              else if (temAlerta)
-                classeLinha +=
-                  " outline outline-2 outline-offset-[-2px] outline-yellow-400 z-0 relative";
-              else if (linhaRascunho)
-                classeLinha += " border-l-4 border-l-yellow-400";
-
-              const tObj = turmas.find(
-                (t: any) => String(t.id) === String(linha.turma_id),
-              );
-              const dFiltradas = tObj?.curso_id
-                ? disciplinasPorCurso.get(String(tObj.curso_id)) || []
-                : [];
-
-              return (
-                <tr
-                  key={linha.id}
-                  className={classeLinha}
-                  style={
-                    corHexadecimal ? { backgroundColor: corHexadecimal } : {}
-                  }
-                >
-                  {/* COLUNA: TURMA */}
-                  <td className="p-2 border-r border-gray-300 overflow-hidden text-center">
-                    {linha.turma_id === undefined ? (
-                      ""
-                    ) : (
-                      <select
-                        title={
-                          turmas.find(
-                            (t: any) => String(t.id) === String(linha.turma_id),
-                          )?.codigo || "Selecione..."
-                        }
-                        value={linha.turma_id || ""}
-                        onChange={(e) =>
-                          atualizarCampo(linha.id, "turma_id", e.target.value)
-                        }
-                        className="w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold text-gray-800"
-                      >
-                        <option value="">Selecione...</option>
-                        {cursos
-                          .filter(
-                            (c: any) =>
-                              getCategoriaCurso(c) === categoriaFiltro,
-                          )
-                          .map((curso: any) => (
-                            <optgroup key={curso.id} label={curso.nome}>
-                              {turmas
-                                .filter(
-                                  (t: any) =>
-                                    String(t.curso_id) === String(curso.id),
-                                )
-                                .map((t: any) => (
-                                  <option key={t.id} value={t.id}>
-                                    {t.codigo}
-                                  </option>
-                                ))}
-                            </optgroup>
-                          ))}
-                      </select>
-                    )}
-                  </td>
-
-                  {/* COLUNA: DISCIPLINA */}
-                  <td className="p-2 border-r border-gray-300 overflow-hidden">
-                    {linha.id.length > 2 && (
-                      <select
-                        disabled={!linha.turma_id}
-                        title={
-                          disciplinas.find(
-                            (d: any) =>
-                              String(d.id) === String(linha.disciplina_id),
-                          )?.nome || "Selecione..."
-                        }
-                        value={linha.disciplina_id || ""}
-                        onChange={(e) =>
-                          atualizarCampo(
-                            linha.id,
-                            "disciplina_id",
-                            e.target.value,
-                          )
-                        }
-                        className="w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold text-gray-800 disabled:opacity-50"
-                      >
-                        <option value="">Selecione...</option>
-                        {dFiltradas.map((d: any) => (
-                          <option key={d.id} value={d.id}>
-                            {d.nome}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </td>
-
-                  {/* COLUNA: PROFESSOR */}
-                  <td className="p-2 border-r border-gray-300 overflow-hidden">
-                    {linha.id.length > 2 && (
-                      <select
-                        title={
-                          professores.find(
-                            (p: any) =>
-                              String(p.id) === String(linha.professor_id),
-                          )?.nome || "(Nenhum)"
-                        }
-                        value={linha.professor_id || ""}
-                        onChange={(e) =>
-                          atualizarCampo(
-                            linha.id,
-                            "professor_id",
-                            e.target.value,
-                          )
-                        }
-                        className="w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none"
-                      >
-                        <option value="">(Nenhum)</option>
-                        {professores.map((p: any) => (
-                          <option key={p.id} value={p.id}>
-                            {p.nome}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </td>
-
-                  {/* COLUNA: SALA/ESPAÇO */}
-                  <td className="p-2 border-r border-gray-300 overflow-hidden">
-                    {linha.id.length > 2 && (
-                      <select
-                        title={
-                          espacos.find(
-                            (e: any) =>
-                              String(e.id) === String(linha.espaco_id),
-                          )?.nome || "(Nenhum)"
-                        }
-                        value={linha.espaco_id || ""}
-                        onChange={(e) =>
-                          atualizarCampo(linha.id, "espaco_id", e.target.value)
-                        }
-                        className="w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none"
-                      >
-                        <option value="">(Nenhum)</option>
-                        {categorias.map((cat: any) => {
-                          const espacosDaCat = espacos.filter(
-                            (e: any) =>
-                              String(e.categoria_id) === String(cat.id),
-                          );
-                          if (espacosDaCat.length === 0) return null;
-                          return (
-                            <optgroup key={cat.id} label={cat.nome}>
-                              {espacosDaCat.map((e: any) => (
-                                <option key={e.id} value={e.id}>
-                                  {e.nome}
-                                </option>
-                              ))}
-                            </optgroup>
-                          );
-                        })}
-                        {(() => {
-                          const semCat = espacos.filter(
-                            (e: any) => !e.categoria_id,
-                          );
-                          if (semCat.length === 0) return null;
-                          return (
-                            <optgroup label="Outros / Sem Categoria">
-                              {semCat.map((e: any) => (
-                                <option key={e.id} value={e.id}>
-                                  {e.nome}
-                                </option>
-                              ))}
-                            </optgroup>
-                          );
-                        })()}
-                      </select>
-                    )}
-                  </td>
-
-                  {/* COLUNA: DIA DA SEMANA */}
-                  <td className="p-2 border-r border-gray-300 overflow-hidden">
-                    {linha.id.length > 2 && (
-                      <select
-                        title={linha.dia_semana || "Selecione..."}
-                        value={linha.dia_semana || ""}
-                        onChange={(e) =>
-                          atualizarCampo(linha.id, "dia_semana", e.target.value)
-                        }
-                        className="w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none"
-                      >
-                        <option value="">Selecione...</option>
-                        <option value="SEGUNDA">Segunda-feira</option>
-                        <option value="TERCA">Terça-feira</option>
-                        <option value="QUARTA">Quarta-feira</option>
-                        <option value="QUINTA">Quinta-feira</option>
-                        <option value="SEXTA">Sexta-feira</option>
-                      </select>
-                    )}
-                  </td>
-
-                  {/* COLUNA: HORÁRIO */}
-                  <td className="p-2 border-r border-gray-300 overflow-hidden">
-                    {linha.id.length > 2 && (
-                      <select
-                        title={
-                          slots.find(
-                            (s: any) =>
-                              String(s.id) === String(linha.slot_horario_id),
-                          )
-                            ? `${formatarHora(slots.find((s: any) => String(s.id) === String(linha.slot_horario_id))?.hora_inicio)} às ${formatarHora(slots.find((s: any) => String(s.id) === String(linha.slot_horario_id))?.hora_fim)}`
-                            : "Selecione..."
-                        }
-                        value={linha.slot_horario_id || ""}
-                        onChange={(e) =>
-                          atualizarCampo(
-                            linha.id,
-                            "slot_horario_id",
-                            e.target.value,
-                          )
-                        }
-                        className="w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none"
-                      >
-                        <option value="">Selecione...</option>
-                        {slots.map((s: any) => (
-                          <option key={s.id} value={s.id}>
-                            {formatarHora(s.hora_inicio)} -{" "}
-                            {formatarHora(s.hora_fim)}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </td>
-
-                  {/* COLUNA: AÇÕES */}
-                  <td className="p-2 text-center">
-                    {linha.id.length > 2 && (
-                      <div className="flex items-center justify-center gap-1.5">
-                        {(temCritico || temAlerta) && (
-                          <span
-                            className="font-bold cursor-help text-lg animate-pulse"
-                            title={problemas
-                              .map((p: any) => mapearMensagem(p))
-                              .join("\n")}
-                          >
-                            {temCritico ? "🔴" : "🟡"}
-                          </span>
-                        )}
-                        <button
-                          onClick={() => duplicarLinha(linha.id)}
-                          className="text-blue-600/60 hover:text-blue-700 font-bold p-1 rounded text-lg"
-                          title="Duplicar Linha"
-                        >
-                          ⧉
-                        </button>
-                        <button
-                          onClick={() => removerLinha(linha.id)}
-                          className="text-red-600/60 hover:text-red-700 font-bold p-1 rounded"
-                          title="Remover Linha"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
       </div>
 
       {/* MODAL DE CONFIRMAÇÃO DE LIMPEZA GERAL (MODO PLANILHA) */}

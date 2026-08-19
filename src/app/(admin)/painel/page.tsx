@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { useMasterData } from "../components/MasterDataContext";
 
 export default function DashboardPage() {
-  const [carregando, setCarregando] = useState(true);
+  const { dadosMestres, carregando: carregandoMestre } = useMasterData();
+  const [carregandoAulas, setCarregandoAulas] = useState(true);
 
   // Estados para controlar a versão
   const [versoes, setVersoes] = useState<any[]>([]);
@@ -45,7 +47,7 @@ export default function DashboardPage() {
           setVersaoSelecionada(ativa.id);
         }
       } else {
-        setCarregando(false);
+        setCarregandoAulas(false);
       }
     }
     carregarVersoes();
@@ -53,47 +55,34 @@ export default function DashboardPage() {
 
   // Modificado para carregar os dados sempre que a versão for alterada
   useEffect(() => {
-    if (versaoSelecionada) {
+    if (versaoSelecionada && dadosMestres) {
       carregarDadosEDiagnosticar();
     }
-  }, [versaoSelecionada]);
+  }, [versaoSelecionada, dadosMestres]);
 
   const carregarDadosEDiagnosticar = async () => {
-    setCarregando(true);
+    if (!dadosMestres) return;
+    setCarregandoAulas(true);
     try {
-      const [
-        { data: aulas },
-        { data: turmas },
-        { data: professores },
-        { data: disciplinas },
-        { data: espacos },
-        { data: slots },
-      ] = await Promise.all([
-        supabase
-          .from("aulas")
-          .select("*")
-          .eq("versao_id", versaoSelecionada)
-          .limit(5000),
-        supabase.from("turmas").select("*").limit(2000),
-        supabase.from("professores").select("*").limit(1000),
-        supabase.from("disciplinas").select("*").limit(5000),
-        supabase.from("espacos").select("*").limit(1000),
-        supabase.from("slots_horarios").select("*"),
-      ]);
+      const { data: aulas } = await supabase
+        .from("aulas")
+        .select("*")
+        .eq("versao_id", versaoSelecionada)
+        .limit(5000);
 
-      if (!aulas || !slots) return;
+      if (!aulas || !dadosMestres.slots) return;
       diagnosticarGrade(
         aulas,
-        turmas || [],
-        professores || [],
-        disciplinas || [],
-        espacos || [],
-        slots,
+        dadosMestres.turmas || [],
+        dadosMestres.professores || [],
+        dadosMestres.disciplinas || [],
+        dadosMestres.espacos || [],
+        dadosMestres.slots,
       );
     } catch (error) {
       console.error("Erro ao carregar dashboard:", error);
     } finally {
-      setCarregando(false);
+      setCarregandoAulas(false);
     }
   };
 
@@ -222,7 +211,9 @@ export default function DashboardPage() {
   const criticosAgrupados = agruparPorTipo(choquesCriticos);
   const alertasAgrupados = agruparPorTipo(alertasSecundarios);
 
-  if (carregando && !versaoSelecionada) {
+  const carregandoGlobal = carregandoMestre || carregandoAulas;
+
+  if (carregandoGlobal && !versaoSelecionada) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
@@ -233,7 +224,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 relative">
       {/* Loading Overlay suave ao trocar de versão */}
-      {carregando && versaoSelecionada && (
+      {carregandoGlobal && versaoSelecionada && (
         <div className="absolute inset-0 z-10 bg-white/50 backdrop-blur-sm flex items-center justify-center rounded-xl">
           <div className="w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
@@ -242,8 +233,8 @@ export default function DashboardPage() {
       {/* CABEÇALHO PADRÃO DO SISTEMA COM SELETOR */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black text-green-800">
-            Painel do Gestor
+          <h1 className="text-2xl font-bold text-gray-800">
+            Dashboard Institucional
           </h1>
           <p className="text-sm text-gray-500 font-medium mt-1">
             Visão estratégica da grade de horários do campus.

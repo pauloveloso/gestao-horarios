@@ -1,20 +1,9 @@
-// src/app/api/test-db/route.ts
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "../../../lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    return NextResponse.json(
-      { erro: "Variáveis de ambiente faltando" },
-      { status: 500 },
-    );
-  }
-
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = await createClient();
 
     // Tenta buscar uma tabela que sabemos que existe (ex: cursos)
     const { data, error } = await supabase

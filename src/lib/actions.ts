@@ -1,20 +1,15 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { executarValidacoes, ValidacaoResultado } from "./validacoes/engine";
-
-// Inicialização do cliente Supabase (Server-side)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, // Usamos a chave de serviço para bypass de RLS se necessário
-);
+import { createClient } from "./supabase/server";
 
 // ============================================================
 // AÇÕES DE LEITURA (GET)
 // ============================================================
 
 export async function getCursos() {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("cursos")
     .select("*")
@@ -25,6 +20,7 @@ export async function getCursos() {
 }
 
 export async function getTurmas() {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("turmas")
     .select("*, cursos(nome)")
@@ -35,6 +31,7 @@ export async function getTurmas() {
 }
 
 export async function getDisciplinas() {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("disciplinas")
     .select("*, cursos(nome)")
@@ -45,6 +42,7 @@ export async function getDisciplinas() {
 }
 
 export async function getProfessores() {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("professores")
     .select("*")
@@ -55,6 +53,7 @@ export async function getProfessores() {
 }
 
 export async function getEspacos() {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("espacos")
     .select("*")
@@ -65,6 +64,7 @@ export async function getEspacos() {
 }
 
 export async function getSlotsHorarios() {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("slots_horarios")
     .select("*")
@@ -75,6 +75,7 @@ export async function getSlotsHorarios() {
 }
 
 export async function getVersoesGrade() {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("versoes_grade")
     .select("*")
@@ -85,6 +86,7 @@ export async function getVersoesGrade() {
 }
 
 export async function getAulasPorVersao(versaoId: number) {
+  const supabase = await createClient();
   // Utiliza a View Materializada para performance
   const { data, error } = await supabase
     .from("mv_grade_horaria_completa")
@@ -97,6 +99,7 @@ export async function getAulasPorVersao(versaoId: number) {
 }
 
 export async function getAulasPorTurma(turmaId: number, versaoId?: number) {
+  const supabase = await createClient();
   let query = supabase
     .from("mv_grade_horaria_completa")
     .select("*")
@@ -128,6 +131,18 @@ interface AulaInput {
 
 export async function salvarAulaComValidacoes(dados: AulaInput) {
   try {
+    const supabase = await createClient();
+    
+    // Verificação de segurança: Usuário logado?
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return {
+        success: false,
+        message: "Não autorizado. Faça login para continuar.",
+        validacoes: [],
+      };
+    }
+
     // 1. Inserir a aula no banco (Constraints UNIQUE do banco já protegem contra duplicidade exata)
     const { data: aulaSalva, error: insertError } = await supabase
       .from("aulas")
@@ -199,6 +214,13 @@ export async function salvarAulaComValidacoes(dados: AulaInput) {
 }
 
 export async function cancelarAula(aulaId: number) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("Não autorizado. Faça login para continuar.");
+  }
+
   // Soft delete: apenas muda o status
   const { error } = await supabase
     .from("aulas")

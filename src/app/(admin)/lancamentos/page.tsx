@@ -2,27 +2,31 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { useMasterData } from "../components/MasterDataContext";
 
 import ModoPlanilha from "./components/ModoPlanilha";
 import ModoGrade from "./components/ModoGrade";
 
 export default function LancamentosPage() {
+  const { dadosMestres, carregando: carregandoMestre } = useMasterData();
+  const [carregandoAulas, setCarregandoAulas] = useState(true);
+
   const [modoAtivo, setModoAtivo] = useState<"PLANILHA" | "GRADE">("PLANILHA");
-  const [carregando, setCarregando] = useState(true);
 
   const versaoRascunhoRef = useRef<any>(null);
   const [versaoRascunho, setVersaoRascunho] = useState<any>(null);
 
   const [aulas, setAulas] = useState<any[]>([]);
   const [choques, setChoques] = useState<any[]>([]);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [turmas, setTurmas] = useState<any[]>([]);
-  const [cursos, setCursos] = useState<any[]>([]);
-  const [professores, setProfessores] = useState<any[]>([]);
-  const [disciplinas, setDisciplinas] = useState<any[]>([]);
-  const [espacos, setEspacos] = useState<any[]>([]);
-  const [slots, setSlots] = useState<any[]>([]);
-  const [categorias, setCategorias] = useState<any[]>([]); // NOVA STATE
+  const turmas = dadosMestres?.turmas || [];
+  const cursos = dadosMestres?.cursos || [];
+  const professores = dadosMestres?.professores || [];
+  const disciplinas = dadosMestres?.disciplinas || [];
+  const espacos = dadosMestres?.espacos || [];
+  const slots = dadosMestres?.slots || [];
+  const categorias = dadosMestres?.categorias || [];
 
   const atualizarRascunho = (val: any) => {
     versaoRascunhoRef.current = val;
@@ -54,27 +58,25 @@ export default function LancamentosPage() {
     if (!versaoRascunhoRef.current) return;
 
     if (cargaInicial) {
-      console.time("⏱️ Gargalo 1: Busca de Aulas (Carga Inicial)");
-      const requisicaoAulas = supabase
+      console.time("⏱️ Gargalo 1: Consulta Principal Aulas + Choques");
+      
+      supabase
         .from("aulas")
         .select("*")
         .eq("versao_id", versaoRascunhoRef.current.id)
         .limit(5000)
         .then(({ data }) => {
           if (data) setAulas(data);
-          console.timeEnd("⏱️ Gargalo 1: Busca de Aulas (Carga Inicial)");
+        })
+        .finally(() => {
+          setCarregandoAulas(false);
+          console.timeEnd("⏱️ Gargalo 1: Consulta Principal Aulas + Choques");
         });
 
-      const requisicaoChoques = buscarChoques();
-      await Promise.all([requisicaoAulas, requisicaoChoques]);
+      buscarChoques();
     } else {
-      console.log("🟢 buscarAulas(false) foi acionado pelo componente filho!");
-      console.time("⏱️ Gargalo 3: Tempo Recarga de Fundo (Apenas Choques)");
-      buscarChoques().finally(() => {
-        console.timeEnd(
-          "⏱️ Gargalo 3: Tempo Recarga de Fundo (Apenas Choques)",
-        );
-      });
+      // Quando não é carga inicial, o canal Realtime (WebSocket) cuidará de atualizar as aulas e os choques
+      console.log("Aguardando via Realtime. Recarga total ignorada.");
     }
   };
 
@@ -85,7 +87,7 @@ export default function LancamentosPage() {
     let montado = true;
 
     const inicializarDadosMestres = async () => {
-      setCarregando(true);
+      setCarregandoAulas(true);
       try {
         const { data: dVersoes } = await supabase
           .from("versoes_grade")
@@ -95,68 +97,23 @@ export default function LancamentosPage() {
 
         const rascunho = dVersoes && dVersoes.length > 0 ? dVersoes[0] : null;
 
-        const [
-          { data: dTurmas },
-          { data: dCursos },
-          { data: dProfessores },
-          { data: dDisciplinas },
-          { data: dEspacos },
-          { data: dSlots },
-          { data: dCategorias }, // FETCH DE CATEGORIAS
-        ] = await Promise.all([
-          supabase.from("turmas").select("*").order("codigo").limit(2000),
-          supabase.from("cursos").select("*"),
-          supabase.from("professores").select("*").order("nome").limit(1000),
-          supabase.from("disciplinas").select("*").order("nome").limit(5000),
-          supabase.from("espacos").select("*").order("nome").limit(1000),
-          supabase.from("slots_horarios").select("*").order("hora_inicio"),
-          supabase.from("categorias_espacos").select("*").order("nome"),
-        ]);
-
         if (!montado) return;
-
-        if (dTurmas) setTurmas(dTurmas);
-        if (dCursos) setCursos(dCursos);
-        if (dProfessores) setProfessores(dProfessores);
-        if (dDisciplinas) setDisciplinas(dDisciplinas);
-        if (dEspacos) setEspacos(dEspacos);
-        if (dSlots) setSlots(dSlots);
-        if (dCategorias) setCategorias(dCategorias);
 
         if (rascunho) {
           atualizarRascunho(rascunho);
         } else {
-          setCarregando(false);
+          setCarregandoAulas(false);
         }
       } catch (error) {
         console.error("Erro na inicialização:", error);
-        if (montado) setCarregando(false);
+        if (montado) setCarregandoAulas(false);
       }
     };
 
     inicializarDadosMestres();
 
-    const canalProfessores = supabase
-      .channel("lancamentos_professores")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "professores" },
-        () => {
-          supabase
-            .from("professores")
-            .select("*")
-            .order("nome")
-            .limit(1000)
-            .then(({ data }) => {
-              if (data && montado) setProfessores(data);
-            });
-        },
-      )
-      .subscribe();
-
     return () => {
       montado = false;
-      supabase.removeChannel(canalProfessores);
     };
   }, []);
 
@@ -167,11 +124,8 @@ export default function LancamentosPage() {
     if (!versaoRascunho) return;
 
     let montado = true;
-    let timeoutDebounce: ReturnType<typeof setTimeout>;
 
-    buscarAulas(true).finally(() => {
-      if (montado) setCarregando(false);
-    });
+    buscarAulas(true);
 
     const idAba = Math.random().toString(36).substring(7);
     const canalAulas = supabase
@@ -180,53 +134,26 @@ export default function LancamentosPage() {
         "postgres_changes",
         { event: "*", schema: "public", table: "aulas" },
         (payload) => {
-          if (!montado) return;
-
-          console.log(`🔔 WebSocket Chegou: [${payload.eventType}]`);
-          console.time("⏱️ Gargalo 4: Processar Memória RAM");
-
-          const rascunhoId = versaoRascunhoRef.current?.id;
-
+          console.log("Recebido evento Realtime de Aulas:", payload);
+          
           setAulas((prevAulas) => {
             let novasAulas = [...prevAulas];
-
             if (payload.eventType === "INSERT") {
-              if (String(payload.new.versao_id) === String(rascunhoId)) {
-                const jaExiste = novasAulas.some(
-                  (a) => String(a.id) === String(payload.new.id),
-                );
-                if (!jaExiste) novasAulas.push(payload.new);
-              }
-            } else if (payload.eventType === "DELETE") {
-              novasAulas = novasAulas.filter(
-                (a) => String(a.id) !== String(payload.old.id),
-              );
+              novasAulas.push(payload.new);
             } else if (payload.eventType === "UPDATE") {
-              if (String(payload.new.versao_id) === String(rascunhoId)) {
-                const index = novasAulas.findIndex(
-                  (a) => String(a.id) === String(payload.new.id),
-                );
-                if (index !== -1) novasAulas[index] = payload.new;
-                else novasAulas.push(payload.new);
-              } else {
-                novasAulas = novasAulas.filter(
-                  (a) => String(a.id) !== String(payload.new.id),
-                );
-              }
+              const idx = novasAulas.findIndex((a) => a.id === payload.new.id);
+              if (idx > -1) novasAulas[idx] = payload.new;
+              else novasAulas.push(payload.new);
+            } else if (payload.eventType === "DELETE") {
+              novasAulas = novasAulas.filter((a) => a.id !== payload.old.id);
             }
             return novasAulas;
           });
 
-          console.timeEnd("⏱️ Gargalo 4: Processar Memória RAM");
-
-          clearTimeout(timeoutDebounce);
-          timeoutDebounce = setTimeout(() => {
-            if (montado) {
-              console.log(
-                "🔔 Disparando recálculo de choques após debounce do WebSocket...",
-              );
-              buscarChoques();
-            }
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          timeoutRef.current = setTimeout(() => {
+            console.log("Realtime: Atualizando choques após mudanças nas aulas...");
+            buscarChoques();
           }, 300);
         },
       )
@@ -234,13 +161,15 @@ export default function LancamentosPage() {
 
     return () => {
       montado = false;
-      clearTimeout(timeoutDebounce);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       supabase.removeChannel(canalAulas);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [versaoRascunho]);
 
-  if (carregando) {
+  const carregandoGlobal = carregandoMestre || carregandoAulas;
+
+  if (carregandoGlobal) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="text-center space-y-4">
@@ -256,11 +185,11 @@ export default function LancamentosPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-green-800">
-            Quadro de Horários
+        <div className="flex-1">
+          <h1 className="text-3xl font-black text-gray-800 tracking-tight flex items-center gap-3">
+            Lançamentos
           </h1>
-          <p className="text-sm text-gray-500 font-medium">
+          <p className="text-gray-500 mt-1 font-medium">
             Gestão acadêmica do semestre
           </p>
         </div>

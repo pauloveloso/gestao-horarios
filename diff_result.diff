@@ -1,0 +1,1634 @@
+--- test.sql	2026-08-18 16:21:10.072297700 -0300
++++ prod.sql	2026-08-18 16:22:41.865905400 -0300
+@@ -2,12 +2,12 @@
+ -- PostgreSQL database dump
+ --
+ 
+-\restrict z1g5te2NuUJU6a9bbGEfSQdvG98FxbwmMpXqyIF9MoMRs45BF36wgeHfaRMXF8N
++\restrict nFsMWggX0KNb8qjCNGPdXmnGmyJ1Vw8Wy9FqgMldKfdkOfCgTweAqcWGTzPhP7a
+ 
+ -- Dumped from database version 17.6
+ -- Dumped by pg_dump version 17.11 (Debian 17.11-0+deb13u1)
+ 
+--- Started on 2026-08-18 16:20:53 -03
++-- Started on 2026-08-18 16:22:18 -03
+ 
+ SET statement_timeout = 0;
+ SET lock_timeout = 0;
+@@ -22,7 +22,7 @@
+ SET row_security = off;
+ 
+ --
+--- TOC entry 4019 (class 1262 OID 5)
++-- TOC entry 4068 (class 1262 OID 5)
+ -- Name: postgres; Type: DATABASE; Schema: -; Owner: postgres
+ --
+ 
+@@ -31,9 +31,9 @@
+ 
+ ALTER DATABASE postgres OWNER TO postgres;
+ 
+-\unrestrict z1g5te2NuUJU6a9bbGEfSQdvG98FxbwmMpXqyIF9MoMRs45BF36wgeHfaRMXF8N
++\unrestrict nFsMWggX0KNb8qjCNGPdXmnGmyJ1Vw8Wy9FqgMldKfdkOfCgTweAqcWGTzPhP7a
+ \connect postgres
+-\restrict z1g5te2NuUJU6a9bbGEfSQdvG98FxbwmMpXqyIF9MoMRs45BF36wgeHfaRMXF8N
++\restrict nFsMWggX0KNb8qjCNGPdXmnGmyJ1Vw8Wy9FqgMldKfdkOfCgTweAqcWGTzPhP7a
+ 
+ SET statement_timeout = 0;
+ SET lock_timeout = 0;
+@@ -48,8 +48,8 @@
+ SET row_security = off;
+ 
+ --
+--- TOC entry 4020 (class 0 OID 0)
+--- Dependencies: 4019
++-- TOC entry 4069 (class 0 OID 0)
++-- Dependencies: 4068
+ -- Name: DATABASE postgres; Type: COMMENT; Schema: -; Owner: postgres
+ --
+ 
+@@ -57,16 +57,16 @@
+ 
+ 
+ --
+--- TOC entry 4022 (class 0 OID 0)
++-- TOC entry 4071 (class 0 OID 0)
+ -- Name: postgres; Type: DATABASE PROPERTIES; Schema: -; Owner: postgres
+ --
+ 
+ ALTER DATABASE postgres SET "app.settings.jwt_exp" TO '3600';
+ 
+ 
+-\unrestrict z1g5te2NuUJU6a9bbGEfSQdvG98FxbwmMpXqyIF9MoMRs45BF36wgeHfaRMXF8N
++\unrestrict nFsMWggX0KNb8qjCNGPdXmnGmyJ1Vw8Wy9FqgMldKfdkOfCgTweAqcWGTzPhP7a
+ \connect postgres
+-\restrict z1g5te2NuUJU6a9bbGEfSQdvG98FxbwmMpXqyIF9MoMRs45BF36wgeHfaRMXF8N
++\restrict nFsMWggX0KNb8qjCNGPdXmnGmyJ1Vw8Wy9FqgMldKfdkOfCgTweAqcWGTzPhP7a
+ 
+ SET statement_timeout = 0;
+ SET lock_timeout = 0;
+@@ -81,7 +81,7 @@
+ SET row_security = off;
+ 
+ --
+--- TOC entry 123 (class 2615 OID 97044)
++-- TOC entry 12 (class 2615 OID 2200)
+ -- Name: public; Type: SCHEMA; Schema: -; Owner: pg_database_owner
+ --
+ 
+@@ -91,8 +91,8 @@
+ ALTER SCHEMA public OWNER TO pg_database_owner;
+ 
+ --
+--- TOC entry 4023 (class 0 OID 0)
+--- Dependencies: 123
++-- TOC entry 4072 (class 0 OID 0)
++-- Dependencies: 12
+ -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
+ --
+ 
+@@ -100,7 +100,7 @@
+ 
+ 
+ --
+--- TOC entry 1245 (class 1247 OID 97046)
++-- TOC entry 1249 (class 1247 OID 17546)
+ -- Name: dia_semana; Type: TYPE; Schema: public; Owner: postgres
+ --
+ 
+@@ -117,7 +117,7 @@
+ ALTER TYPE public.dia_semana OWNER TO postgres;
+ 
+ --
+--- TOC entry 1248 (class 1247 OID 97060)
++-- TOC entry 1243 (class 1247 OID 17530)
+ -- Name: modalidade_curso; Type: TYPE; Schema: public; Owner: postgres
+ --
+ 
+@@ -133,7 +133,7 @@
+ ALTER TYPE public.modalidade_curso OWNER TO postgres;
+ 
+ --
+--- TOC entry 1251 (class 1247 OID 97072)
++-- TOC entry 1246 (class 1247 OID 17538)
+ -- Name: status_versao; Type: TYPE; Schema: public; Owner: postgres
+ --
+ 
+@@ -147,7 +147,7 @@
+ ALTER TYPE public.status_versao OWNER TO postgres;
+ 
+ --
+--- TOC entry 1254 (class 1247 OID 97080)
++-- TOC entry 1240 (class 1247 OID 17516)
+ -- Name: tipo_espaco; Type: TYPE; Schema: public; Owner: postgres
+ --
+ 
+@@ -164,7 +164,7 @@
+ ALTER TYPE public.tipo_espaco OWNER TO postgres;
+ 
+ --
+--- TOC entry 1257 (class 1247 OID 97094)
++-- TOC entry 1252 (class 1247 OID 17560)
+ -- Name: turno_aula; Type: TYPE; Schema: public; Owner: postgres
+ --
+ 
+@@ -182,7 +182,7 @@
+ ALTER TYPE public.turno_aula OWNER TO postgres;
+ 
+ --
+--- TOC entry 520 (class 1255 OID 97109)
++-- TOC entry 514 (class 1255 OID 18931)
+ -- Name: fn_validar_reserva_antes_save(); Type: FUNCTION; Schema: public; Owner: postgres
+ --
+ 
+@@ -251,7 +251,7 @@
+ SET default_table_access_method = heap;
+ 
+ --
+--- TOC entry 383 (class 1259 OID 97110)
++-- TOC entry 391 (class 1259 OID 17739)
+ -- Name: aulas; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -266,14 +266,14 @@
+     criado_em timestamp with time zone DEFAULT timezone('utc'::text, now()),
+     status character varying(20) DEFAULT 'INCOMPLETO'::character varying,
+     versao_id uuid,
+-    CONSTRAINT aulas_dia_semana_check CHECK (((dia_semana)::text = ANY (ARRAY[('SEGUNDA'::character varying)::text, ('TERCA'::character varying)::text, ('QUARTA'::character varying)::text, ('QUINTA'::character varying)::text, ('SEXTA'::character varying)::text, ('SABADO'::character varying)::text])))
++    CONSTRAINT aulas_dia_semana_check CHECK (((dia_semana)::text = ANY ((ARRAY['SEGUNDA'::character varying, 'TERCA'::character varying, 'QUARTA'::character varying, 'QUINTA'::character varying, 'SEXTA'::character varying, 'SABADO'::character varying])::text[])))
+ );
+ 
+ 
+ ALTER TABLE public.aulas OWNER TO postgres;
+ 
+ --
+--- TOC entry 384 (class 1259 OID 97117)
++-- TOC entry 392 (class 1259 OID 18141)
+ -- Name: categorias_espacos; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -286,7 +286,7 @@
+ ALTER TABLE public.categorias_espacos OWNER TO postgres;
+ 
+ --
+--- TOC entry 385 (class 1259 OID 97123)
++-- TOC entry 398 (class 1259 OID 18918)
+ -- Name: configuracoes_semestre; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -303,7 +303,7 @@
+ ALTER TABLE public.configuracoes_semestre OWNER TO postgres;
+ 
+ --
+--- TOC entry 386 (class 1259 OID 97129)
++-- TOC entry 385 (class 1259 OID 17588)
+ -- Name: cursos; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -318,8 +318,8 @@
+ ALTER TABLE public.cursos OWNER TO postgres;
+ 
+ --
+--- TOC entry 4029 (class 0 OID 0)
+--- Dependencies: 386
++-- TOC entry 4078 (class 0 OID 0)
++-- Dependencies: 385
+ -- Name: COLUMN cursos.cor_identificacao; Type: COMMENT; Schema: public; Owner: postgres
+ --
+ 
+@@ -327,7 +327,7 @@
+ 
+ 
+ --
+--- TOC entry 387 (class 1259 OID 97136)
++-- TOC entry 387 (class 1259 OID 17611)
+ -- Name: disciplinas; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -343,7 +343,7 @@
+ ALTER TABLE public.disciplinas OWNER TO postgres;
+ 
+ --
+--- TOC entry 4031 (class 0 OID 0)
++-- TOC entry 4080 (class 0 OID 0)
+ -- Dependencies: 387
+ -- Name: COLUMN disciplinas.curso_id; Type: COMMENT; Schema: public; Owner: postgres
+ --
+@@ -352,7 +352,7 @@
+ 
+ 
+ --
+--- TOC entry 388 (class 1259 OID 97142)
++-- TOC entry 384 (class 1259 OID 17579)
+ -- Name: espacos; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -367,7 +367,7 @@
+ ALTER TABLE public.espacos OWNER TO postgres;
+ 
+ --
+--- TOC entry 389 (class 1259 OID 97148)
++-- TOC entry 396 (class 1259 OID 18765)
+ -- Name: eventos_calendario; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -386,8 +386,8 @@
+ ALTER TABLE public.eventos_calendario OWNER TO postgres;
+ 
+ --
+--- TOC entry 4034 (class 0 OID 0)
+--- Dependencies: 389
++-- TOC entry 4083 (class 0 OID 0)
++-- Dependencies: 396
+ -- Name: TABLE eventos_calendario; Type: COMMENT; Schema: public; Owner: postgres
+ --
+ 
+@@ -395,7 +395,7 @@
+ 
+ 
+ --
+--- TOC entry 390 (class 1259 OID 97154)
++-- TOC entry 395 (class 1259 OID 18755)
+ -- Name: periodos_letivos; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -417,8 +417,8 @@
+ ALTER TABLE public.periodos_letivos OWNER TO postgres;
+ 
+ --
+--- TOC entry 4036 (class 0 OID 0)
+--- Dependencies: 390
++-- TOC entry 4085 (class 0 OID 0)
++-- Dependencies: 395
+ -- Name: TABLE periodos_letivos; Type: COMMENT; Schema: public; Owner: postgres
+ --
+ 
+@@ -426,7 +426,7 @@
+ 
+ 
+ --
+--- TOC entry 391 (class 1259 OID 97160)
++-- TOC entry 383 (class 1259 OID 17567)
+ -- Name: professores; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -443,7 +443,7 @@
+ ALTER TABLE public.professores OWNER TO postgres;
+ 
+ --
+--- TOC entry 392 (class 1259 OID 97166)
++-- TOC entry 394 (class 1259 OID 18593)
+ -- Name: professores_indisponibilidades; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -460,7 +460,7 @@
+ ALTER TABLE public.professores_indisponibilidades OWNER TO postgres;
+ 
+ --
+--- TOC entry 393 (class 1259 OID 97173)
++-- TOC entry 397 (class 1259 OID 18897)
+ -- Name: reservas_espacos; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -482,8 +482,8 @@
+ ALTER TABLE public.reservas_espacos OWNER TO postgres;
+ 
+ --
+--- TOC entry 4040 (class 0 OID 0)
+--- Dependencies: 393
++-- TOC entry 4089 (class 0 OID 0)
++-- Dependencies: 397
+ -- Name: TABLE reservas_espacos; Type: COMMENT; Schema: public; Owner: postgres
+ --
+ 
+@@ -491,7 +491,7 @@
+ 
+ 
+ --
+--- TOC entry 394 (class 1259 OID 97181)
++-- TOC entry 388 (class 1259 OID 17619)
+ -- Name: slots_horarios; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -508,7 +508,7 @@
+ ALTER TABLE public.slots_horarios OWNER TO postgres;
+ 
+ --
+--- TOC entry 395 (class 1259 OID 97186)
++-- TOC entry 386 (class 1259 OID 17596)
+ -- Name: turmas; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -523,7 +523,7 @@
+ ALTER TABLE public.turmas OWNER TO postgres;
+ 
+ --
+--- TOC entry 396 (class 1259 OID 97192)
++-- TOC entry 389 (class 1259 OID 17626)
+ -- Name: versoes_grade; Type: TABLE; Schema: public; Owner: postgres
+ --
+ 
+@@ -541,7 +541,7 @@
+ ALTER TABLE public.versoes_grade OWNER TO postgres;
+ 
+ --
+--- TOC entry 397 (class 1259 OID 97200)
++-- TOC entry 393 (class 1259 OID 18565)
+ -- Name: vw_choques_horarios_base; Type: VIEW; Schema: public; Owner: postgres
+ --
+ 
+@@ -713,7 +713,7 @@
+ ALTER VIEW public.vw_choques_horarios_base OWNER TO postgres;
+ 
+ --
+--- TOC entry 398 (class 1259 OID 97205)
++-- TOC entry 400 (class 1259 OID 19003)
+ -- Name: vw_choques_horarios; Type: VIEW; Schema: public; Owner: postgres
+ --
+ 
+@@ -730,7 +730,7 @@
+ ALTER VIEW public.vw_choques_horarios OWNER TO postgres;
+ 
+ --
+--- TOC entry 399 (class 1259 OID 97209)
++-- TOC entry 399 (class 1259 OID 18933)
+ -- Name: vw_validacoes_reservas; Type: VIEW; Schema: public; Owner: postgres
+ --
+ 
+@@ -763,8 +763,8 @@
+ ALTER VIEW public.vw_validacoes_reservas OWNER TO postgres;
+ 
+ --
+--- TOC entry 4000 (class 0 OID 97110)
+--- Dependencies: 383
++-- TOC entry 4056 (class 0 OID 17739)
++-- Dependencies: 391
+ -- Data for Name: aulas; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -2347,7 +2347,6 @@
+ 6fdea44c-b3b4-461d-a955-6acbc718ddd5	ddea3efd-55d9-4ab3-8404-14f8504c762a	660cacb9-1fe6-4e20-9453-d064b2f70cb5	79a15358-a40c-41e4-824f-aaa2e62ba8fd	515b8380-22dd-4736-8ac3-0889804de05b	7b3eba63-32cf-476a-b118-c399129ac7f3	SEXTA	2026-06-17 01:20:36.971277+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+ 8753796a-2e9a-4897-9727-e1c2f9dfd4b1	49690439-1eeb-436a-b3d6-35d374bf6278	8da07e3b-e3e6-4287-938f-d681f440f9fd	21c2d77f-db5a-4b64-b203-fa8570de0318	fbe2f321-d8a7-4001-93d0-d30302a4ba6a	470c616c-db6e-42d5-9069-e5ae8979202c	SEXTA	2026-06-19 10:56:23.507314+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+ e712b88b-6438-4292-a168-957684858823	49690439-1eeb-436a-b3d6-35d374bf6278	8da07e3b-e3e6-4287-938f-d681f440f9fd	21c2d77f-db5a-4b64-b203-fa8570de0318	fbe2f321-d8a7-4001-93d0-d30302a4ba6a	ebc43996-354b-4c4f-ac1e-b13e31664e14	SEXTA	2026-06-19 10:56:43.104632+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+-301832d5-6ab3-485b-8aa2-d96150062b43	8b8d7e24-9e15-44c2-9e4e-5be0f19f95fc	002ee22a-254b-4e0d-a9a9-d671ff94954a	832cd908-3686-4a54-a49e-2e3398b6925d	8cab6d11-debc-47aa-b4fd-685f53ef6987	b1b28880-c4de-44be-88b2-e7f1126a7d26	QUINTA	2026-05-11 01:18:53.001+00	ATIVO	69c9f32e-121d-4d7b-adde-1648e9fcad96
+ c47c25e5-677e-4120-895e-ff357762d0a5	db3db93a-84a4-459b-8e56-dabcf32bfc5c	e54e4846-c45a-4267-ade3-aadd9ac084ed	21c2d77f-db5a-4b64-b203-fa8570de0318	1b650e03-5298-4e2f-bd42-329dfe3d432e	faa5fe3e-ca11-482c-b1bf-432df47e1f05	QUINTA	2026-08-03 20:40:11.149637+00	INCOMPLETO	ca5f86ca-3d10-4448-80a8-c51016fed9c8
+ d50795dd-d700-499f-b239-0da79eb5b6b4	c0c21586-2d2e-4006-b9eb-0125ad0b1456	6203f4f9-b5d8-453f-98f0-50a5b9c2c9d0	7a4272a7-9b7b-4991-8f20-894488c06c6e	5cf11ff6-ca6c-4ec9-944e-7fa4f6e09088	affe23ac-d225-4edb-be7b-eb05fc01ae90	SEGUNDA	2026-06-30 17:42:29.901312+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+ d62fe93e-234f-487c-97b0-4183cfb8d7e1	49690439-1eeb-436a-b3d6-35d374bf6278	8da07e3b-e3e6-4287-938f-d681f440f9fd	21c2d77f-db5a-4b64-b203-fa8570de0318	fbe2f321-d8a7-4001-93d0-d30302a4ba6a	470c616c-db6e-42d5-9069-e5ae8979202c	QUINTA	2026-06-19 10:57:05.602729+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+@@ -2737,6 +2736,7 @@
+ eb0c528b-21b4-466f-b00f-4bd05b478b38	8b8d7e24-9e15-44c2-9e4e-5be0f19f95fc	c97f0855-df4c-4445-8f3b-5562d0a6bd28	d7ab5591-f41b-47d3-98ce-1cbc673319a8	e6c77336-8432-486e-a9d9-f1aaff6456e8	470c616c-db6e-42d5-9069-e5ae8979202c	QUINTA	2026-05-11 01:18:53.001+00	ATIVO	69c9f32e-121d-4d7b-adde-1648e9fcad96
+ ce56bc39-76e5-404f-bbe7-753723281631	8b8d7e24-9e15-44c2-9e4e-5be0f19f95fc	dc277a58-23db-463e-9a93-504e934a4dde	e75d7a00-db24-4d5a-bc93-9d32962b9868	67c2d935-5eef-463e-b350-cfc88964605d	faa5fe3e-ca11-482c-b1bf-432df47e1f05	QUINTA	2026-05-11 01:18:53.001+00	ATIVO	69c9f32e-121d-4d7b-adde-1648e9fcad96
+ c9d14875-839b-4ac7-80c7-a0114333e7bf	8b8d7e24-9e15-44c2-9e4e-5be0f19f95fc	dc277a58-23db-463e-9a93-504e934a4dde	e75d7a00-db24-4d5a-bc93-9d32962b9868	67c2d935-5eef-463e-b350-cfc88964605d	c76c6229-aed1-4ae2-959d-8ea2f33b5c15	QUINTA	2026-05-11 01:18:53.001+00	ATIVO	69c9f32e-121d-4d7b-adde-1648e9fcad96
++301832d5-6ab3-485b-8aa2-d96150062b43	8b8d7e24-9e15-44c2-9e4e-5be0f19f95fc	002ee22a-254b-4e0d-a9a9-d671ff94954a	832cd908-3686-4a54-a49e-2e3398b6925d	8cab6d11-debc-47aa-b4fd-685f53ef6987	b1b28880-c4de-44be-88b2-e7f1126a7d26	QUINTA	2026-05-11 01:18:53.001+00	ATIVO	69c9f32e-121d-4d7b-adde-1648e9fcad96
+ ce167687-d169-457e-99da-acef426bc209	8b8d7e24-9e15-44c2-9e4e-5be0f19f95fc	002ee22a-254b-4e0d-a9a9-d671ff94954a	832cd908-3686-4a54-a49e-2e3398b6925d	8cab6d11-debc-47aa-b4fd-685f53ef6987	bdfed353-1c2f-4d0e-87ce-8d185acea322	QUINTA	2026-05-11 01:18:53.001+00	ATIVO	69c9f32e-121d-4d7b-adde-1648e9fcad96
+ b4374af1-2439-4461-88e8-b02613569e73	8b8d7e24-9e15-44c2-9e4e-5be0f19f95fc	440b9a7e-e619-4c82-8012-30052a8eb001	71743c21-7d28-478b-9087-7dacd44d86e2	e7fbca26-b627-4877-a748-735e6ffe5923	affe23ac-d225-4edb-be7b-eb05fc01ae90	SEXTA	2026-05-11 01:18:53.001+00	ATIVO	69c9f32e-121d-4d7b-adde-1648e9fcad96
+ 5a1eb73d-273f-4057-87da-d96faf1d9873	8b8d7e24-9e15-44c2-9e4e-5be0f19f95fc	440b9a7e-e619-4c82-8012-30052a8eb001	71743c21-7d28-478b-9087-7dacd44d86e2	e7fbca26-b627-4877-a748-735e6ffe5923	70e43ca2-d16b-410f-ae9d-c6d047484ea7	SEXTA	2026-05-11 01:18:53.001+00	ATIVO	69c9f32e-121d-4d7b-adde-1648e9fcad96
+@@ -6205,6 +6205,7 @@
+ 0a3ca73d-67b2-4ecd-9310-6bf7ef5bca1b	86f0c6dd-66bf-487a-a0d2-3713d2d6f219	c9bde72c-ae77-4483-be5e-250ec7bf9ea6	d7ab5591-f41b-47d3-98ce-1cbc673319a8	9229ef3f-2cb3-469c-856e-1d2478c3dc86	45a94af5-95b6-455d-81e2-dff321f75185	QUARTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ e2572543-cb52-42c6-ae08-9ef6709289d0	af8be42b-6cc0-4d4e-a157-34a2c8f5e842	6b4fd1dd-d360-4b3f-aed7-b49738532fee	25d0cbfc-b32c-40db-bd2f-e44037c3abb0	7519e813-c30d-4b22-b69f-7407d1e885e3	c76c6229-aed1-4ae2-959d-8ea2f33b5c15	QUINTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 85eb2418-caa9-4a2e-ba74-e92846a7b552	5da48cf6-e8f1-43eb-8873-3ae192ee6352	7550263b-4e40-4501-811a-f71b9c5ac94e	c920066c-45af-41c3-829e-c87200854777	2cd2fd86-5880-48c3-a7c7-08d79fc0938b	c76c6229-aed1-4ae2-959d-8ea2f33b5c15	QUINTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
++24f8dafd-dc60-4889-a0f2-f50146d093ca	842a0716-5ac6-468f-a72a-dd926f5cf051	172b81b5-97cd-4c14-9d82-722447a01228	98643379-b227-45cf-8ae8-93a0c4286cee	db06b8cb-fbf4-491c-9994-a29ca4a74024	45a94af5-95b6-455d-81e2-dff321f75185	SEGUNDA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 98e933ef-3707-49cc-982b-7c0c59ad19d9	842a0716-5ac6-468f-a72a-dd926f5cf051	172b81b5-97cd-4c14-9d82-722447a01228	98643379-b227-45cf-8ae8-93a0c4286cee	db06b8cb-fbf4-491c-9994-a29ca4a74024	45a94af5-95b6-455d-81e2-dff321f75185	TERCA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 1a92432a-1023-4370-8907-e39e24b51b18	465a65b6-7d20-454a-ac32-7eb2efee0a50	152cb2c1-bf8d-41c7-98c8-065175ad5505	a1540428-a541-4854-b134-13c7fa5dbe46	d1ccf852-1363-4939-9759-ea19485a1dea	affe23ac-d225-4edb-be7b-eb05fc01ae90	QUINTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 12b97435-c3c9-482a-9ed5-fad266314ec9	a34bce20-3845-43d6-9adf-28233bc7d468	f4a38b4d-155e-4f8f-b9b2-54e469d1594b	5eaec8af-62f6-4004-85c5-5058de437042	81eab306-220e-44c4-b38e-09d52ac98ccf	faa5fe3e-ca11-482c-b1bf-432df47e1f05	QUARTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+@@ -6212,10 +6213,10 @@
+ fead359d-1161-4a8d-879d-c95b69bb676f	a34bce20-3845-43d6-9adf-28233bc7d468	f4a38b4d-155e-4f8f-b9b2-54e469d1594b	5eaec8af-62f6-4004-85c5-5058de437042	81eab306-220e-44c4-b38e-09d52ac98ccf	b1b28880-c4de-44be-88b2-e7f1126a7d26	QUARTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 0c24ab1d-f617-4857-ba2e-e3b6ad39702f	af8be42b-6cc0-4d4e-a157-34a2c8f5e842	6b4fd1dd-d360-4b3f-aed7-b49738532fee	25d0cbfc-b32c-40db-bd2f-e44037c3abb0	7519e813-c30d-4b22-b69f-7407d1e885e3	b1b28880-c4de-44be-88b2-e7f1126a7d26	SEXTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 0fa62e8e-b5cd-4c03-8f5a-cf45edff6eb9	c0c21586-2d2e-4006-b9eb-0125ad0b1456	5dd1b229-f362-46dc-a7b2-aff5642ca4ba	fbfedcbc-9b6f-4d07-a4fd-e22cd3af8999	5cf11ff6-ca6c-4ec9-944e-7fa4f6e09088	affe23ac-d225-4edb-be7b-eb05fc01ae90	QUINTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+-1ebb4ed2-9a7e-495a-ba28-3b9919aeed7b	7dbbb5c7-18ae-487a-aed6-948dfab5898a	683d687f-01a2-4d23-8f8c-34ea16474797	d47a8b9a-9994-4fd0-94aa-d96fc8a01d00	2202c1a2-3691-4956-be39-6e12a5fdf6db	b1b28880-c4de-44be-88b2-e7f1126a7d26	QUARTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 5b2d5547-b075-4093-aa3d-cfce4724207b	7dbbb5c7-18ae-487a-aed6-948dfab5898a	683d687f-01a2-4d23-8f8c-34ea16474797	d47a8b9a-9994-4fd0-94aa-d96fc8a01d00	2202c1a2-3691-4956-be39-6e12a5fdf6db	bdfed353-1c2f-4d0e-87ce-8d185acea322	QUARTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ cdf34361-2f18-4162-9e85-aa90d62d02fc	069f01fd-6cc0-4814-acdc-5a8a7c44534a	e8811235-83dc-40de-8672-6fade86e031e	dc2aca8c-ec40-47e6-a35d-9a37fa51cc4f	e92100a1-661d-4bec-b380-6d0800f31c34	bdfed353-1c2f-4d0e-87ce-8d185acea322	QUARTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 570dd93a-d301-4f8c-a859-f7afd37e91f4	8db62b8c-c843-4a59-a118-50f0cc0a3f0d	c8c4ef47-1982-4971-a4e5-a32a6deea33f	637eec9b-3f1f-45d5-bd01-872d71f87f70	c8d4e02c-3994-482f-91e2-dd8180b0f44c	d4b3b600-37d4-497a-9425-49fe14ed5ebe	QUARTA	2026-06-17 03:20:47.887154+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
++550ae315-1b7a-4255-9849-72c3152180f9	842a0716-5ac6-468f-a72a-dd926f5cf051	172b81b5-97cd-4c14-9d82-722447a01228	98643379-b227-45cf-8ae8-93a0c4286cee	db06b8cb-fbf4-491c-9994-a29ca4a74024	470c616c-db6e-42d5-9069-e5ae8979202c	SEGUNDA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 872a23fb-ea07-43b6-bd5b-22a931330f19	bb5215a6-9d60-4281-8138-c01f4e87cc74	c931950b-24dc-4aa2-80f9-1b74003dde63	f47fc337-c5fe-45c4-993f-fb49fa0db930	4a0a3828-d8c1-42c9-b548-c22468ce66ca	470c616c-db6e-42d5-9069-e5ae8979202c	TERCA	2026-06-16 19:57:00.040137+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+ 32e07a79-d132-4c2e-a0fa-766b813c3fb9	ba47184b-e129-4663-9766-68d440ffd80a	4c230536-4321-4a9d-8465-bed42cd1fdb4	de29ead2-7fe4-4df4-aa19-1c5cccf6cd60	eed30365-3da9-472e-9614-194905be0c8e	b1b28880-c4de-44be-88b2-e7f1126a7d26	QUARTA	2026-06-30 16:21:44.173093+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+ d9712d00-24f0-4649-88b9-64c89dac32a1	842a0716-5ac6-468f-a72a-dd926f5cf051	172b81b5-97cd-4c14-9d82-722447a01228	98643379-b227-45cf-8ae8-93a0c4286cee	db06b8cb-fbf4-491c-9994-a29ca4a74024	470c616c-db6e-42d5-9069-e5ae8979202c	TERCA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+@@ -6233,6 +6234,7 @@
+ 7c731818-b36b-4d23-9d5b-18441379126f	7408aaa4-97f2-41b8-bef1-c14da048ee77	7e390533-2237-4874-9355-acce5fe1e4a7	dc2aca8c-ec40-47e6-a35d-9a37fa51cc4f	d95f91c4-8b6a-4846-a5fa-587c119877b8	c76c6229-aed1-4ae2-959d-8ea2f33b5c15	QUARTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 0e8f94ae-02d8-4012-9269-b5bba1c0a76e	0c1ef4f9-b796-4850-acb6-afff021d842e	795df87d-c854-40fd-8168-5d14526c0041	4de227ca-c6cf-43d3-81d3-56dd2dc8a3f9	1fad7fdd-85bd-448b-8ee7-8a0c412258fb	c76c6229-aed1-4ae2-959d-8ea2f33b5c15	QUARTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ b1a0e869-0c61-4170-89ec-dcee490d66b6	7dbbb5c7-18ae-487a-aed6-948dfab5898a	683d687f-01a2-4d23-8f8c-34ea16474797	d47a8b9a-9994-4fd0-94aa-d96fc8a01d00	2202c1a2-3691-4956-be39-6e12a5fdf6db	c76c6229-aed1-4ae2-959d-8ea2f33b5c15	QUINTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
++3dbca5e1-064f-4129-80a5-fd1777bc967e	842a0716-5ac6-468f-a72a-dd926f5cf051	8a90425d-ae64-48ce-b11c-8081a9c76a07	f47fc337-c5fe-45c4-993f-fb49fa0db930	65ae8122-e977-4771-afae-3443d6a1074f	affe23ac-d225-4edb-be7b-eb05fc01ae90	TERCA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 0286198c-e580-426e-8c86-87eedb478cb4	842a0716-5ac6-468f-a72a-dd926f5cf051	8a90425d-ae64-48ce-b11c-8081a9c76a07	f47fc337-c5fe-45c4-993f-fb49fa0db930	65ae8122-e977-4771-afae-3443d6a1074f	affe23ac-d225-4edb-be7b-eb05fc01ae90	SEXTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ b02420d1-a16f-4bf3-8166-a0767094cfd0	d122165d-e38d-4e6b-9bb7-486cad93d5bd	1bd88265-d490-43db-9248-6751bbd72c0c	c6529b15-2676-4ea1-99c0-b3e15bfd45c6	fb9bdc6b-6fce-47e2-ab0e-ee8a24250992	70e43ca2-d16b-410f-ae9d-c6d047484ea7	SEGUNDA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ b0be792d-a3d2-4464-8310-7a878175dd05	d122165d-e38d-4e6b-9bb7-486cad93d5bd	1bd88265-d490-43db-9248-6751bbd72c0c	c6529b15-2676-4ea1-99c0-b3e15bfd45c6	fb9bdc6b-6fce-47e2-ab0e-ee8a24250992	45a94af5-95b6-455d-81e2-dff321f75185	QUINTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+@@ -6240,6 +6242,7 @@
+ 5cfe5f84-9717-47db-a814-f59731821b5f	5da48cf6-e8f1-43eb-8873-3ae192ee6352	e555736b-23ea-46e3-b9d2-533cf542c7b0	5889699d-d6e8-4eea-a219-9882e08b92b7	e1239976-bca5-471d-8463-5400c9229318	faa5fe3e-ca11-482c-b1bf-432df47e1f05	SEGUNDA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 28259582-8310-4a2a-bbb8-718a7284e589	c0c21586-2d2e-4006-b9eb-0125ad0b1456	5dd1b229-f362-46dc-a7b2-aff5642ca4ba	fbfedcbc-9b6f-4d07-a4fd-e22cd3af8999	5cf11ff6-ca6c-4ec9-944e-7fa4f6e09088	70e43ca2-d16b-410f-ae9d-c6d047484ea7	QUINTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ a06867db-c3f7-4a59-a7cb-a22b259952da	c0c21586-2d2e-4006-b9eb-0125ad0b1456	5dd1b229-f362-46dc-a7b2-aff5642ca4ba	fbfedcbc-9b6f-4d07-a4fd-e22cd3af8999	5cf11ff6-ca6c-4ec9-944e-7fa4f6e09088	45a94af5-95b6-455d-81e2-dff321f75185	QUINTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
++7e429321-c4d5-469b-bdd7-568406d60a23	842a0716-5ac6-468f-a72a-dd926f5cf051	8a90425d-ae64-48ce-b11c-8081a9c76a07	f47fc337-c5fe-45c4-993f-fb49fa0db930	65ae8122-e977-4771-afae-3443d6a1074f	70e43ca2-d16b-410f-ae9d-c6d047484ea7	TERCA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 5e778205-7e5a-4802-bb9a-6070cff4984e	842a0716-5ac6-468f-a72a-dd926f5cf051	8a90425d-ae64-48ce-b11c-8081a9c76a07	f47fc337-c5fe-45c4-993f-fb49fa0db930	65ae8122-e977-4771-afae-3443d6a1074f	70e43ca2-d16b-410f-ae9d-c6d047484ea7	SEXTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ b5cb9dc7-bcdc-4a89-9cb9-0d884a130f89	97df4d42-7748-46de-9631-5ffdaacaa78b	80f0aa1d-02c3-4fca-b319-b9f38f510090	5f95abd8-d7a0-4a0b-b539-249fc64a1a14	569c0d8d-e504-4839-a398-fc1f270d03fe	c76c6229-aed1-4ae2-959d-8ea2f33b5c15	QUINTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 2cf6719e-25fe-4d3e-a3fd-00884da2a958	92644b80-6c32-4229-97aa-247776940489	49177225-5c68-4452-9291-fc6b1ab23884	cc544759-c375-4f71-9df5-c7c6a500148c	4633613a-c1fb-46b2-a42e-9f14e225f636	b29973f7-1324-4be5-a22b-209ec856eb8a	TERCA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+@@ -6256,6 +6259,7 @@
+ 7d3acb40-9941-45a2-b474-71fd61a9097c	c3a95f7f-abdb-4c25-984a-356123ed5a95	ff09c93c-9f9a-4814-961a-cd3bd46a1ec9	1611b34f-f11b-441a-a21b-9358b297f2e0	c9eb66f2-527a-43b3-96b0-dc1bf29bfb1a	70e43ca2-d16b-410f-ae9d-c6d047484ea7	QUARTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 5222f9ba-d71d-4cbb-9a63-18cbcb60ec49	db3db93a-84a4-459b-8e56-dabcf32bfc5c	263ac88e-983e-4f54-8dc5-67e6199918be	b36f15e3-d50f-4dbc-92a3-ca1bad249ffd	4a0a3828-d8c1-42c9-b548-c22468ce66ca	70e43ca2-d16b-410f-ae9d-c6d047484ea7	SEXTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 08c5501b-8c54-41d9-833c-5d0dd5e360db	ab4a5346-e5a5-42e7-b4ec-ca429071f568	331086e3-156b-41c9-ad34-01e6cdfae4ae	98adc848-43ce-450b-a4fc-72a718a6d117	7519e813-c30d-4b22-b69f-7407d1e885e3	a23e6a37-9b7f-4598-92b5-5bb00e2a8cb5	SEGUNDA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
++78c5ea43-2525-4d31-a681-7b9ff90d617d	842a0716-5ac6-468f-a72a-dd926f5cf051	73da9e85-0874-4bd4-aa93-686fe253a554	b7973eff-d076-4047-865f-94b1a3517531	4a0a3828-d8c1-42c9-b548-c22468ce66ca	b1b28880-c4de-44be-88b2-e7f1126a7d26	SEGUNDA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 3936ab0b-a6d1-4c07-83b2-dc45426499f8	97df4d42-7748-46de-9631-5ffdaacaa78b	59a81f75-cc2c-4943-97d5-37fa654dda34	0b7cfb45-c2a3-44ab-a20b-4cce20151af4	\N	c76c6229-aed1-4ae2-959d-8ea2f33b5c15	SEGUNDA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ ce75aaaf-7957-4fb5-bc1f-2787d42c6c0f	842a0716-5ac6-468f-a72a-dd926f5cf051	f235893c-1632-468f-845c-a9f8b568a88d	5d3b3ba5-2ce5-4a83-a607-f9aaad1bbf8e	db06b8cb-fbf4-491c-9994-a29ca4a74024	470c616c-db6e-42d5-9069-e5ae8979202c	SEXTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ dedf5099-9a7e-43ab-8438-cf63405d7c69	bb5215a6-9d60-4281-8138-c01f4e87cc74	c931950b-24dc-4aa2-80f9-1b74003dde63	f47fc337-c5fe-45c4-993f-fb49fa0db930	65ae8122-e977-4771-afae-3443d6a1074f	45a94af5-95b6-455d-81e2-dff321f75185	SEXTA	2026-06-16 19:57:19.444876+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+@@ -6892,6 +6896,7 @@
+ 9c5fb2e2-27e4-4fe5-a77e-bdaf7f847e71	ab4a5346-e5a5-42e7-b4ec-ca429071f568	93f1d677-a4c1-4b5b-b9ae-61a9e78bdc6c	25d0cbfc-b32c-40db-bd2f-e44037c3abb0	7519e813-c30d-4b22-b69f-7407d1e885e3	b29973f7-1324-4be5-a22b-209ec856eb8a	QUARTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 4cb9c123-8614-412f-b32b-311fb81dd6d2	5da48cf6-e8f1-43eb-8873-3ae192ee6352	6651fe17-ebd1-4b7e-8d31-458dddc54397	b5a52869-0f60-4cb8-a946-89b092f995b6	4ba48a31-ca21-4821-a59c-2d978d9f2e25	bdfed353-1c2f-4d0e-87ce-8d185acea322	QUINTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ dd45320b-059c-40a2-a469-0ad60262fd61	49690439-1eeb-436a-b3d6-35d374bf6278	8da07e3b-e3e6-4287-938f-d681f440f9fd	21c2d77f-db5a-4b64-b203-fa8570de0318	fbe2f321-d8a7-4001-93d0-d30302a4ba6a	45a94af5-95b6-455d-81e2-dff321f75185	QUINTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
++c107bd72-7074-4393-ba00-87296c46e7be	842a0716-5ac6-468f-a72a-dd926f5cf051	73da9e85-0874-4bd4-aa93-686fe253a554	b7973eff-d076-4047-865f-94b1a3517531	4a0a3828-d8c1-42c9-b548-c22468ce66ca	bdfed353-1c2f-4d0e-87ce-8d185acea322	SEGUNDA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ fc160b46-061b-4fe6-b668-39e835984413	ab4a5346-e5a5-42e7-b4ec-ca429071f568	97046fdd-82c2-4488-8118-d63638007983	a416d112-a39a-445d-af52-7b311911385c	7519e813-c30d-4b22-b69f-7407d1e885e3	7b3eba63-32cf-476a-b118-c399129ac7f3	QUINTA	2026-08-11 21:53:46.886016+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 9efa9465-e23b-46d7-bcca-a388dbc44028	5da48cf6-e8f1-43eb-8873-3ae192ee6352	6651fe17-ebd1-4b7e-8d31-458dddc54397	b5a52869-0f60-4cb8-a946-89b092f995b6	4ba48a31-ca21-4821-a59c-2d978d9f2e25	b1b28880-c4de-44be-88b2-e7f1126a7d26	QUINTA	2026-06-27 01:49:47.123867+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+ 3b2a3347-a064-4f4c-8393-c83f52061ee8	ba47184b-e129-4663-9766-68d440ffd80a	5fdabc2e-3752-4649-ac83-c665fe48ed3f	5eaec8af-62f6-4004-85c5-5058de437042	eed30365-3da9-472e-9614-194905be0c8e	c76c6229-aed1-4ae2-959d-8ea2f33b5c15	TERCA	2026-06-30 16:29:10.377895+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+@@ -9068,6 +9073,7 @@
+ 70f9003d-96e3-4e96-a53d-259ca62815a9	91e6760c-7e6f-4a88-9866-24fcaac0a8e6	a9a6f2b7-693b-4f81-ab86-7ad81539fbad	99361f15-3ca8-4b63-be52-2f1682748b2c	d1ccf852-1363-4939-9759-ea19485a1dea	c76c6229-aed1-4ae2-959d-8ea2f33b5c15	QUINTA	2026-06-18 13:33:46.165302+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+ 414ff44e-0c25-4439-9ae4-2934a0452311	eb0cee97-4da1-425c-8fab-03971a98d110	c5e4efb2-6d81-4561-be51-c8731277b779	55867506-1741-42b6-9866-c702a114a65d	22bfb714-f8f1-4407-b8c5-f3709b016c40	70e43ca2-d16b-410f-ae9d-c6d047484ea7	TERCA	2026-06-30 17:14:14.853385+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+ 903b54c9-2d44-4851-b4c2-c7a8e53f38a1	c5237a4e-c038-4703-abcb-41c0007eebed	d0d08982-02a0-4810-99fa-c744fd8a0355	de29ead2-7fe4-4df4-aa19-1c5cccf6cd60	7519e813-c30d-4b22-b69f-7407d1e885e3	70e43ca2-d16b-410f-ae9d-c6d047484ea7	SEXTA	2026-07-01 14:18:16.879721+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
++b5cb9770-9557-4e39-a679-02f6798e36fe	7dbbb5c7-18ae-487a-aed6-948dfab5898a	683d687f-01a2-4d23-8f8c-34ea16474797	d47a8b9a-9994-4fd0-94aa-d96fc8a01d00	2202c1a2-3691-4956-be39-6e12a5fdf6db	b1b28880-c4de-44be-88b2-e7f1126a7d26	QUARTA	2026-08-18 17:37:45.765225+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ 3e658ad6-bcc4-437e-a642-9fc476312682	eb0cee97-4da1-425c-8fab-03971a98d110	c5e4efb2-6d81-4561-be51-c8731277b779	55867506-1741-42b6-9866-c702a114a65d	22bfb714-f8f1-4407-b8c5-f3709b016c40	45a94af5-95b6-455d-81e2-dff321f75185	TERCA	2026-06-30 17:14:17.217398+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+ e496bc61-5aef-4683-bc34-33a582c37ee8	6edbb44f-8178-4662-8e95-4e146f491a5d	22b36673-1d4d-4bdf-af02-890d9dcc3906	adf2906f-da41-4070-907a-6b1c009d6f27	2202c1a2-3691-4956-be39-6e12a5fdf6db	7b3eba63-32cf-476a-b118-c399129ac7f3	QUARTA	2026-07-15 14:32:24.516342+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+ daaab6ec-6efc-489b-b267-349a2510ca1d	465a65b6-7d20-454a-ac32-7eb2efee0a50	152cb2c1-bf8d-41c7-98c8-065175ad5505	a1540428-a541-4854-b134-13c7fa5dbe46	d1ccf852-1363-4939-9759-ea19485a1dea	470c616c-db6e-42d5-9069-e5ae8979202c	SEGUNDA	2026-06-17 00:18:28.321344+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+@@ -9239,16 +9245,12 @@
+ c10000b9-b410-4260-9e97-1b98f2247987	d122165d-e38d-4e6b-9bb7-486cad93d5bd	7ad4b162-9f55-4f35-bbaf-4d4fe08119ea	5356d5e7-a506-46c9-9b4b-fbbe2167f606	fb9bdc6b-6fce-47e2-ab0e-ee8a24250992	affe23ac-d225-4edb-be7b-eb05fc01ae90	QUINTA	2026-06-17 00:46:41.677635+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+ 28c62ee5-61f4-4573-a69d-d63ed91ae292	d122165d-e38d-4e6b-9bb7-486cad93d5bd	7ad4b162-9f55-4f35-bbaf-4d4fe08119ea	5356d5e7-a506-46c9-9b4b-fbbe2167f606	fb9bdc6b-6fce-47e2-ab0e-ee8a24250992	70e43ca2-d16b-410f-ae9d-c6d047484ea7	TERCA	2026-06-17 00:46:20.840973+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+ 3cea0a3e-1ab7-4982-9be5-0c2ee7645b3f	5da48cf6-e8f1-43eb-8873-3ae192ee6352	a7265af8-b297-49e2-b047-c06baf166d56	d2114ff1-3ff5-400b-bb3b-23329d98f13d	2cd2fd86-5880-48c3-a7c7-08d79fc0938b	45a94af5-95b6-455d-81e2-dff321f75185	TERCA	2026-06-25 16:54:51.219219+00	INCOMPLETO	972efc03-9b0d-4f2e-bd09-4ecd5b4b4c2e
+-7e5db132-3ab3-4458-a349-d0ddbcd2fb15	9f1c1c7d-fbbe-4f6a-a279-d18c5dee15fb	9afe5f54-2dd9-445c-8cec-fa1cef2e5da7	832cd908-3686-4a54-a49e-2e3398b6925d	92f1179b-cefe-41f5-9af9-02d61cee6267	affe23ac-d225-4edb-be7b-eb05fc01ae90	SEGUNDA	2026-08-18 16:51:49.714797+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+-16dc17e2-d2d6-4bf0-9cfd-f2068a82c73f	9f1c1c7d-fbbe-4f6a-a279-d18c5dee15fb	9afe5f54-2dd9-445c-8cec-fa1cef2e5da7	832cd908-3686-4a54-a49e-2e3398b6925d	92f1179b-cefe-41f5-9af9-02d61cee6267	70e43ca2-d16b-410f-ae9d-c6d047484ea7	SEGUNDA	2026-08-18 16:59:42.484139+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+-57d0ad05-a536-4fd9-9815-4c94b87b98f3	8db62b8c-c843-4a59-a118-50f0cc0a3f0d	b7a0461b-f0ea-439c-9817-5446eda58c67	\N	\N	affe23ac-d225-4edb-be7b-eb05fc01ae90	SEGUNDA	2026-08-18 17:10:02.987811+00	INCOMPLETO	ca5f86ca-3d10-4448-80a8-c51016fed9c8
+-abfbfe78-2a4f-4bb2-b036-651ada2167f9	9f1c1c7d-fbbe-4f6a-a279-d18c5dee15fb	9afe5f54-2dd9-445c-8cec-fa1cef2e5da7	832cd908-3686-4a54-a49e-2e3398b6925d	92f1179b-cefe-41f5-9af9-02d61cee6267	470c616c-db6e-42d5-9069-e5ae8979202c	SEGUNDA	2026-08-18 17:49:11.406009+00	INCOMPLETO	ce1a9ea6-7635-4dfb-a242-dce43b46ad2e
+ \.
+ 
+ 
+ --
+--- TOC entry 4001 (class 0 OID 97117)
+--- Dependencies: 384
++-- TOC entry 4057 (class 0 OID 18141)
++-- Dependencies: 392
+ -- Data for Name: categorias_espacos; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -9266,8 +9268,8 @@
+ 
+ 
+ --
+--- TOC entry 4002 (class 0 OID 97123)
+--- Dependencies: 385
++-- TOC entry 4062 (class 0 OID 18918)
++-- Dependencies: 398
+ -- Data for Name: configuracoes_semestre; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -9276,8 +9278,8 @@
+ 
+ 
+ --
+--- TOC entry 4003 (class 0 OID 97129)
+--- Dependencies: 386
++-- TOC entry 4051 (class 0 OID 17588)
++-- Dependencies: 385
+ -- Data for Name: cursos; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -9302,7 +9304,7 @@
+ 
+ 
+ --
+--- TOC entry 4004 (class 0 OID 97136)
++-- TOC entry 4053 (class 0 OID 17611)
+ -- Dependencies: 387
+ -- Data for Name: disciplinas; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+@@ -10361,8 +10363,8 @@
+ 
+ 
+ --
+--- TOC entry 4005 (class 0 OID 97142)
+--- Dependencies: 388
++-- TOC entry 4050 (class 0 OID 17579)
++-- Dependencies: 384
+ -- Data for Name: espacos; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -10473,8 +10475,8 @@
+ 
+ 
+ --
+--- TOC entry 4006 (class 0 OID 97148)
+--- Dependencies: 389
++-- TOC entry 4060 (class 0 OID 18765)
++-- Dependencies: 396
+ -- Data for Name: eventos_calendario; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -10483,8 +10485,8 @@
+ 
+ 
+ --
+--- TOC entry 4007 (class 0 OID 97154)
+--- Dependencies: 390
++-- TOC entry 4059 (class 0 OID 18755)
++-- Dependencies: 395
+ -- Data for Name: periodos_letivos; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -10496,8 +10498,8 @@
+ 
+ 
+ --
+--- TOC entry 4008 (class 0 OID 97160)
+--- Dependencies: 391
++-- TOC entry 4049 (class 0 OID 17567)
++-- Dependencies: 383
+ -- Data for Name: professores; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -10689,8 +10691,8 @@
+ 
+ 
+ --
+--- TOC entry 4009 (class 0 OID 97166)
+--- Dependencies: 392
++-- TOC entry 4058 (class 0 OID 18593)
++-- Dependencies: 394
+ -- Data for Name: professores_indisponibilidades; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -10862,8 +10864,8 @@
+ 
+ 
+ --
+--- TOC entry 4010 (class 0 OID 97173)
+--- Dependencies: 393
++-- TOC entry 4061 (class 0 OID 18897)
++-- Dependencies: 397
+ -- Data for Name: reservas_espacos; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -11104,8 +11106,8 @@
+ 
+ 
+ --
+--- TOC entry 4011 (class 0 OID 97181)
+--- Dependencies: 394
++-- TOC entry 4054 (class 0 OID 17619)
++-- Dependencies: 388
+ -- Data for Name: slots_horarios; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -11131,8 +11133,8 @@
+ 
+ 
+ --
+--- TOC entry 4012 (class 0 OID 97186)
+--- Dependencies: 395
++-- TOC entry 4052 (class 0 OID 17596)
++-- Dependencies: 386
+ -- Data for Name: turmas; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -11249,8 +11251,8 @@
+ 
+ 
+ --
+--- TOC entry 4013 (class 0 OID 97192)
+--- Dependencies: 396
++-- TOC entry 4055 (class 0 OID 17626)
++-- Dependencies: 389
+ -- Data for Name: versoes_grade; Type: TABLE DATA; Schema: public; Owner: postgres
+ --
+ 
+@@ -11266,7 +11268,7 @@
+ 
+ 
+ --
+--- TOC entry 3744 (class 2606 OID 97215)
++-- TOC entry 3814 (class 2606 OID 17746)
+ -- Name: aulas aulas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11275,7 +11277,7 @@
+ 
+ 
+ --
+--- TOC entry 3756 (class 2606 OID 97217)
++-- TOC entry 3826 (class 2606 OID 18148)
+ -- Name: categorias_espacos categorias_espacos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11284,7 +11286,7 @@
+ 
+ 
+ --
+--- TOC entry 3759 (class 2606 OID 97219)
++-- TOC entry 3842 (class 2606 OID 18925)
+ -- Name: configuracoes_semestre configuracoes_semestre_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11293,7 +11295,7 @@
+ 
+ 
+ --
+--- TOC entry 3761 (class 2606 OID 97221)
++-- TOC entry 3844 (class 2606 OID 18927)
+ -- Name: configuracoes_semestre configuracoes_semestre_semestre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11302,7 +11304,7 @@
+ 
+ 
+ --
+--- TOC entry 3763 (class 2606 OID 97223)
++-- TOC entry 3799 (class 2606 OID 17595)
+ -- Name: cursos cursos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11311,7 +11313,7 @@
+ 
+ 
+ --
+--- TOC entry 3765 (class 2606 OID 97225)
++-- TOC entry 3806 (class 2606 OID 17618)
+ -- Name: disciplinas disciplinas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11320,7 +11322,7 @@
+ 
+ 
+ --
+--- TOC entry 3769 (class 2606 OID 97227)
++-- TOC entry 3795 (class 2606 OID 17846)
+ -- Name: espacos espacos_nome_unico; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11329,7 +11331,7 @@
+ 
+ 
+ --
+--- TOC entry 3771 (class 2606 OID 97229)
++-- TOC entry 3797 (class 2606 OID 17587)
+ -- Name: espacos espacos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11338,7 +11340,7 @@
+ 
+ 
+ --
+--- TOC entry 3773 (class 2606 OID 97231)
++-- TOC entry 3835 (class 2606 OID 18772)
+ -- Name: eventos_calendario eventos_calendario_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11347,7 +11349,7 @@
+ 
+ 
+ --
+--- TOC entry 3776 (class 2606 OID 97233)
++-- TOC entry 3831 (class 2606 OID 18762)
+ -- Name: periodos_letivos periodos_letivos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11356,7 +11358,7 @@
+ 
+ 
+ --
+--- TOC entry 3778 (class 2606 OID 97235)
++-- TOC entry 3833 (class 2606 OID 18764)
+ -- Name: periodos_letivos periodos_letivos_sigla_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11365,7 +11367,7 @@
+ 
+ 
+ --
+--- TOC entry 3780 (class 2606 OID 97237)
++-- TOC entry 3789 (class 2606 OID 17578)
+ -- Name: professores professores_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11374,7 +11376,7 @@
+ 
+ 
+ --
+--- TOC entry 3786 (class 2606 OID 97239)
++-- TOC entry 3829 (class 2606 OID 18601)
+ -- Name: professores_indisponibilidades professores_indisponibilidades_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11383,7 +11385,7 @@
+ 
+ 
+ --
+--- TOC entry 3782 (class 2606 OID 97241)
++-- TOC entry 3791 (class 2606 OID 17574)
+ -- Name: professores professores_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11392,7 +11394,7 @@
+ 
+ 
+ --
+--- TOC entry 3784 (class 2606 OID 97243)
++-- TOC entry 3793 (class 2606 OID 17576)
+ -- Name: professores professores_siape_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11401,7 +11403,7 @@
+ 
+ 
+ --
+--- TOC entry 3790 (class 2606 OID 97245)
++-- TOC entry 3840 (class 2606 OID 18906)
+ -- Name: reservas_espacos reservas_espacos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11410,7 +11412,7 @@
+ 
+ 
+ --
+--- TOC entry 3792 (class 2606 OID 97247)
++-- TOC entry 3810 (class 2606 OID 17625)
+ -- Name: slots_horarios slots_horarios_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11419,7 +11421,7 @@
+ 
+ 
+ --
+--- TOC entry 3795 (class 2606 OID 97249)
++-- TOC entry 3802 (class 2606 OID 17605)
+ -- Name: turmas turmas_codigo_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11428,7 +11430,7 @@
+ 
+ 
+ --
+--- TOC entry 3797 (class 2606 OID 97251)
++-- TOC entry 3804 (class 2606 OID 17603)
+ -- Name: turmas turmas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11437,7 +11439,7 @@
+ 
+ 
+ --
+--- TOC entry 3799 (class 2606 OID 97253)
++-- TOC entry 3812 (class 2606 OID 17635)
+ -- Name: versoes_grade versoes_grade_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11446,7 +11448,7 @@
+ 
+ 
+ --
+--- TOC entry 3745 (class 1259 OID 97254)
++-- TOC entry 3815 (class 1259 OID 18238)
+ -- Name: idx_aulas_conflito_espaco; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11454,7 +11456,7 @@
+ 
+ 
+ --
+--- TOC entry 3746 (class 1259 OID 97255)
++-- TOC entry 3816 (class 1259 OID 18236)
+ -- Name: idx_aulas_conflito_professor; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11462,7 +11464,7 @@
+ 
+ 
+ --
+--- TOC entry 3747 (class 1259 OID 97256)
++-- TOC entry 3817 (class 1259 OID 18237)
+ -- Name: idx_aulas_conflito_turma; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11470,7 +11472,7 @@
+ 
+ 
+ --
+--- TOC entry 3748 (class 1259 OID 97257)
++-- TOC entry 3818 (class 1259 OID 18985)
+ -- Name: idx_aulas_dia_slot; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11478,7 +11480,7 @@
+ 
+ 
+ --
+--- TOC entry 3749 (class 1259 OID 97258)
++-- TOC entry 3819 (class 1259 OID 18984)
+ -- Name: idx_aulas_disciplina_id; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11486,7 +11488,7 @@
+ 
+ 
+ --
+--- TOC entry 3750 (class 1259 OID 97259)
++-- TOC entry 3820 (class 1259 OID 18983)
+ -- Name: idx_aulas_espaco_id; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11494,7 +11496,7 @@
+ 
+ 
+ --
+--- TOC entry 3751 (class 1259 OID 97260)
++-- TOC entry 3821 (class 1259 OID 18982)
+ -- Name: idx_aulas_professor_id; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11502,7 +11504,7 @@
+ 
+ 
+ --
+--- TOC entry 3752 (class 1259 OID 97261)
++-- TOC entry 3822 (class 1259 OID 18981)
+ -- Name: idx_aulas_turma_id; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11510,7 +11512,7 @@
+ 
+ 
+ --
+--- TOC entry 3753 (class 1259 OID 97262)
++-- TOC entry 3823 (class 1259 OID 18239)
+ -- Name: idx_aulas_versao; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11518,7 +11520,7 @@
+ 
+ 
+ --
+--- TOC entry 3754 (class 1259 OID 97263)
++-- TOC entry 3824 (class 1259 OID 18980)
+ -- Name: idx_aulas_versao_id; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11526,7 +11528,7 @@
+ 
+ 
+ --
+--- TOC entry 3757 (class 1259 OID 97264)
++-- TOC entry 3827 (class 1259 OID 18391)
+ -- Name: idx_categorias_espacos_nome_unico; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11534,7 +11536,7 @@
+ 
+ 
+ --
+--- TOC entry 3766 (class 1259 OID 97265)
++-- TOC entry 3807 (class 1259 OID 18987)
+ -- Name: idx_disciplinas_curso_id; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11542,7 +11544,7 @@
+ 
+ 
+ --
+--- TOC entry 3767 (class 1259 OID 97266)
++-- TOC entry 3808 (class 1259 OID 18360)
+ -- Name: idx_disciplinas_nome_curso_unico; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11550,7 +11552,7 @@
+ 
+ 
+ --
+--- TOC entry 3774 (class 1259 OID 97267)
++-- TOC entry 3836 (class 1259 OID 18988)
+ -- Name: idx_eventos_periodo_id; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11558,7 +11560,7 @@
+ 
+ 
+ --
+--- TOC entry 3787 (class 1259 OID 97268)
++-- TOC entry 3837 (class 1259 OID 18990)
+ -- Name: idx_reservas_data_slot; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11566,7 +11568,7 @@
+ 
+ 
+ --
+--- TOC entry 3788 (class 1259 OID 97269)
++-- TOC entry 3838 (class 1259 OID 18989)
+ -- Name: idx_reservas_espaco_id; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11574,7 +11576,7 @@
+ 
+ 
+ --
+--- TOC entry 3793 (class 1259 OID 97270)
++-- TOC entry 3800 (class 1259 OID 18986)
+ -- Name: idx_turmas_curso_id; Type: INDEX; Schema: public; Owner: postgres
+ --
+ 
+@@ -11582,7 +11584,7 @@
+ 
+ 
+ --
+--- TOC entry 3815 (class 2620 OID 97271)
++-- TOC entry 3860 (class 2620 OID 18932)
+ -- Name: reservas_espacos trg_validar_reserva; Type: TRIGGER; Schema: public; Owner: postgres
+ --
+ 
+@@ -11590,7 +11592,7 @@
+ 
+ 
+ --
+--- TOC entry 3800 (class 2606 OID 97272)
++-- TOC entry 3849 (class 2606 OID 17752)
+ -- Name: aulas aulas_disciplina_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11599,7 +11601,7 @@
+ 
+ 
+ --
+--- TOC entry 3801 (class 2606 OID 97277)
++-- TOC entry 3850 (class 2606 OID 17762)
+ -- Name: aulas aulas_espaco_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11608,7 +11610,7 @@
+ 
+ 
+ --
+--- TOC entry 3802 (class 2606 OID 97282)
++-- TOC entry 3851 (class 2606 OID 17757)
+ -- Name: aulas aulas_professor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11617,7 +11619,7 @@
+ 
+ 
+ --
+--- TOC entry 3803 (class 2606 OID 97287)
++-- TOC entry 3852 (class 2606 OID 17767)
+ -- Name: aulas aulas_slot_horario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11626,7 +11628,7 @@
+ 
+ 
+ --
+--- TOC entry 3804 (class 2606 OID 97292)
++-- TOC entry 3853 (class 2606 OID 17747)
+ -- Name: aulas aulas_turma_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11635,7 +11637,7 @@
+ 
+ 
+ --
+--- TOC entry 3805 (class 2606 OID 97297)
++-- TOC entry 3854 (class 2606 OID 18215)
+ -- Name: aulas aulas_versao_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11644,7 +11646,7 @@
+ 
+ 
+ --
+--- TOC entry 3806 (class 2606 OID 97302)
++-- TOC entry 3847 (class 2606 OID 18093)
+ -- Name: disciplinas disciplinas_curso_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11653,7 +11655,7 @@
+ 
+ 
+ --
+--- TOC entry 3807 (class 2606 OID 97307)
++-- TOC entry 3845 (class 2606 OID 18149)
+ -- Name: espacos espacos_categoria_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11662,7 +11664,7 @@
+ 
+ 
+ --
+--- TOC entry 3808 (class 2606 OID 97312)
++-- TOC entry 3857 (class 2606 OID 18773)
+ -- Name: eventos_calendario eventos_calendario_periodo_letivo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11671,7 +11673,7 @@
+ 
+ 
+ --
+--- TOC entry 3809 (class 2606 OID 97317)
++-- TOC entry 3855 (class 2606 OID 18602)
+ -- Name: professores_indisponibilidades professores_indisponibilidades_professor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11680,7 +11682,7 @@
+ 
+ 
+ --
+--- TOC entry 3810 (class 2606 OID 97322)
++-- TOC entry 3856 (class 2606 OID 18607)
+ -- Name: professores_indisponibilidades professores_indisponibilidades_slot_horario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11689,7 +11691,7 @@
+ 
+ 
+ --
+--- TOC entry 3811 (class 2606 OID 97327)
++-- TOC entry 3858 (class 2606 OID 18907)
+ -- Name: reservas_espacos reservas_espacos_espaco_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11698,7 +11700,7 @@
+ 
+ 
+ --
+--- TOC entry 3812 (class 2606 OID 97332)
++-- TOC entry 3859 (class 2606 OID 18912)
+ -- Name: reservas_espacos reservas_espacos_slot_horario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11707,7 +11709,7 @@
+ 
+ 
+ --
+--- TOC entry 3813 (class 2606 OID 97337)
++-- TOC entry 3846 (class 2606 OID 17606)
+ -- Name: turmas turmas_curso_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11716,7 +11718,7 @@
+ 
+ 
+ --
+--- TOC entry 3814 (class 2606 OID 97342)
++-- TOC entry 3848 (class 2606 OID 17636)
+ -- Name: versoes_grade versoes_grade_criado_por_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+ --
+ 
+@@ -11725,7 +11727,7 @@
+ 
+ 
+ --
+--- TOC entry 3974 (class 3256 OID 97347)
++-- TOC entry 4034 (class 3256 OID 17838)
+ -- Name: aulas Permitir controle total em aulas no admin; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11733,7 +11735,7 @@
+ 
+ 
+ --
+--- TOC entry 3975 (class 3256 OID 97348)
++-- TOC entry 4026 (class 3256 OID 17718)
+ -- Name: cursos Permitir escrita para usuários logados em cursos; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11741,7 +11743,7 @@
+ 
+ 
+ --
+--- TOC entry 3976 (class 3256 OID 97349)
++-- TOC entry 4028 (class 3256 OID 17720)
+ -- Name: disciplinas Permitir escrita para usuários logados em disciplinas; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11749,7 +11751,7 @@
+ 
+ 
+ --
+--- TOC entry 3977 (class 3256 OID 97350)
++-- TOC entry 4025 (class 3256 OID 17717)
+ -- Name: espacos Permitir escrita para usuários logados em espacos; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11757,7 +11759,7 @@
+ 
+ 
+ --
+--- TOC entry 3978 (class 3256 OID 97351)
++-- TOC entry 4024 (class 3256 OID 17716)
+ -- Name: professores Permitir escrita para usuários logados em professores; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11765,7 +11767,7 @@
+ 
+ 
+ --
+--- TOC entry 3979 (class 3256 OID 97352)
++-- TOC entry 4029 (class 3256 OID 17721)
+ -- Name: slots_horarios Permitir escrita para usuários logados em slots; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11773,7 +11775,7 @@
+ 
+ 
+ --
+--- TOC entry 3980 (class 3256 OID 97353)
++-- TOC entry 4027 (class 3256 OID 17719)
+ -- Name: turmas Permitir escrita para usuários logados em turmas; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11781,7 +11783,7 @@
+ 
+ 
+ --
+--- TOC entry 3981 (class 3256 OID 97354)
++-- TOC entry 4030 (class 3256 OID 17722)
+ -- Name: versoes_grade Permitir escrita para usuários logados em versoes; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11789,7 +11791,7 @@
+ 
+ 
+ --
+--- TOC entry 3982 (class 3256 OID 97355)
++-- TOC entry 4037 (class 3256 OID 18917)
+ -- Name: reservas_espacos Permitir leitura e escrita para reservas; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11797,7 +11799,7 @@
+ 
+ 
+ --
+--- TOC entry 3983 (class 3256 OID 97356)
++-- TOC entry 4033 (class 3256 OID 17772)
+ -- Name: aulas Permitir leitura pública em aulas; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11805,7 +11807,7 @@
+ 
+ 
+ --
+--- TOC entry 3984 (class 3256 OID 97357)
++-- TOC entry 4031 (class 3256 OID 17731)
+ -- Name: cursos Permitir leitura pública em cursos; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11813,7 +11815,7 @@
+ 
+ 
+ --
+--- TOC entry 3985 (class 3256 OID 97358)
++-- TOC entry 4032 (class 3256 OID 17738)
+ -- Name: disciplinas Permitir leitura pública em disciplinas; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11821,7 +11823,7 @@
+ 
+ 
+ --
+--- TOC entry 3986 (class 3256 OID 97359)
++-- TOC entry 4020 (class 3256 OID 17709)
+ -- Name: espacos Permitir leitura pública em espacos; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11829,7 +11831,7 @@
+ 
+ 
+ --
+--- TOC entry 3987 (class 3256 OID 97360)
++-- TOC entry 4019 (class 3256 OID 17708)
+ -- Name: professores Permitir leitura pública em professores; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11837,7 +11839,7 @@
+ 
+ 
+ --
+--- TOC entry 3988 (class 3256 OID 97361)
++-- TOC entry 4022 (class 3256 OID 17713)
+ -- Name: slots_horarios Permitir leitura pública em slots; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11845,7 +11847,7 @@
+ 
+ 
+ --
+--- TOC entry 3989 (class 3256 OID 97362)
++-- TOC entry 4021 (class 3256 OID 17711)
+ -- Name: turmas Permitir leitura pública em turmas; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11853,7 +11855,7 @@
+ 
+ 
+ --
+--- TOC entry 3990 (class 3256 OID 97363)
++-- TOC entry 4023 (class 3256 OID 17714)
+ -- Name: versoes_grade Permitir leitura pública em versoes; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11861,7 +11863,7 @@
+ 
+ 
+ --
+--- TOC entry 3991 (class 3256 OID 97364)
++-- TOC entry 4038 (class 3256 OID 18928)
+ -- Name: configuracoes_semestre Permitir tudo em config_semestre; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11869,7 +11871,7 @@
+ 
+ 
+ --
+--- TOC entry 3992 (class 3256 OID 97365)
++-- TOC entry 4040 (class 3256 OID 18930)
+ -- Name: eventos_calendario Permitir tudo em eventos_calendario; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11877,7 +11879,7 @@
+ 
+ 
+ --
+--- TOC entry 3993 (class 3256 OID 97366)
++-- TOC entry 4039 (class 3256 OID 18929)
+ -- Name: periodos_letivos Permitir tudo em periodos_letivos; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11885,7 +11887,7 @@
+ 
+ 
+ --
+--- TOC entry 3994 (class 3256 OID 97367)
++-- TOC entry 4036 (class 3256 OID 18779)
+ -- Name: eventos_calendario Permitir tudo para autenticados em eventos_calendario; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11893,7 +11895,7 @@
+ 
+ 
+ --
+--- TOC entry 3995 (class 3256 OID 97368)
++-- TOC entry 4035 (class 3256 OID 18778)
+ -- Name: periodos_letivos Permitir tudo para autenticados em periodos_letivos; Type: POLICY; Schema: public; Owner: postgres
+ --
+ 
+@@ -11901,78 +11903,78 @@
+ 
+ 
+ --
+--- TOC entry 3967 (class 0 OID 97110)
+--- Dependencies: 383
++-- TOC entry 4014 (class 0 OID 17739)
++-- Dependencies: 391
+ -- Name: aulas; Type: ROW SECURITY; Schema: public; Owner: postgres
+ --
+ 
+ ALTER TABLE public.aulas ENABLE ROW LEVEL SECURITY;
+ 
+ --
+--- TOC entry 3968 (class 0 OID 97123)
+--- Dependencies: 385
++-- TOC entry 4018 (class 0 OID 18918)
++-- Dependencies: 398
+ -- Name: configuracoes_semestre; Type: ROW SECURITY; Schema: public; Owner: postgres
+ --
+ 
+ ALTER TABLE public.configuracoes_semestre ENABLE ROW LEVEL SECURITY;
+ 
+ --
+--- TOC entry 3969 (class 0 OID 97148)
+--- Dependencies: 389
++-- TOC entry 4016 (class 0 OID 18765)
++-- Dependencies: 396
+ -- Name: eventos_calendario; Type: ROW SECURITY; Schema: public; Owner: postgres
+ --
+ 
+ ALTER TABLE public.eventos_calendario ENABLE ROW LEVEL SECURITY;
+ 
+ --
+--- TOC entry 3970 (class 0 OID 97154)
+--- Dependencies: 390
++-- TOC entry 4015 (class 0 OID 18755)
++-- Dependencies: 395
+ -- Name: periodos_letivos; Type: ROW SECURITY; Schema: public; Owner: postgres
+ --
+ 
+ ALTER TABLE public.periodos_letivos ENABLE ROW LEVEL SECURITY;
+ 
+ --
+--- TOC entry 3971 (class 0 OID 97173)
+--- Dependencies: 393
++-- TOC entry 4017 (class 0 OID 18897)
++-- Dependencies: 397
+ -- Name: reservas_espacos; Type: ROW SECURITY; Schema: public; Owner: postgres
+ --
+ 
+ ALTER TABLE public.reservas_espacos ENABLE ROW LEVEL SECURITY;
+ 
+ --
+--- TOC entry 3972 (class 0 OID 97181)
+--- Dependencies: 394
++-- TOC entry 4012 (class 0 OID 17619)
++-- Dependencies: 388
+ -- Name: slots_horarios; Type: ROW SECURITY; Schema: public; Owner: postgres
+ --
+ 
+ ALTER TABLE public.slots_horarios ENABLE ROW LEVEL SECURITY;
+ 
+ --
+--- TOC entry 3973 (class 0 OID 97192)
+--- Dependencies: 396
++-- TOC entry 4013 (class 0 OID 17626)
++-- Dependencies: 389
+ -- Name: versoes_grade; Type: ROW SECURITY; Schema: public; Owner: postgres
+ --
+ 
+ ALTER TABLE public.versoes_grade ENABLE ROW LEVEL SECURITY;
+ 
+ --
+--- TOC entry 4021 (class 0 OID 0)
+--- Dependencies: 4019
++-- TOC entry 4070 (class 0 OID 0)
++-- Dependencies: 4068
+ -- Name: DATABASE postgres; Type: ACL; Schema: -; Owner: postgres
+ --
+ 
+ GRANT CREATE ON DATABASE postgres TO supabase_etl_admin;
++GRANT CREATE ON DATABASE postgres TO supabase_storage_admin;
+ GRANT ALL ON DATABASE postgres TO dashboard_user;
+ 
+ 
+ --
+--- TOC entry 4024 (class 0 OID 0)
+--- Dependencies: 123
++-- TOC entry 4073 (class 0 OID 0)
++-- Dependencies: 12
+ -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
+ --
+ 
+-REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+ GRANT USAGE ON SCHEMA public TO postgres;
+ GRANT USAGE ON SCHEMA public TO anon;
+ GRANT USAGE ON SCHEMA public TO authenticated;
+@@ -11980,8 +11982,8 @@
+ 
+ 
+ --
+--- TOC entry 4025 (class 0 OID 0)
+--- Dependencies: 520
++-- TOC entry 4074 (class 0 OID 0)
++-- Dependencies: 514
+ -- Name: FUNCTION fn_validar_reserva_antes_save(); Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -11991,8 +11993,8 @@
+ 
+ 
+ --
+--- TOC entry 4026 (class 0 OID 0)
+--- Dependencies: 383
++-- TOC entry 4075 (class 0 OID 0)
++-- Dependencies: 391
+ -- Name: TABLE aulas; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12002,8 +12004,8 @@
+ 
+ 
+ --
+--- TOC entry 4027 (class 0 OID 0)
+--- Dependencies: 384
++-- TOC entry 4076 (class 0 OID 0)
++-- Dependencies: 392
+ -- Name: TABLE categorias_espacos; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12013,8 +12015,8 @@
+ 
+ 
+ --
+--- TOC entry 4028 (class 0 OID 0)
+--- Dependencies: 385
++-- TOC entry 4077 (class 0 OID 0)
++-- Dependencies: 398
+ -- Name: TABLE configuracoes_semestre; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12024,8 +12026,8 @@
+ 
+ 
+ --
+--- TOC entry 4030 (class 0 OID 0)
+--- Dependencies: 386
++-- TOC entry 4079 (class 0 OID 0)
++-- Dependencies: 385
+ -- Name: TABLE cursos; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12035,7 +12037,7 @@
+ 
+ 
+ --
+--- TOC entry 4032 (class 0 OID 0)
++-- TOC entry 4081 (class 0 OID 0)
+ -- Dependencies: 387
+ -- Name: TABLE disciplinas; Type: ACL; Schema: public; Owner: postgres
+ --
+@@ -12046,8 +12048,8 @@
+ 
+ 
+ --
+--- TOC entry 4033 (class 0 OID 0)
+--- Dependencies: 388
++-- TOC entry 4082 (class 0 OID 0)
++-- Dependencies: 384
+ -- Name: TABLE espacos; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12057,8 +12059,8 @@
+ 
+ 
+ --
+--- TOC entry 4035 (class 0 OID 0)
+--- Dependencies: 389
++-- TOC entry 4084 (class 0 OID 0)
++-- Dependencies: 396
+ -- Name: TABLE eventos_calendario; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12068,8 +12070,8 @@
+ 
+ 
+ --
+--- TOC entry 4037 (class 0 OID 0)
+--- Dependencies: 390
++-- TOC entry 4086 (class 0 OID 0)
++-- Dependencies: 395
+ -- Name: TABLE periodos_letivos; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12079,8 +12081,8 @@
+ 
+ 
+ --
+--- TOC entry 4038 (class 0 OID 0)
+--- Dependencies: 391
++-- TOC entry 4087 (class 0 OID 0)
++-- Dependencies: 383
+ -- Name: TABLE professores; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12090,8 +12092,8 @@
+ 
+ 
+ --
+--- TOC entry 4039 (class 0 OID 0)
+--- Dependencies: 392
++-- TOC entry 4088 (class 0 OID 0)
++-- Dependencies: 394
+ -- Name: TABLE professores_indisponibilidades; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12101,8 +12103,8 @@
+ 
+ 
+ --
+--- TOC entry 4041 (class 0 OID 0)
+--- Dependencies: 393
++-- TOC entry 4090 (class 0 OID 0)
++-- Dependencies: 397
+ -- Name: TABLE reservas_espacos; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12112,8 +12114,8 @@
+ 
+ 
+ --
+--- TOC entry 4042 (class 0 OID 0)
+--- Dependencies: 394
++-- TOC entry 4091 (class 0 OID 0)
++-- Dependencies: 388
+ -- Name: TABLE slots_horarios; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12123,8 +12125,8 @@
+ 
+ 
+ --
+--- TOC entry 4043 (class 0 OID 0)
+--- Dependencies: 395
++-- TOC entry 4092 (class 0 OID 0)
++-- Dependencies: 386
+ -- Name: TABLE turmas; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12134,8 +12136,8 @@
+ 
+ 
+ --
+--- TOC entry 4044 (class 0 OID 0)
+--- Dependencies: 396
++-- TOC entry 4093 (class 0 OID 0)
++-- Dependencies: 389
+ -- Name: TABLE versoes_grade; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12145,8 +12147,8 @@
+ 
+ 
+ --
+--- TOC entry 4045 (class 0 OID 0)
+--- Dependencies: 397
++-- TOC entry 4094 (class 0 OID 0)
++-- Dependencies: 393
+ -- Name: TABLE vw_choques_horarios_base; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12156,8 +12158,8 @@
+ 
+ 
+ --
+--- TOC entry 4046 (class 0 OID 0)
+--- Dependencies: 398
++-- TOC entry 4095 (class 0 OID 0)
++-- Dependencies: 400
+ -- Name: TABLE vw_choques_horarios; Type: ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12167,7 +12169,7 @@
+ 
+ 
+ --
+--- TOC entry 4047 (class 0 OID 0)
++-- TOC entry 4096 (class 0 OID 0)
+ -- Dependencies: 399
+ -- Name: TABLE vw_validacoes_reservas; Type: ACL; Schema: public; Owner: postgres
+ --
+@@ -12178,7 +12180,7 @@
+ 
+ 
+ --
+--- TOC entry 2536 (class 826 OID 97369)
++-- TOC entry 2518 (class 826 OID 16494)
+ -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12189,7 +12191,18 @@
+ 
+ 
+ --
+--- TOC entry 2537 (class 826 OID 97370)
++-- TOC entry 2519 (class 826 OID 16495)
++-- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
++--
++
++ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres;
++ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO anon;
++ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO authenticated;
++ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
++
++
++--
++-- TOC entry 2517 (class 826 OID 16493)
+ -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12200,7 +12213,18 @@
+ 
+ 
+ --
+--- TOC entry 2538 (class 826 OID 97371)
++-- TOC entry 2521 (class 826 OID 16497)
++-- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
++--
++
++ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO postgres;
++ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO anon;
++ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO authenticated;
++ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON FUNCTIONS TO service_role;
++
++
++--
++-- TOC entry 2516 (class 826 OID 16492)
+ -- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: postgres
+ --
+ 
+@@ -12210,11 +12234,22 @@
+ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO service_role;
+ 
+ 
+--- Completed on 2026-08-18 16:21:10 -03
++--
++-- TOC entry 2520 (class 826 OID 16496)
++-- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: supabase_admin
++--
++
++ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO postgres;
++ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO anon;
++ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO authenticated;
++ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON TABLES TO service_role;
++
++
++-- Completed on 2026-08-18 16:22:41 -03
+ 
+ --
+ -- PostgreSQL database dump complete
+ --
+ 
+-\unrestrict z1g5te2NuUJU6a9bbGEfSQdvG98FxbwmMpXqyIF9MoMRs45BF36wgeHfaRMXF8N
++\unrestrict nFsMWggX0KNb8qjCNGPdXmnGmyJ1Vw8Wy9FqgMldKfdkOfCgTweAqcWGTzPhP7a
+ 

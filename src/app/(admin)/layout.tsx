@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { MasterDataProvider } from "./components/MasterDataContext";
 
 export default function AdminLayout({
   children,
@@ -222,7 +223,9 @@ export default function AdminLayout({
         </header>
 
         <main className="flex-1 overflow-y-auto bg-gray-50 relative p-4 md:p-8">
-          {children}
+          <MasterDataProvider>
+            {children}
+          </MasterDataProvider>
         </main>
       </div>
 
