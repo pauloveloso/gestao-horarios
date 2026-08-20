@@ -184,47 +184,47 @@ export default function LancamentosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
+      <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex-1">
-          <h1 className="text-3xl font-black text-gray-800 tracking-tight flex items-center gap-3">
+          <h1 className="text-base font-black uppercase tracking-tight text-white flex items-center gap-3">
             Lançamentos
           </h1>
-          <p className="text-gray-500 mt-1 font-medium">
+          <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
             Gestão acadêmica do semestre
           </p>
         </div>
 
         {versaoRascunho && (
           <div className="hidden md:flex flex-col items-center justify-center px-4">
-            <span className="text-[10px] font-black uppercase text-gray-400">
+            <span className="text-[10px] font-black uppercase text-green-200">
               Editando Rascunho
             </span>
-            <span className="text-xs font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200 mt-0.5">
+            <span className="text-xs font-bold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-200 mt-0.5 tracking-widest uppercase">
               {versaoRascunho.nome}
             </span>
           </div>
         )}
 
-        <div className="flex bg-gray-100 p-1 rounded-lg shadow-inner">
+        <div className="flex bg-green-950 p-1 rounded-lg shadow-inner">
           <button
             onClick={() => setModoAtivo("PLANILHA")}
-            className={`px-6 py-2 rounded-md font-bold text-sm transition-all ${
+            className={`px-6 py-2 rounded-md font-bold text-xs uppercase tracking-widest transition-all ${
               modoAtivo === "PLANILHA"
-                ? "bg-white text-green-700 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-green-600 text-white shadow-sm"
+                : "text-green-400 hover:text-white"
             }`}
           >
-            📋 Modo Planilha
+            📋 Planilha
           </button>
           <button
             onClick={() => setModoAtivo("GRADE")}
-            className={`px-6 py-2 rounded-md font-bold text-sm transition-all ${
+            className={`px-6 py-2 rounded-md font-bold text-xs uppercase tracking-widest transition-all ${
               modoAtivo === "GRADE"
-                ? "bg-white text-green-700 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-green-600 text-white shadow-sm"
+                : "text-green-400 hover:text-white"
             }`}
           >
-            🗓️ Modo Grade
+            🗓️ Grade
           </button>
         </div>
       </div>

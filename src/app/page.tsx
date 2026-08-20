@@ -3,13 +3,18 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas-pro";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { PDFPublicoDocument } from "./components/PDFPublicoDocument";
 
 export default function HomePage() {
   const [carregando, setCarregando] = useState(true);
   const [gerandoPDF, setGerandoPDF] = useState(false);
   const [logado, setLogado] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const [versoes, setVersoes] = useState<any[]>([]);
   const [versaoSelecionada, setVersaoSelecionada] = useState<string>("");
@@ -201,68 +206,13 @@ export default function HomePage() {
     });
 
   const gerarPDF = async () => {
-    if (!relatorioRef.current) return;
-    setGerandoPDF(true);
-
-    try {
-      const elemento = relatorioRef.current;
-
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-
-      const margin = 10;
-      const maxPdfWidth = pdf.internal.pageSize.getWidth() - margin * 2;
-      const maxPdfHeight = pdf.internal.pageSize.getHeight() - margin * 2;
-
-      const canvas = await html2canvas(elemento, {
-        scale: 1.5,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-      });
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.75);
-
-      const imgRatio = canvas.height / canvas.width;
-      let imgWidth = maxPdfWidth;
-      let imgHeight = imgWidth * imgRatio;
-
-      if (imgHeight > maxPdfHeight) {
-        imgHeight = maxPdfHeight;
-        imgWidth = imgHeight / imgRatio;
-      }
-
-      const xOffset = margin + (maxPdfWidth - imgWidth) / 2;
-      const yOffset = margin;
-
-      pdf.addImage(
-        imgData,
-        "JPEG",
-        xOffset,
-        yOffset,
-        imgWidth,
-        imgHeight,
-        undefined,
-        "FAST",
-      );
-
-      const tituloSeguro =
-        obterTituloGrade()
-          .replace(/[^a-zA-Z0-9]/g, "_")
-          .replace(/_+/g, "_")
-          .toLowerCase() || "horarios";
-      pdf.save(`IFNMG_${tituloSeguro}.pdf`);
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      alert("Ocorreu um erro ao exportar o PDF. Tente novamente.");
-    } finally {
-      setGerandoPDF(false);
-    }
+    // Legacy function removed
   };
+
+  const tituloSeguro = obterTituloGrade()
+    .replace(/[^a-zA-Z0-9]/g, "_")
+    .replace(/_+/g, "_")
+    .toLowerCase() || "horarios";
 
   if (carregando && !versaoSelecionada) {
     return (
@@ -284,19 +234,15 @@ export default function HomePage() {
                   | IFNMG
                 </span>
               </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-1">
-                <p className="text-sm font-medium text-green-100 uppercase tracking-widest">
-                  Portal de Horários
-                </p>
-
+              <div className="flex items-center gap-2 w-full xl:w-auto">
+                <span className="text-xs font-bold text-green-200 whitespace-nowrap uppercase tracking-wider hidden sm:block">
+                  Semestre/Ano:
+                </span>
                 {versoes.length > 0 && (
                   <select
                     value={versaoSelecionada}
-                    onChange={(e) => {
-                      setVersaoSelecionada(e.target.value);
-                      setIdSelecionado("");
-                    }}
-                    className="bg-green-900 text-green-100 text-[11px] font-bold uppercase rounded border border-green-700 px-2 py-1 outline-none cursor-pointer hover:bg-green-700 transition-colors"
+                    onChange={(e) => setVersaoSelecionada(e.target.value)}
+                    className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-full xl:max-w-xs"
                   >
                     {versoes.map((v, idx) => {
                       const hoje = new Date().toISOString().split("T")[0];
@@ -361,7 +307,7 @@ export default function HomePage() {
             <select
               value={idSelecionado}
               onChange={(e) => setIdSelecionado(e.target.value)}
-              className="bg-white text-gray-800 rounded-lg p-2 text-sm font-bold outline-none border-none w-full sm:w-[250px] shadow-inner truncate h-10"
+              className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-full sm:w-[250px] truncate h-10 shadow-sm"
             >
               <option value="">Escolha...</option>
               {tipoFiltro === "TURMA" &&
@@ -407,23 +353,47 @@ export default function HomePage() {
                 })}
             </select>
 
-            <button
-              onClick={gerarPDF}
-              disabled={
-                !idSelecionado || turnosOcupados.length === 0 || gerandoPDF
-              }
-              className="bg-white text-green-800 px-4 py-2 rounded-lg font-black text-xs shadow hover:bg-green-50 transition-all active:scale-95 disabled:opacity-30 h-10 flex items-center justify-center min-w-[130px]"
-              title="Baixar PDF"
-            >
-              {gerandoPDF ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-3 h-3 border-2 border-green-800 border-t-transparent rounded-full animate-spin"></div>
-                  Gerando...
-                </span>
+            <div className="flex gap-2 w-full xl:w-auto mt-4 xl:mt-0">
+              {(!idSelecionado || turnosOcupados.length === 0 || !isClient) ? (
+                <button
+                  disabled
+                  className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm h-10 min-w-[150px]"
+                >
+                  <span className="hidden sm:inline">🖨️ BAIXAR PDF</span>
+                  <span className="sm:hidden">🖨️ PDF</span>
+                </button>
               ) : (
-                "🖨️ BAIXAR PDF"
+                <PDFDownloadLink
+                  document={
+                    <PDFPublicoDocument
+                      dados={dados}
+                      turnosOcupados={turnosOcupados}
+                      diasSemana={diasSemana}
+                      tipoFiltro={tipoFiltro}
+                      idSelecionado={idSelecionado}
+                      titulo={obterTituloGrade()}
+                      dataVigencia={formatarData(infoVersao?.data_inicio_vigencia)}
+                    />
+                  }
+                  fileName={`Horario_${tituloSeguro}.pdf`}
+                  className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm h-10 min-w-[150px] whitespace-nowrap"
+                >
+                  {({ loading }) =>
+                    loading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span className="hidden sm:inline">GERANDO...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>📄</span> <span className="hidden sm:inline">BAIXAR PDF</span>
+                        <span className="sm:hidden">BAIXAR PDF</span>
+                      </>
+                    )
+                  }
+                </PDFDownloadLink>
               )}
-            </button>
+            </div>
           </div>
         </div>
       </header>
@@ -442,7 +412,7 @@ export default function HomePage() {
             </p>
           </div>
         ) : (
-          <div ref={relatorioRef} className="bg-white p-4">
+          <div className="bg-white p-4">
             <div className="text-center py-4 bg-white border-b border-gray-400 mb-4">
               <h2 className="text-2xl font-black text-black uppercase tracking-wide">
                 IFNMG - Campus Januária | Quadro de Horário

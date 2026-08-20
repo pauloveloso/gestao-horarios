@@ -3,13 +3,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas-pro";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { PDFHorariosDocument } from "./components/PDFHorariosDocument";
 
 export default function QuadrosHorariosPage() {
   const [carregando, setCarregando] = useState(true);
-  const [exportando, setExportando] = useState(false);
   const conteudoRef = useRef<HTMLDivElement>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const [versoes, setVersoes] = useState<any[]>([]);
   const [semestres, setSemestres] = useState<string[]>([]);
@@ -214,56 +218,15 @@ export default function QuadrosHorariosPage() {
 
   const formatarHora = (hora: string) => (hora ? hora.substring(0, 5) : "");
 
-  const exportarParaPDF = async () => {
-    if (paginas.length === 0) return;
-    setExportando(true);
+  const getCursoNomeLimpo = () => {
+    const cursoObjeto = cursos.find(
+      (c) => String(c.id) === String(cursoSelecionado),
+    );
+    return cursoObjeto?.nome.replace(/[^a-zA-Z0-9]/g, "_") || "curso";
+  };
 
-    try {
-      const cursoObjeto = cursos.find(
-        (c) => String(c.id) === String(cursoSelecionado),
-      );
-      const nomeCursoLimpo =
-        cursoObjeto?.nome.replace(/[^a-zA-Z0-9]/g, "_") || "curso";
-
-      const siglaLimpa = semestreSelecionado.replace(/[^a-zA-Z0-9]/g, "_");
-
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-
-      window.scrollTo(0, 0);
-
-      for (let i = 0; i < paginas.length; i++) {
-        const folhaElement = document.getElementById(`quadro-pdf-${i}`);
-        if (!folhaElement) continue;
-
-        // AQUI ESTÁ A CORREÇÃO DE QUALIDADE (scale: 3 e qualidade do imgData)
-        const canvas = await html2canvas(folhaElement, {
-          scale: 3,
-          useCORS: true,
-          logging: false,
-          scrollY: 0,
-          x: 0,
-          y: 0,
-          backgroundColor: "#ffffff",
-        });
-
-        const imgData = canvas.toDataURL("image/jpeg", 0.95);
-
-        if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
-      }
-
-      pdf.save(`QUADRO_HORARIOS_${nomeCursoLimpo}_${siglaLimpa}.pdf`);
-    } catch (error) {
-      console.error("Erro ao processar exportação para o PDF:", error);
-      alert("Ocorreu um erro ao gerar o PDF.");
-    } finally {
-      setExportando(false);
-    }
+  const getSiglaLimpa = () => {
+    return semestreSelecionado.replace(/[^a-zA-Z0-9]/g, "_");
   };
 
   const QuadroHorario = ({ pagina, index }: { pagina: any; index: number }) => {
@@ -448,7 +411,7 @@ export default function QuadrosHorariosPage() {
                 <select
                   value={semestreSelecionado}
                   onChange={(e) => setSemestreSelecionado(e.target.value)}
-                  className="bg-green-800 border border-green-700 text-white rounded px-3 py-2 text-sm font-bold outline-none cursor-pointer focus:border-green-400 max-w-[200px] truncate"
+                  className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[200px] truncate"
                 >
                   {semestres.map((s) => (
                     <option key={s} value={s}>
@@ -465,7 +428,7 @@ export default function QuadrosHorariosPage() {
                 <select
                   value={cursoSelecionado}
                   onChange={(e) => setCursoSelecionado(e.target.value)}
-                  className="bg-green-800 border border-green-700 text-white rounded px-3 py-2 text-sm font-bold outline-none cursor-pointer focus:border-green-400 max-w-[250px] truncate"
+                  className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[250px] truncate"
                 >
                   <option value="">Selecione um curso...</option>
                   {cursos.map((c) => (
@@ -476,23 +439,40 @@ export default function QuadrosHorariosPage() {
                 </select>
               </div>
 
-              <button
-                onClick={exportarParaPDF}
-                disabled={carregando || exportando || paginas.length === 0}
-                className="bg-green-500 hover:bg-green-400 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center gap-2 disabled:opacity-50 shadow-sm"
-              >
-                {exportando ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    GERANDO...
-                  </>
-                ) : (
-                  <>
-                    <span>📄</span> EXPORTAR PDF ({paginas.length}{" "}
-                    {paginas.length === 1 ? "Quadro" : "Quadros"})
-                  </>
-                )}
-              </button>
+              {!(isClient && paginas.length > 0) ? (
+                <button
+                  disabled
+                  className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center gap-2 disabled:opacity-50 shadow-sm min-w-[180px] justify-center h-9"
+                >
+                  📄 EXPORTAR PDF
+                </button>
+              ) : (
+                <PDFDownloadLink
+                  document={
+                    <PDFHorariosDocument
+                      paginas={paginas}
+                      versaoAtivaDetalhes={versaoAtivaDetalhes}
+                      originUrl={typeof window !== "undefined" ? window.location.origin : ""}
+                    />
+                  }
+                  fileName={`QUADRO_HORARIOS_${getCursoNomeLimpo()}_${getSiglaLimpa()}.pdf`}
+                  className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm min-w-[180px] whitespace-nowrap h-9"
+                >
+                  {({ loading }) =>
+                    loading ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        GERANDO...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        📄 EXPORTAR PDF ({paginas.length}{" "}
+                        {paginas.length === 1 ? "Quadro" : "Quadros"})
+                      </span>
+                    )
+                  }
+                </PDFDownloadLink>
+              )}
             </div>
           </div>
         </header>

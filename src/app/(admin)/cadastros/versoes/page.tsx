@@ -225,12 +225,12 @@ export default function GestaoVersoesPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center mt-6">
+      <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-6">
         <div>
-          <h1 className="text-2xl font-black text-green-800">
+          <h1 className="text-base font-black uppercase tracking-tight text-white">
             Controle de Versões
           </h1>
-          <p className="text-sm text-gray-500 font-medium mt-1">
+          <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
             Gerencie rascunhos, agende publicações e controle o histórico de
             horários.
           </p>
@@ -238,9 +238,9 @@ export default function GestaoVersoesPage() {
         {rascunhos.length === 0 && (
           <button
             onClick={() => setModalNovoRascunho(true)}
-            className="bg-green-600 text-white px-5 py-2.5 rounded shadow-sm text-sm font-bold hover:bg-green-700 transition-colors"
+            className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm w-full md:w-auto h-9"
           >
-            + Criar Rascunho Inicial
+            + CRIAR RASCUNHO INICIAL
           </button>
         )}
       </div>

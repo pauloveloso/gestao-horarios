@@ -86,7 +86,7 @@ export default function RelatorioProfessoresPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 h-screen flex flex-col">
       {/* CABEÇALHO PADRÃO */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden shrink-0 mt-6 relative">
+      <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col lg:flex-row justify-between items-center gap-4 mt-6">
         {/* Loading overlay discreto ao trocar de versão */}
         {carregando && versaoSelecionada && (
           <div className="absolute inset-0 z-10 bg-white/50 backdrop-blur-sm flex items-center justify-center rounded-xl">
@@ -95,7 +95,7 @@ export default function RelatorioProfessoresPage() {
         )}
 
         <div>
-          <h1 className="text-2xl font-black text-green-800 flex items-center gap-3">
+          <h1 className="text-base font-black uppercase tracking-tight text-white flex items-center gap-3">
             Carga Horária dos Docentes
             {versaoAtualObj?.status === "RASCUNHO" && (
               <span className="text-[10px] bg-yellow-100 text-yellow-800 border border-yellow-200 px-2 py-1 rounded tracking-widest uppercase align-middle">
@@ -103,7 +103,7 @@ export default function RelatorioProfessoresPage() {
               </span>
             )}
           </h1>
-          <p className="text-sm text-gray-500 font-medium mt-1">
+          <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
             Controle de ocupação e distribuição de aulas no campus.
           </p>
         </div>
@@ -114,7 +114,7 @@ export default function RelatorioProfessoresPage() {
             <select
               value={versaoSelecionada}
               onChange={(e) => setVersaoSelecionada(e.target.value)}
-              className="border border-green-300 bg-green-50 text-green-800 rounded p-2 text-sm outline-none font-bold w-full sm:w-auto shadow-sm"
+              className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[200px]"
               title="Filtrar por versão"
             >
               {versoes.map((v) => (
@@ -131,7 +131,7 @@ export default function RelatorioProfessoresPage() {
             placeholder="Buscar professor..."
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
-            className="border border-gray-300 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-56"
+            className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none hover:border-green-300 transition-all shadow-sm w-full sm:w-56 placeholder-green-800/50"
           />
           {/* 
           <button

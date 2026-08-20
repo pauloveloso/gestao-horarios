@@ -231,12 +231,12 @@ export default function DashboardPage() {
       )}
 
       {/* CABEÇALHO PADRÃO DO SISTEMA COM SELETOR */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-base font-black uppercase tracking-tight text-white">
             Dashboard Institucional
           </h1>
-          <p className="text-sm text-gray-500 font-medium mt-1">
+          <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
             Visão estratégica da grade de horários do campus.
           </p>
         </div>
@@ -246,7 +246,7 @@ export default function DashboardPage() {
             <select
               value={versaoSelecionada}
               onChange={(e) => setVersaoSelecionada(e.target.value)}
-              className="bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded px-3 py-2.5 outline-none focus:ring-2 focus:ring-green-600 w-full sm:w-auto cursor-pointer"
+              className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-full sm:max-w-auto"
             >
               {versoes.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -258,9 +258,9 @@ export default function DashboardPage() {
           )}
           <button
             onClick={carregarDadosEDiagnosticar}
-            className="bg-green-600 text-white px-5 py-2.5 rounded shadow-sm text-sm font-bold hover:bg-green-700 transition-colors shrink-0 w-full sm:w-auto flex justify-center gap-2"
+            className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm w-full sm:w-auto h-9"
           >
-            <span>🔄</span> Atualizar Dados
+            <span>🔄</span> ATUALIZAR DADOS
           </button>
         </div>
       </div>

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas-pro";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { PDFIntegradoDocument } from "./components/PDFIntegradoDocument";
 
 export default function ExportarPDFIntegradoPage() {
   const [carregando, setCarregando] = useState(true);
@@ -11,8 +11,11 @@ export default function ExportarPDFIntegradoPage() {
   const [versoes, setVersoes] = useState<any[]>([]);
   const [versaoSelecionada, setVersaoSelecionada] = useState("");
   const [dados, setDados] = useState<any>(null);
+  const [isClient, setIsClient] = useState(false);
 
-  const relatorioRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const dias = [
     { id: "SEGUNDA", label: "SEGUNDA" },
@@ -114,6 +117,8 @@ export default function ExportarPDFIntegradoPage() {
         });
       });
 
+      const versaoInfo = versoes.find(v => v.id === versaoSelecionada);
+
       setDados({
         aulas: aulas || [],
         grupos: gruposParaImpressao,
@@ -121,6 +126,7 @@ export default function ExportarPDFIntegradoPage() {
         disciplinas,
         espacos,
         slots: slotsFiltrados,
+        versao: versaoInfo,
       });
     } catch (error) {
       console.error("Erro:", error);
@@ -146,77 +152,8 @@ export default function ExportarPDFIntegradoPage() {
   };
 
   const gerarPDF = async () => {
-    if (!relatorioRef.current) return;
-    setGerandoPDF(true);
-
-    try {
-      const elementosTurma =
-        relatorioRef.current.querySelectorAll(".pdf-bloco-turma");
-
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      const usableHeight = pdfHeight - margin * 2;
-
-      let currentY = margin;
-      let isFirstPage = true;
-
-      for (let i = 0; i < elementosTurma.length; i++) {
-        const elemento = elementosTurma[i] as HTMLElement;
-
-        const canvas = await html2canvas(elemento, {
-          scale: 1.5,
-          useCORS: true,
-          logging: false,
-          backgroundColor: "#ffffff",
-        });
-
-        const imgData = canvas.toDataURL("image/jpeg", 0.75);
-
-        const imgWidth = pdfWidth - margin * 2;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        if (currentY + imgHeight <= usableHeight + margin) {
-          if (!isFirstPage && currentY === margin) {
-            // Primeira imagem da nova página
-          }
-        } else {
-          if (!isFirstPage) {
-            pdf.addPage();
-            currentY = margin;
-          }
-        }
-
-        pdf.addImage(
-          imgData,
-          "JPEG",
-          margin,
-          currentY,
-          imgWidth,
-          imgHeight,
-          undefined,
-          "FAST",
-        );
-
-        // Espaçamento pequeno entre as tabelas
-        currentY += imgHeight + 4;
-        isFirstPage = false;
-      }
-
-      pdf.save(`Horarios_Integrado_IFNMG.pdf`);
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      alert("Ocorreu um erro ao gerar o PDF. Tente novamente.");
-    } finally {
-      setGerandoPDF(false);
-    }
+    // A função antiga de gerarPDF via html2canvas foi removida.
+    // O PDF agora é gerado nativamente pelo @react-pdf/renderer através do botão de download.
   };
 
   if (carregando && !dados)
@@ -232,22 +169,22 @@ export default function ExportarPDFIntegradoPage() {
     );
 
   return (
-    <div className="space-y-6 pb-20">
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6 pb-20 max-w-7xl mx-auto">
+      <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col lg:flex-row justify-between items-center gap-4">
         <div>
-          <h1 className="text-xl font-black text-green-800">
+          <h1 className="text-base font-black uppercase tracking-tight text-white">
             Relatório Integrado (Oficial)
           </h1>
-          <p className="text-xs text-gray-500 font-bold uppercase mt-1">
+          <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
             Exportação em Alta Resolução (PDF Dinâmico)
           </p>
         </div>
-        <div className="flex flex-wrap gap-4 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-3 justify-end w-full lg:w-auto">
           <select
             value={versaoSelecionada}
             onChange={(e) => setVersaoSelecionada(e.target.value)}
             disabled={gerandoPDF}
-            className="border border-green-300 rounded p-2 text-sm font-bold bg-green-50 text-green-800 outline-none disabled:opacity-50"
+            className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[200px]"
           >
             {versoes.map((v) => (
               <option key={v.id} value={v.id}>
@@ -255,25 +192,38 @@ export default function ExportarPDFIntegradoPage() {
               </option>
             ))}
           </select>
-          <button
-            onClick={gerarPDF}
-            disabled={gerandoPDF || !dados || dados.grupos.length === 0}
-            className="bg-green-600 text-white px-6 py-2 rounded font-black text-sm shadow hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[160px] transition-all"
-          >
-            {gerandoPDF ? (
-              <span className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Processando...
-              </span>
-            ) : (
-              "📄 BAIXAR PDF"
-            )}
-          </button>
+          {!(isClient && dados && dados.grupos.length > 0) ? (
+            <button
+              disabled
+              className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm min-w-[150px] h-9"
+            >
+              🖨️ BAIXAR PDF
+            </button>
+          ) : (
+            <PDFDownloadLink
+              document={<PDFIntegradoDocument dados={dados} />}
+              fileName={`Horarios_Integrado_IFNMG.pdf`}
+              className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm min-w-[150px] whitespace-nowrap h-9"
+            >
+              {({ loading }) =>
+                loading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    GERANDO...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    📄 BAIXAR PDF
+                  </span>
+                )
+              }
+            </PDFDownloadLink>
+          )}
         </div>
       </div>
 
       <div className="bg-white p-2 rounded shadow-sm border border-gray-100 overflow-x-auto overflow-y-hidden">
-        <div ref={relatorioRef} className="w-full min-w-[900px] bg-white p-4">
+        <div className="w-full min-w-[900px] bg-white p-4">
           {dados?.grupos.map((grupo: any) => (
             <div key={grupo.id} className="mb-0">
               {grupo.turmas.map((turma: any) => (

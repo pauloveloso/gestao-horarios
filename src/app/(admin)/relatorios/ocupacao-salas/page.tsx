@@ -2,12 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas-pro";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { PDFOcupacaoSalasDocument } from "./components/PDFOcupacaoSalasDocument";
 
 export default function RelatorioOcupacaoSalasPage() {
   const [carregando, setCarregando] = useState(true);
-  const [gerandoPDF, setGerandoPDF] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const [versoes, setVersoes] = useState<any[]>([]);
   const [versaoSelecionada, setVersaoSelecionada] = useState<string>("");
@@ -162,115 +166,11 @@ export default function RelatorioOcupacaoSalasPage() {
     },
   ];
 
-  // ========================================================================
-  // MOTOR DE EXPORTAÇÃO PDF - 1 SALA POR PÁGINA (Prevenção de Limite de Memória)
-  // ========================================================================
-  const gerarPDF = async () => {
-    setGerandoPDF(true);
-
-    try {
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-
-      const marginX = 10;
-      const marginY = 10;
-      const maxPdfWidth = pdf.internal.pageSize.getWidth() - marginX * 2;
-      const maxPdfHeight = pdf.internal.pageSize.getHeight() - marginY * 2;
-
-      // Elementos do DOM a capturar
-      const cabecalhoEl = document.getElementById("cabecalho-relatorio");
-      const salasEls = document.querySelectorAll(".sala-print-container");
-
-      if (!cabecalhoEl || salasEls.length === 0) {
-        alert("Não há dados na tela para gerar o PDF.");
-        setGerandoPDF(false);
-        return;
-      }
-
-      // 1. CAPTURA O CABEÇALHO (Apenas 1 vez)
-      const canvasCabecalho = await html2canvas(cabecalhoEl, {
-        scale: 3,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-      });
-      const imgCabecalho = canvasCabecalho.toDataURL("image/jpeg", 0.95);
-      const ratioCabecalho = canvasCabecalho.height / canvasCabecalho.width;
-      const cabecalhoW = maxPdfWidth;
-      const cabecalhoH = cabecalhoW * ratioCabecalho;
-
-      // 2. CAPTURA CADA SALA E ADICIONA NUMA PÁGINA NOVA
-      for (let i = 0; i < salasEls.length; i++) {
-        if (i > 0) pdf.addPage();
-
-        // Cola o cabeçalho no topo da página atual
-        pdf.addImage(
-          imgCabecalho,
-          "JPEG",
-          marginX,
-          marginY,
-          cabecalhoW,
-          cabecalhoH,
-          undefined,
-          "FAST",
-        );
-
-        const salaEl = salasEls[i] as HTMLElement;
-
-        // Capta apenas a sala atual (impede o erro de Canvas gigante)
-        const canvasSala = await html2canvas(salaEl, {
-          scale: 3,
-          useCORS: true,
-          logging: false,
-          backgroundColor: "#ffffff",
-        });
-        const imgSala = canvasSala.toDataURL("image/jpeg", 0.95);
-
-        const ratioSala = canvasSala.height / canvasSala.width;
-        let salaW = maxPdfWidth;
-        let salaH = salaW * ratioSala;
-
-        // Calcula o espaço que sobrou debaixo do cabeçalho
-        const espacoDisponivelH = maxPdfHeight - cabecalhoH - 5;
-
-        // Se a sala for maior que o papel, escala para baixo mantendo proporção
-        if (salaH > espacoDisponivelH) {
-          salaH = espacoDisponivelH;
-          salaW = salaH / ratioSala;
-        }
-
-        const xOffset = marginX + (maxPdfWidth - salaW) / 2; // Centraliza a sala no meio da folha
-        const yOffset = marginY + cabecalhoH + 5; // Cola 5mm abaixo do cabeçalho
-
-        pdf.addImage(
-          imgSala,
-          "JPEG",
-          xOffset,
-          yOffset,
-          salaW,
-          salaH,
-          undefined,
-          "FAST",
-        );
-      }
-
-      const tituloSeguro =
-        infoCategoria?.nome
+  const getTituloSeguro = () => {
+    return infoCategoria?.nome
           .replace(/[^a-zA-Z0-9]/g, "_")
           .replace(/_+/g, "_")
           .toLowerCase() || "ocupacao";
-
-      pdf.save(`IFNMG_Salas_${tituloSeguro}.pdf`);
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      alert("Ocorreu um erro ao exportar o PDF. Tente novamente.");
-    } finally {
-      setGerandoPDF(false);
-    }
   };
 
   if (carregando && !versaoSelecionada) {
@@ -299,10 +199,10 @@ export default function RelatorioOcupacaoSalasPage() {
             <select
               value={versaoSelecionada}
               onChange={(e) => setVersaoSelecionada(e.target.value)}
-              className="bg-green-800 border border-green-700 text-white rounded p-2 text-xs font-bold outline-none cursor-pointer hover:bg-green-700 max-w-[200px]"
+              className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[200px]"
             >
               {versoes.map((v) => (
-                <option key={v.id} value={v.id} className="text-gray-800">
+                <option key={v.id} value={v.id}>
                   {v.nome} ({v.status})
                 </option>
               ))}
@@ -312,7 +212,7 @@ export default function RelatorioOcupacaoSalasPage() {
           <select
             value={categoriaSelecionada}
             onChange={(e) => setCategoriaSelecionada(e.target.value)}
-            className="bg-white text-gray-800 rounded-lg p-2 text-xs font-bold outline-none w-full sm:w-[250px] truncate h-9 cursor-pointer"
+            className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-full sm:w-[250px] truncate h-9 shadow-sm"
           >
             <option value="">Selecione uma Categoria...</option>
             {dados.categorias.map((cat: any) => (
@@ -322,24 +222,43 @@ export default function RelatorioOcupacaoSalasPage() {
             ))}
           </select>
 
-          <button
-            onClick={gerarPDF}
-            disabled={
-              !categoriaSelecionada ||
-              espacosFiltrados.length === 0 ||
-              gerandoPDF
-            }
-            className="bg-white text-green-800 px-4 py-2 rounded-lg font-black text-xs shadow hover:bg-green-50 disabled:opacity-30 h-9 flex items-center justify-center min-w-[130px]"
-          >
-            {gerandoPDF ? (
+          {!(isClient && espacosFiltrados.length > 0) ? (
+            <button
+              disabled
+              className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm h-9 min-w-[150px]"
+            >
               <span className="flex items-center gap-2">
-                <div className="w-3 h-3 border-2 border-green-800 border-t-transparent rounded-full animate-spin"></div>
-                GERANDO...
+                🖨️ BAIXAR PDF
               </span>
-            ) : (
-              "🖨️ IMPRIMIR PDF"
-            )}
-          </button>
+            </button>
+          ) : (
+            <PDFDownloadLink
+              document={
+                <PDFOcupacaoSalasDocument
+                  dados={dados}
+                  infoVersao={infoVersao}
+                  infoCategoria={infoCategoria}
+                  espacosFiltrados={espacosFiltrados}
+                  todosTurnos={todosTurnos}
+                />
+              }
+              fileName={`IFNMG_Salas_${getTituloSeguro()}.pdf`}
+              className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm h-9 min-w-[150px]"
+            >
+              {({ loading }) =>
+                loading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    GERANDO...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    🖨️ BAIXAR PDF
+                  </span>
+                )
+              }
+            </PDFDownloadLink>
+          )}
         </div>
       </div>
 

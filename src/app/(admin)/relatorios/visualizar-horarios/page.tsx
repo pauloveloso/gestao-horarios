@@ -2,12 +2,17 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas-pro";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { PDFPublicoDocument } from "@/app/components/PDFPublicoDocument";
 
 export default function VisualizarHorariosAdminPage() {
   const [carregando, setCarregando] = useState(true);
   const [gerandoPDF, setGerandoPDF] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const [versoes, setVersoes] = useState<any[]>([]);
   const [versaoSelecionada, setVersaoSelecionada] = useState<string>("");
@@ -255,70 +260,14 @@ export default function VisualizarHorariosAdminPage() {
   // MOTOR DE EXPORTAÇÃO PDF - PÁGINA ÚNICA E COMPACTO
   // ========================================================================
   const gerarPDF = async () => {
-    if (!relatorioRef.current) return;
-    setGerandoPDF(true);
-
-    try {
-      const elemento = relatorioRef.current;
-
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-
-      const margin = 10;
-      const maxPdfWidth = pdf.internal.pageSize.getWidth() - margin * 2;
-      const maxPdfHeight = pdf.internal.pageSize.getHeight() - margin * 2;
-
-      // QUALIDADE AUMENTADA (scale: 3)
-      const canvas = await html2canvas(elemento, {
-        scale: 3,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-      });
-
-      // COMPRESSÃO MELHORADA (0.95)
-      const imgData = canvas.toDataURL("image/jpeg", 0.95);
-
-      const imgRatio = canvas.height / canvas.width;
-      let imgWidth = maxPdfWidth;
-      let imgHeight = imgWidth * imgRatio;
-
-      if (imgHeight > maxPdfHeight) {
-        imgHeight = maxPdfHeight;
-        imgWidth = imgHeight / imgRatio;
-      }
-
-      const xOffset = margin + (maxPdfWidth - imgWidth) / 2;
-      const yOffset = margin;
-
-      pdf.addImage(
-        imgData,
-        "JPEG",
-        xOffset,
-        yOffset,
-        imgWidth,
-        imgHeight,
-        undefined,
-        "FAST",
-      );
-
-      const tituloSeguro =
-        obterTituloGrade()
-          .replace(/[^a-zA-Z0-9]/g, "_")
-          .replace(/_+/g, "_")
-          .toLowerCase() || "horarios";
-      pdf.save(`IFNMG_${tituloSeguro}_Inspeção.pdf`);
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      alert("Ocorreu um erro ao exportar o PDF. Tente novamente.");
-    } finally {
-      setGerandoPDF(false);
-    }
+    // Legacy function removed
   };
+
+  const tituloSeguro =
+    obterTituloGrade()
+      .replace(/[^a-zA-Z0-9]/g, "_")
+      .replace(/_+/g, "_")
+      .toLowerCase() || "horarios";
 
   if (carregando && !versaoSelecionada) {
     return (
@@ -329,7 +278,7 @@ export default function VisualizarHorariosAdminPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 pb-20 max-w-7xl mx-auto">
       {/* BARRA DE FILTROS ADAPTADA PARA O CORPO INTERNO */}
       <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col lg:flex-row justify-between items-center gap-4">
         <div>
@@ -349,17 +298,17 @@ export default function VisualizarHorariosAdminPage() {
                 setVersaoSelecionada(e.target.value);
                 setIdSelecionado("");
               }}
-              className="bg-green-800 border border-green-700 text-white rounded p-2 text-xs font-bold outline-none cursor-pointer hover:bg-green-700 max-w-[200px]"
+              className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all max-w-[200px] shadow-sm"
             >
               {versoes.map((v) => (
-                <option key={v.id} value={v.id} className="text-gray-800">
+                <option key={v.id} value={v.id}>
                   {v.nome} ({v.status})
                 </option>
               ))}
             </select>
           )}
 
-          <div className="flex bg-green-950 rounded-lg p-1">
+          <div className="flex bg-green-950 rounded-lg p-1 border border-green-900">
             {(["TURMA", "PROFESSOR", "ESPACO"] as const).map((t) => (
               <button
                 key={t}
@@ -367,7 +316,7 @@ export default function VisualizarHorariosAdminPage() {
                   setTipoFiltro(t);
                   setIdSelecionado("");
                 }}
-                className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-all ${tipoFiltro === t ? "bg-green-600 text-white" : "text-green-400 hover:text-white"}`}
+                className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-all ${tipoFiltro === t ? "bg-green-600 text-white shadow-sm" : "text-green-400 hover:text-white"}`}
               >
                 {t === "TURMA"
                   ? "Turmas"
@@ -381,7 +330,7 @@ export default function VisualizarHorariosAdminPage() {
           <select
             value={idSelecionado}
             onChange={(e) => setIdSelecionado(e.target.value)}
-            className="bg-white text-gray-800 rounded-lg p-2 text-xs font-bold outline-none w-full sm:w-[200px] truncate h-9"
+            className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-full sm:w-[200px] truncate h-9 shadow-sm"
           >
             <option value="">Escolha...</option>
             {tipoFiltro === "TURMA" &&
@@ -424,22 +373,45 @@ export default function VisualizarHorariosAdminPage() {
               })}
           </select>
 
-          <button
-            onClick={gerarPDF}
-            disabled={
-              !idSelecionado || turnosOcupados.length === 0 || gerandoPDF
-            }
-            className="bg-white text-green-800 px-4 py-2 rounded-lg font-black text-xs shadow hover:bg-green-50 disabled:opacity-30 h-9 flex items-center justify-center min-w-[130px]"
-          >
-            {gerandoPDF ? (
-              <span className="flex items-center gap-2">
-                <div className="w-3 h-3 border-2 border-green-800 border-t-transparent rounded-full animate-spin"></div>
-                GERANDO...
-              </span>
+          <div className="flex gap-2 w-full xl:w-auto mt-4 md:mt-0">
+            {(!idSelecionado || turnosOcupados.length === 0 || !isClient) ? (
+              <button
+                disabled
+                className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm h-9 min-w-[150px]"
+              >
+                🖨️ BAIXAR PDF
+              </button>
             ) : (
-              "🖨️ IMPRIMIR PDF"
+              <PDFDownloadLink
+                document={
+                  <PDFPublicoDocument
+                    dados={dados}
+                    turnosOcupados={turnosOcupados}
+                    diasSemana={diasSemana}
+                    tipoFiltro={tipoFiltro}
+                    idSelecionado={idSelecionado}
+                    titulo={obterTituloGrade()}
+                    dataVigencia={formatarData(infoVersao?.data_inicio_vigencia)}
+                  />
+                }
+                fileName={`IFNMG_${tituloSeguro}_Inspecao.pdf`}
+                className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm h-9 min-w-[150px] whitespace-nowrap"
+              >
+                {({ loading }) =>
+                  loading ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-green-800 border-t-transparent rounded-full animate-spin"></div>
+                      <span>GERANDO...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>📄</span> <span>BAIXAR PDF</span>
+                    </>
+                  )
+                }
+              </PDFDownloadLink>
             )}
-          </button>
+          </div>
         </div>
       </div>
 
