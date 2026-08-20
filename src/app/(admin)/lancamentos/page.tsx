@@ -60,18 +60,21 @@ export default function LancamentosPage() {
     if (cargaInicial) {
       console.time("⏱️ Gargalo 1: Consulta Principal Aulas + Choques");
       
-      supabase
-        .from("aulas")
-        .select("*")
-        .eq("versao_id", versaoRascunhoRef.current.id)
-        .limit(5000)
-        .then(({ data }) => {
+      (async () => {
+        try {
+          const { data } = await supabase
+            .from("aulas")
+            .select("*")
+            .eq("versao_id", versaoRascunhoRef.current.id)
+            .limit(5000);
           if (data) setAulas(data);
-        })
-        .finally(() => {
+        } catch (e) {
+          console.error(e);
+        } finally {
           setCarregandoAulas(false);
           console.timeEnd("⏱️ Gargalo 1: Consulta Principal Aulas + Choques");
-        });
+        }
+      })();
 
       buscarChoques();
     } else {

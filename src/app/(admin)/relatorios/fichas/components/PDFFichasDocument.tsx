@@ -366,40 +366,40 @@ export const PDFFichasDocument = ({ paginas, versaoAtivaDetalhes, originUrl }: P
             key={`page-${pageIndex}`}
             size="A4"
             orientation="landscape"
-            style={[styles.page, isCompact && styles.pageCompact]}
+            style={[styles.page, (isCompact ? styles.pageCompact : {})]}
             wrap={false}
           >
-            <View style={[styles.headerRow, isCompact && styles.headerRowCompact]}>
-              <Image src={logoUrl} style={[styles.logo, isCompact && styles.logoCompact]} />
+            <View style={[styles.headerRow, (isCompact ? styles.headerRowCompact : {})]}>
+              <Image src={logoUrl} style={[styles.logo, (isCompact ? styles.logoCompact : {})]} />
               <View style={styles.headerTextCol}>
-                <Text style={[styles.instText, isCompact && styles.instTextCompact]}>Instituto Federal</Text>
-                <Text style={[styles.subInstText, isCompact && styles.subInstTextCompact]}>Norte de Minas Gerais</Text>
-                <Text style={[styles.subInstText, isCompact && styles.subInstTextCompact]}>Campus Januária</Text>
+                <Text style={[styles.instText, (isCompact ? styles.instTextCompact : {})]}>Instituto Federal</Text>
+                <Text style={[styles.subInstText, (isCompact ? styles.subInstTextCompact : {})]}>Norte de Minas Gerais</Text>
+                <Text style={[styles.subInstText, (isCompact ? styles.subInstTextCompact : {})]}>Campus Januária</Text>
               </View>
             </View>
 
-            <View style={[styles.turmaInfoBox, isCompact && styles.turmaInfoBoxCompact]}>
-              <Text style={[styles.requerimentoText, isCompact && styles.requerimentoTextCompact]}>
+            <View style={[styles.turmaInfoBox, (isCompact ? styles.turmaInfoBoxCompact : {})]}>
+              <Text style={[styles.requerimentoText, (isCompact ? styles.requerimentoTextCompact : {})]}>
                 REQUERIMENTO DE RENOVAÇÃO DE MATRÍCULA
               </Text>
-              <Text style={[styles.cursoText, isCompact && styles.cursoTextCompact]}>
+              <Text style={[styles.cursoText, (isCompact ? styles.cursoTextCompact : {})]}>
                 COORDENAÇÃO DO CURSO DE {pagina.turma.curso_nome}
               </Text>
-              <Text style={[styles.semestreText, isCompact && styles.semestreTextCompact]}>
+              <Text style={[styles.semestreText, (isCompact ? styles.semestreTextCompact : {})]}>
                 {formatarSemestreInteligente(
                   versaoAtivaDetalhes?.semestre,
                   pagina.turma.curso_nome
                 )}
               </Text>
-              <Text style={[styles.codigoTurmaText, isCompact && styles.codigoTurmaTextCompact]}>{pagina.turma.codigo}</Text>
+              <Text style={[styles.codigoTurmaText, (isCompact ? styles.codigoTurmaTextCompact : {})]}>{pagina.turma.codigo}</Text>
             </View>
 
             <View style={styles.tableContainer}>
               <View style={styles.table}>
                 {/* Thead */}
               <View style={styles.tableRow}>
-                <View style={[styles.tableColHeaderTime, isCompact && styles.tableColHeaderTimeCompact]}>
-                  <Text style={[styles.headerText, isCompact && styles.headerTextCompact]}>HORÁRIO</Text>
+                <View style={[styles.tableColHeaderTime, (isCompact ? styles.tableColHeaderTimeCompact : {})]}>
+                  <Text style={[styles.headerText, (isCompact ? styles.headerTextCompact : {})]}>HORÁRIO</Text>
                 </View>
                 {diasSemana.map((d, index) => (
                   <View
@@ -408,10 +408,10 @@ export const PDFFichasDocument = ({ paginas, versaoAtivaDetalhes, originUrl }: P
                       index === diasSemana.length - 1
                         ? styles.tableColHeaderDayLast
                         : styles.tableColHeaderDay,
-                      isCompact && styles.tableColHeaderDayCompact
+                      (isCompact ? styles.tableColHeaderDayCompact : {})
                     ]}
                   >
-                    <Text style={[styles.headerText, isCompact && styles.headerTextCompact]}>{d.nome}</Text>
+                    <Text style={[styles.headerText, (isCompact ? styles.headerTextCompact : {})]}>{d.nome}</Text>
                   </View>
                 ))}
               </View>
@@ -425,7 +425,7 @@ export const PDFFichasDocument = ({ paginas, versaoAtivaDetalhes, originUrl }: P
                     intervalo = (
                       <View key={`intervalo-${slotIndex}`} style={styles.tableRowIntervalo}>
                         <View style={{ width: "100%" }}>
-                          <Text style={[styles.intervalText, isCompact && styles.intervalTextCompact]}>
+                          <Text style={[styles.intervalText, (isCompact ? styles.intervalTextCompact : {})]}>
                             INTERVALO: {formatarHora(fimAnterior)} às {formatarHora(slot.hora_inicio)}
                           </Text>
                         </View>
@@ -444,15 +444,15 @@ export const PDFFichasDocument = ({ paginas, versaoAtivaDetalhes, originUrl }: P
                       <View
                         style={[
                           styles.tableColTime,
-                          isCompact && styles.tableColTimeCompact,
+                          (isCompact ? styles.tableColTimeCompact : {}),
                           isLastSlot ? { borderBottomWidth: 0 } : {},
                         ]}
                       >
-                        <Text style={[styles.timeTextSmall, isCompact && styles.timeTextSmallCompact]}>
+                        <Text style={[styles.timeTextSmall, (isCompact ? styles.timeTextSmallCompact : {})]}>
                           {formatarHora(slot.hora_inicio)}
                         </Text>
-                        <Text style={[styles.timeTextSmall, isCompact && styles.timeTextSmallCompact]}>às</Text>
-                        <Text style={[styles.timeTextSmall, isCompact && styles.timeTextSmallCompact]}>
+                        <Text style={[styles.timeTextSmall, (isCompact ? styles.timeTextSmallCompact : {})]}>às</Text>
+                        <Text style={[styles.timeTextSmall, (isCompact ? styles.timeTextSmallCompact : {})]}>
                           {formatarHora(slot.hora_fim)}
                         </Text>
                       </View>
@@ -473,19 +473,19 @@ export const PDFFichasDocument = ({ paginas, versaoAtivaDetalhes, originUrl }: P
                               isLastDay
                                 ? styles.tableColDayLast
                                 : styles.tableColDay,
-                              isCompact && styles.tableColDayCompact,
+                              (isCompact ? styles.tableColDayCompact : {}),
                               isLastSlot ? { borderBottomWidth: 0 } : {},
                             ]}
                           >
                             {aula ? (
                               <View style={styles.aulaBox}>
-                                <Text style={[styles.discText, isCompact && styles.discTextCompact]}>
+                                <Text style={[styles.discText, (isCompact ? styles.discTextCompact : {})]}>
                                   (    ) {aula.disciplina_nome}
                                 </Text>
-                                <Text style={[styles.salaText, isCompact && styles.salaTextCompact]}>
+                                <Text style={[styles.salaText, (isCompact ? styles.salaTextCompact : {})]}>
                                   {aula.espaco_nome}
                                 </Text>
-                                <Text style={[styles.profText, isCompact && styles.profTextCompact]}>
+                                <Text style={[styles.profText, (isCompact ? styles.profTextCompact : {})]}>
                                   {aula.professor_nome}
                                 </Text>
                               </View>
@@ -502,7 +502,7 @@ export const PDFFichasDocument = ({ paginas, versaoAtivaDetalhes, originUrl }: P
               {/* Marca d'água (Renderizada por cima da tabela para evitar ser sobreposta pelo fundo das células) */}
               <View style={styles.watermarkContainer}>
                 {Array.from({ length: 24 }).map((_, rIdx) => (
-                  <View key={`wm-r-${rIdx}`} style={[styles.watermarkRow, isCompact && styles.watermarkRowCompact]}>
+                  <View key={`wm-r-${rIdx}`} style={[styles.watermarkRow, (isCompact ? styles.watermarkRowCompact : {})]}>
                     {Array.from({ length: 5 }).map((_, cIdx) => (
                       <Text key={`wm-c-${cIdx}`} style={styles.watermarkText}>
                         INSTITUTO FEDERAL DO NORTE DE MINAS GERAIS - CAMPUS JANUÁRIA
@@ -513,30 +513,30 @@ export const PDFFichasDocument = ({ paginas, versaoAtivaDetalhes, originUrl }: P
               </View>
             </View>
 
-            <View style={[styles.instructionsBox, isCompact && styles.instructionsBoxCompact]}>
-              <Text style={[styles.instructionsText, isCompact && styles.instructionsTextCompact]}>
+            <View style={[styles.instructionsBox, (isCompact ? styles.instructionsBoxCompact : {})]}>
+              <Text style={[styles.instructionsText, (isCompact ? styles.instructionsTextCompact : {})]}>
                 A matrícula é responsabilidade do acadêmico. Antes de efetivá-la, leia os Regulamentos dos Cursos Superiores do IFNMG.
                 Após fazer a escolha da disciplina, <Text style={styles.instructionsBold}>ANULAR os quadros das disciplinas que NÃO serão cursadas</Text>.
               </Text>
-              <Text style={[styles.instructionsText, styles.instructionsBold, isCompact && styles.instructionsTextCompact, { marginBottom: 0 }]}>
+              <Text style={[styles.instructionsText, styles.instructionsBold, (isCompact ? styles.instructionsTextCompact : {}), { marginBottom: 0 }]}>
                 Disciplinas que são pré-requisitos para disciplinas futuras. Recomenda-se prioridade.
               </Text>
             </View>
 
-            <View style={[styles.footer, isCompact && styles.footerCompact]}>
+            <View style={[styles.footer, (isCompact ? styles.footerCompact : {})]}>
               <View style={styles.signatureCol}>
-                <View style={[styles.signatureLine, isCompact && styles.signatureLineCompact]}></View>
-                <Text style={[styles.signatureText, isCompact && styles.signatureTextCompact]}>
+                <View style={[styles.signatureLine, (isCompact ? styles.signatureLineCompact : {})]}></View>
+                <Text style={[styles.signatureText, (isCompact ? styles.signatureTextCompact : {})]}>
                   Assinatura do Acadêmico/Responsável
                 </Text>
               </View>
               <View style={styles.dateCol}>
-                <View style={[styles.dateLine, isCompact && styles.dateLineCompact]}></View>
-                <Text style={[styles.dateText, isCompact && styles.dateTextCompact]}>Data</Text>
+                <View style={[styles.dateLine, (isCompact ? styles.dateLineCompact : {})]}></View>
+                <Text style={[styles.dateText, (isCompact ? styles.dateTextCompact : {})]}>Data</Text>
               </View>
               <View style={styles.turmaCol}>
-                <View style={[styles.dateLine, isCompact && styles.dateLineCompact]}></View>
-                <Text style={[styles.dateText, isCompact && styles.dateTextCompact]}>Turma</Text>
+                <View style={[styles.dateLine, (isCompact ? styles.dateLineCompact : {})]}></View>
+                <Text style={[styles.dateText, (isCompact ? styles.dateTextCompact : {})]}>Turma</Text>
               </View>
             </View>
           </Page>

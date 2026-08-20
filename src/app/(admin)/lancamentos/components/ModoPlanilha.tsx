@@ -115,12 +115,12 @@ export default function ModoPlanilha({
   // ========================================================
   // MAPAS DE ALTA PERFORMANCE O(1)
   // ========================================================
-  const turmasMap = useMemo(() => new Map(turmas.map((t: any) => [String(t.id), t])), [turmas]);
-  const slotsMap = useMemo(() => new Map(slots.map((s: any) => [String(s.id), s])), [slots]);
-  const cursosMap = useMemo(() => new Map(cursos.map((c: any) => [String(c.id), c])), [cursos]);
+  const turmasMap = useMemo(() => new Map<string, any>(turmas.map((t: any) => [String(t.id), t])), [turmas]);
+  const slotsMap = useMemo(() => new Map<string, any>(slots.map((s: any) => [String(s.id), s])), [slots]);
+  const cursosMap = useMemo(() => new Map<string, any>(cursos.map((c: any) => [String(c.id), c])), [cursos]);
 
   const disciplinasPorCurso = useMemo(() => {
-    const mapa = new Map();
+    const mapa = new Map<string, any>();
     cursos.forEach((c: any) => {
       const disc = disciplinas
         .filter((d: any) => String(d.curso_id) === String(c.id))
@@ -131,9 +131,9 @@ export default function ModoPlanilha({
   }, [cursos, disciplinas]);
 
   const mapaCoresTurma = useMemo(() => {
-    const mapa = new Map();
+    const mapa = new Map<string, any>();
     turmas.forEach((t: any) => {
-      const c = cursosMap.get(String(t.curso_id));
+      const c = cursosMap.get(String(t.curso_id)) as any;
       if (c?.cor_identificacao) mapa.set(String(t.id), c.cor_identificacao);
     });
     return mapa;
@@ -161,7 +161,7 @@ export default function ModoPlanilha({
       };
 
       // Agrupar aulas por turma (O(n))
-      const aulasPorTurma = new Map();
+      const aulasPorTurma = new Map<string, any>();
       aulasMapeadas.forEach((a: any) => {
         const tid = String(a.turma_id);
         if (!aulasPorTurma.has(tid)) aulasPorTurma.set(tid, []);
