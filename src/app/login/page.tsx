@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { ShieldAlert, AlertTriangle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -99,7 +100,7 @@ export default function LoginPage() {
           {usuarioNaoAutorizado ? (
             <div className="w-full flex flex-col items-center gap-4 text-center">
                <div className="bg-red-50 text-red-700 p-4 rounded-lg text-sm font-bold border border-red-200 w-full">
-                  <span className="text-2xl block mb-2">⛔</span>
+                  <ShieldAlert className="w-8 h-8 mx-auto mb-2 text-red-500" />
                   Você está autenticado como <br/><span className="text-black font-black">{usuarioNaoAutorizado.email}</span>, <br/>mas este e-mail não é autorizado.
                </div>
                <p className="text-gray-500 text-xs font-medium">
@@ -116,7 +117,7 @@ export default function LoginPage() {
           ) : (
             <>
               <div className="bg-yellow-50 text-yellow-800 p-4 rounded-lg text-xs font-bold text-center border border-yellow-200 mb-6 w-full">
-                ⚠️ O acesso a este sistema é exclusivo para servidores do IFNMG através da conta institucional (@ifnmg.edu.br).
+                <AlertTriangle className="w-4 h-4 inline-block -mt-1 mr-1 text-yellow-500" /> O acesso a este sistema é exclusivo para servidores do IFNMG através da conta institucional (@ifnmg.edu.br).
               </div>
 
               <button

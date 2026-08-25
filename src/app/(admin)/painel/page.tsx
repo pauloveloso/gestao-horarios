@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useMasterData } from "../components/MasterDataContext";
 import { useUser } from "../components/UserContext";
+import { RefreshCw, Users, Building, ShieldAlert, ThumbsUp, AlertTriangle, Sparkles } from "lucide-react";
 
 export default function DashboardPage() {
   const { user, isCoordenador, isAdmin, isProfessorTAE } = useUser();
@@ -262,7 +263,7 @@ export default function DashboardPage() {
             onClick={carregarDadosEDiagnosticar}
             className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm w-full sm:w-auto h-9"
           >
-            <span>🔄</span> ATUALIZAR DADOS
+            <RefreshCw className="w-4 h-4" /> ATUALIZAR DADOS
           </button>
         </div>
       </div>
@@ -329,8 +330,8 @@ export default function DashboardPage() {
           href="/relatorios/professores"
           className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-md transition-all flex items-center gap-5 group cursor-pointer"
         >
-          <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center text-3xl group-hover:bg-blue-100 transition-colors shrink-0">
-            👨‍🏫
+          <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors shrink-0">
+            <Users className="w-6 h-6 text-blue-600" />
           </div>
           <div>
             <h3 className="font-black text-gray-800 group-hover:text-blue-700 transition-colors text-lg">
@@ -346,8 +347,8 @@ export default function DashboardPage() {
           href="/relatorios/ocupacao-salas"
           className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-green-300 hover:shadow-md transition-all flex items-center gap-5 group cursor-pointer"
         >
-          <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center text-3xl group-hover:bg-green-100 transition-colors shrink-0">
-            🏢
+          <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center group-hover:bg-green-100 transition-colors shrink-0">
+            <Building className="w-6 h-6 text-green-600" />
           </div>
           <div>
             <h3 className="font-black text-gray-800 group-hover:text-green-700 transition-colors text-lg">
@@ -366,7 +367,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
           <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <h2 className="font-bold text-gray-700 flex items-center gap-2">
-              <span className="text-red-600">⛔</span> Impedimentos Físicos
+              <ShieldAlert className="w-5 h-5 text-red-600 inline" /> Impedimentos Físicos
             </h2>
             <span className="bg-red-100 text-red-700 font-black text-xs px-2 py-1 rounded-full">
               {choquesCriticos.length}
@@ -376,7 +377,7 @@ export default function DashboardPage() {
           <div className="h-[450px] overflow-y-auto custom-scrollbar bg-white">
             {choquesCriticos.length === 0 ? (
               <div className="p-10 text-center text-gray-400 font-medium h-full flex flex-col items-center justify-center">
-                <span className="text-4xl mb-2 opacity-50">👍</span>
+                <Building className="w-12 h-12 mb-4 mx-auto text-green-500 opacity-80" />
                 Nenhum choque detectado.
               </div>
             ) : (
@@ -420,7 +421,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
           <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <h2 className="font-bold text-gray-700 flex items-center gap-2">
-              <span className="text-yellow-500">⚠️</span> Alertas de
+              <AlertTriangle className="w-5 h-5 text-yellow-500 inline" /> Alertas de
               Planejamento
             </h2>
             <span className="bg-yellow-100 text-yellow-700 font-black text-xs px-2 py-1 rounded-full">
@@ -431,7 +432,7 @@ export default function DashboardPage() {
           <div className="h-[450px] overflow-y-auto custom-scrollbar bg-white">
             {alertasSecundarios.length === 0 ? (
               <div className="p-10 text-center text-gray-400 font-medium h-full flex flex-col items-center justify-center">
-                <span className="text-4xl mb-2 opacity-50">✨</span>
+                <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 Nenhum alerta pedagógico.
               </div>
             ) : (

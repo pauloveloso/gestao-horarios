@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { PDFIntegradoDocument } from "./components/PDFIntegradoDocument";
+import { Download } from "lucide-react";
 
 export default function ExportarPDFIntegradoPage() {
   const [carregando, setCarregando] = useState(true);
@@ -197,7 +198,7 @@ export default function ExportarPDFIntegradoPage() {
               disabled
               className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm min-w-[150px] h-9"
             >
-              🖨️ BAIXAR PDF
+              <Download className="w-4 h-4 inline-block -mt-1 mr-1" /> BAIXAR PDF
             </button>
           ) : (
             <PDFDownloadLink
@@ -213,7 +214,7 @@ export default function ExportarPDFIntegradoPage() {
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    📄 BAIXAR PDF
+                    <Download className="w-4 h-4 inline-block -mt-1 mr-1" /> BAIXAR PDF
                   </span>
                 )
               }

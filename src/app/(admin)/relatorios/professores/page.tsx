@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { Printer } from "lucide-react";
 
 export default function RelatorioProfessoresPage() {
   const [carregando, setCarregando] = useState(true);
@@ -138,7 +139,7 @@ export default function RelatorioProfessoresPage() {
             onClick={() => window.print()}
             className="bg-green-600 text-white px-5 py-2.5 rounded shadow-sm text-sm font-bold hover:bg-green-700 transition-colors shrink-0"
           >
-            Imprimir 📄
+            <Printer className="w-4 h-4 inline-block -mt-1 mr-1" /> Imprimir
           </button>
           */}
         </div>

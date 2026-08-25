@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useUser } from "../components/UserContext";
+import { X, Trash2, Search, Ban, CheckCircle2, Calendar, Lock } from "lucide-react";
 
 export default function ReservasPage() {
   const { user, isCoordenador } = useUser();
@@ -541,7 +542,7 @@ export default function ReservasPage() {
             className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors text-xs font-bold"
             title="Pressione ESC para cancelar"
           >
-            ✕ Cancelar
+            <X className="w-4 h-4 inline-block -mt-1 mr-1" /> Cancelar
           </button>
         </div>
       )}
@@ -559,7 +560,7 @@ export default function ReservasPage() {
                 onClick={() => setModalAberto(false)}
                 className="text-white/70 hover:text-white font-bold text-xl"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -680,7 +681,7 @@ export default function ReservasPage() {
                       disabled={salvando}
                       className="flex-1 py-2 rounded-lg font-bold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors text-xs disabled:opacity-50"
                     >
-                      🗑️ Excluir Reserva
+                      <Trash2 className="w-4 h-4 inline-block -mt-1 mr-1" /> Excluir Reserva
                     </button>
                   )}
                 </div>
@@ -772,7 +773,7 @@ export default function ReservasPage() {
                 }}
                 className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all ${abaAtiva === "ESPACO" ? "bg-white text-green-700 border-b-2 border-green-600 shadow-sm" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}
               >
-                🔍 Buscar por Espaço
+                <Search className="w-4 h-4 inline-block -mt-1 mr-1" /> Buscar por Espaço
               </button>
             </div>
 
@@ -852,7 +853,7 @@ export default function ReservasPage() {
                   <div className="flex-1 min-h-0 overflow-y-auto bg-white rounded-xl border border-gray-200 p-4">
                     {!buscaRealizada && !carregandoBusca && (
                       <div className="h-full flex flex-col items-center justify-center text-center text-gray-400">
-                        <span className="text-5xl mb-2">🔎</span>
+                        <Search className="w-16 h-16 mx-auto mb-2 text-gray-400" />
                         <p className="font-bold">
                           Selecione os filtros acima para ver a disponibilidade.
                         </p>
@@ -869,7 +870,7 @@ export default function ReservasPage() {
                       !carregandoBusca &&
                       espacosDisponiveis.length === 0 && (
                         <div className="h-full flex flex-col items-center justify-center text-center text-red-500">
-                          <span className="text-5xl mb-2">🛑</span>
+                          <Ban className="w-16 h-16 mx-auto mb-2 text-gray-400" />
                           <p className="font-bold text-lg text-red-800">
                             Sem Vagas!
                           </p>
@@ -885,7 +886,7 @@ export default function ReservasPage() {
                       espacosDisponiveis.length > 0 && (
                         <div className="space-y-6">
                           <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-lg flex items-center gap-3">
-                            <span className="text-xl">✅</span>
+                            <CheckCircle2 className="w-6 h-6 text-green-500 mx-auto" />
                             <div>
                               <p className="font-black text-sm">
                                 Encontrámos {espacosDisponiveis.length} espaços
@@ -932,7 +933,7 @@ export default function ReservasPage() {
                                         className="mt-4 w-full bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 py-2 rounded font-bold text-xs transition-colors flex items-center justify-center gap-2"
                                       >
                                         <span>Ver Grade de Horários</span>{" "}
-                                        <span>📅</span>
+                                        <Calendar className="w-4 h-4 inline-block text-green-700" />
                                       </button>
                                     </div>
                                   ))}
@@ -1120,8 +1121,8 @@ export default function ReservasPage() {
                                             className={`rounded p-2 line-clamp-3 leading-snug ${isReserva && !reservaCopiada ? "bg-white border border-indigo-100 text-indigo-800 shadow-sm" : "bg-gray-200/60 text-gray-600"}`}
                                           >
                                             {ocupacao.tipo === "AULA"
-                                              ? "🔒 "
-                                              : "📆 "}
+                                              ? <Lock className="w-3 h-3 inline-block -mt-0.5 mr-1" />
+                                              : <Calendar className="w-3 h-3 inline-block -mt-0.5 mr-1" />}
                                             {ocupacao.nome}
                                           </div>
                                         </td>

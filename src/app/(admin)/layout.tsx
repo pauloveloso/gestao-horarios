@@ -16,7 +16,11 @@ import {
   BookOpen, 
   DoorOpen, 
   Users, 
-  ShieldCheck 
+  ShieldCheck,
+  Lock,
+  ShieldAlert,
+  X,
+  LogOut
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { MasterDataProvider } from "./components/MasterDataContext";
@@ -137,7 +141,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50 flex-col font-sans p-4">
         <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-gray-200 max-w-md w-full">
-          <span className="text-5xl mb-4 block">🔒</span>
+          <Lock className="w-16 h-16 mb-4 mx-auto text-gray-400" />
           <h2 className="text-xl font-black text-gray-800 mb-2">Sessão Expirada ou Inválida</h2>
           <p className="text-gray-500 font-medium text-sm mb-6">
             Você precisa estar logado para acessar o painel de gestão.
@@ -155,7 +159,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50 flex-col font-sans p-4">
         <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-red-200 max-w-md w-full">
-          <span className="text-5xl opacity-80 mb-4 block">⛔</span>
+          <ShieldAlert className="w-16 h-16 opacity-80 mb-4 mx-auto text-red-500" />
           <h2 className="text-xl font-black text-red-700 mb-2">Acesso Negado</h2>
           <p className="text-gray-600 font-medium text-sm mb-6 bg-red-50 p-3 rounded border border-red-100">
             O e-mail <b>{user.email}</b> não é autorizado. Apenas contas <b>@ifnmg.edu.br</b> são permitidas no sistema.
@@ -175,7 +179,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50 flex-col font-sans">
         <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-red-100 max-w-md">
-          <span className="text-5xl opacity-50 mb-4 block">⛔</span>
+          <ShieldAlert className="w-16 h-16 opacity-50 mb-4 mx-auto text-gray-400" />
           <h2 className="text-xl font-black text-gray-800 mb-2">Acesso Negado</h2>
           <p className="text-gray-500 font-medium text-sm mb-6">
             O seu perfil (<strong className="text-green-700">{user.nivel_acesso.replace("_", "/")}</strong>) não tem permissão para acessar esta página.
@@ -220,7 +224,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             onClick={() => setMenuAberto(false)}
             className="md:hidden text-green-200 hover:text-white"
           >
-            ✕
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -273,13 +277,13 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             target="_blank"
             className="flex items-center justify-center gap-2 w-full bg-green-800 hover:bg-green-700 text-white py-2 rounded-lg text-xs font-bold transition-colors"
           >
-            <span>👁️</span> Visão Pública
+            <Eye className="w-4 h-4" /> Visão Pública
           </Link>
           <button
             onClick={fazerLogout}
             className="flex items-center justify-center gap-2 w-full border border-green-700 text-green-300 hover:bg-green-800 hover:text-white py-2 rounded-lg text-xs font-bold transition-colors"
           >
-            <span>🚪</span> Sair do Sistema
+            <LogOut className="w-4 h-4" /> Sair do Sistema
           </button>
         </div>
       </aside>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { CircleX, AlertCircle, Trash2, MapPin, Clipboard, AlertTriangle, Users, X } from "lucide-react";
 
 export default function ModoGrade({
   versaoId,
@@ -44,25 +45,25 @@ export default function ModoGrade({
     if (choque.mensagem_customizada) return choque.mensagem_customizada;
     switch (choque.tipo_choque) {
       case "CHOQUE_TURMA":
-        return "🔴 Choque: Turma já possui aula neste horário.";
+        return "[Choque] Turma já possui aula neste horário.";
       case "CHOQUE_ESPACO":
-        return "🔴 Choque: Sala/Laboratório já ocupado.";
+        return "[Choque] Sala/Laboratório já ocupado.";
       case "CHOQUE_DOCENTE":
-        return "🔴 Choque: Professor já alocado em outra turma.";
+        return "[Choque] Professor já alocado em outra turma.";
       case "DESCANSO_DOCENTE":
-        return "🔴 Alerta Trabalhista: Sem descanso interjornada (Mín. 10h).";
+        return "[Alerta Trabalhista] Sem descanso interjornada (Mín. 10h).";
       case "LIMITE_TURNOS":
-        return "🔴 Limite: Professor alocado em 3 turnos hoje.";
+        return "[Limite] Professor alocado em 3 turnos hoje.";
       case "INDISPONIBILIDADE":
-        return "🔴 Indisponibilidade: Horário reservado para atendimento especial.";
+        return "[Indisponibilidade] Horário reservado para atendimento especial.";
       case "DIA_PLANEJAMENTO":
-        return "🟡 Atenção: Dia de planejamento do professor.";
+        return "[Atenção] Dia de planejamento do professor.";
       case "AULAS_GEMINADAS":
-        return "🟡 Limite: Mais de 2 aulas geminadas desta disciplina.";
+        return "[Limite] Mais de 2 aulas geminadas desta disciplina.";
       case "FIM_DE_SEMANA":
-        return "🟡 Atenção: Professor leciona Sexta à noite e Segunda de manhã.";
+        return "[Atenção] Professor leciona Sexta à noite e Segunda de manhã.";
       default:
-        return "⚠️ Problema detectado.";
+        return "[Aviso] Problema detectado.";
     }
   };
 
@@ -317,9 +318,9 @@ export default function ModoGrade({
                 setTextoConfirmacao("");
                 setModalLimpezaAberto(true);
               }}
-              className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white rounded outline-none w-full md:w-auto text-xs font-black shadow-sm transition-colors uppercase tracking-wider mr-2"
+              className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white rounded outline-none w-full md:w-auto text-xs font-black shadow-sm transition-colors uppercase tracking-wider mr-2 flex items-center gap-2"
             >
-              🗑️ Limpar Turma
+              <Trash2 className="w-4 h-4" /> Limpar Turma
             </button>
           )}
 
@@ -345,7 +346,7 @@ export default function ModoGrade({
           <div className="bg-blue-600 text-white px-6 py-2.5 rounded-xl shadow-2xl flex justify-between items-center border border-blue-400 backdrop-blur-sm bg-opacity-95">
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="bg-white text-blue-600 w-8 h-8 flex items-center justify-center rounded-full animate-pulse shrink-0 shadow-sm">
-                <span className="text-lg leading-none mt-0.5">⧉</span>
+                <Clipboard className="w-4 h-4" />
               </div>
               <p className="text-blue-50 text-[13px] md:text-sm truncate">
                 <strong className="font-black text-white uppercase tracking-wider mr-2">
@@ -483,7 +484,7 @@ export default function ModoGrade({
                                     className={`bg-blue-600 hover:bg-blue-700 text-white rounded shadow font-bold ${isSplit ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs"}`}
                                     title="Copiar e colar na grade"
                                   >
-                                    ⧉
+                                    <Clipboard className="w-3 h-3" />
                                   </button>
                                   <button
                                     onClick={(e) => {
@@ -493,7 +494,7 @@ export default function ModoGrade({
                                     className={`bg-red-600 hover:bg-red-700 text-white rounded shadow font-bold ${isSplit ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs"}`}
                                     title="Excluir aula"
                                   >
-                                    ✕
+                                    <X className="w-3 h-3" />
                                   </button>
                                 </div>
 
@@ -504,7 +505,7 @@ export default function ModoGrade({
                                       .map((p: any) => mapearMensagem(p))
                                       .join("\n")}
                                   >
-                                    {temCritico ? "🔴" : "🟡"}
+                                    {temCritico ? <CircleX className="w-4 h-4 text-red-500 fill-white" /> : <AlertCircle className="w-4 h-4 text-yellow-500 fill-white" />}
                                   </div>
                                 )}
 
@@ -518,7 +519,7 @@ export default function ModoGrade({
                                         .map((p: any) => mapearMensagem(p))
                                         .join("\n")}
                                     >
-                                      {temCritico ? "🔴" : "🟡"}
+                                      {temCritico ? <CircleX className="w-3 h-3 text-red-500 fill-white" /> : <AlertCircle className="w-3 h-3 text-yellow-500 fill-white" />}
                                     </span>
                                   )}
                                   <span
@@ -535,25 +536,29 @@ export default function ModoGrade({
                                 <div
                                   className={`flex flex-col min-w-0 ${isSplit ? "mt-0.5" : "mt-2 space-y-1"}`}
                                 >
-                                  <span
-                                    className={`text-gray-700 truncate ${isSplit ? "text-[10px]" : "text-xs"}`}
-                                    title={getNome(
-                                      professores,
-                                      aula.professor_id,
-                                    )}
-                                  >
-                                    👨‍🏫{" "}
-                                    {getNome(professores, aula.professor_id) ||
-                                      "A definir"}
-                                  </span>
-                                  <span
-                                    className={`bg-white/80 border text-gray-800 rounded font-bold w-fit block truncate max-w-full ${isSplit ? "text-[9px] px-1 py-0.5" : "text-xs px-2 py-0.5"}`}
-                                    title={getNome(espacos, aula.espaco_id)}
-                                  >
-                                    📍{" "}
-                                    {getNome(espacos, aula.espaco_id) ||
-                                      "S/ Sala"}
-                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    <Users className="w-3 h-3 opacity-70 shrink-0" />
+                                    <span
+                                      className={`text-gray-700 truncate ${isSplit ? "text-[10px]" : "text-xs"}`}
+                                      title={getNome(
+                                        professores,
+                                        aula.professor_id,
+                                      )}
+                                    >
+                                      {getNome(professores, aula.professor_id) ||
+                                        "A definir"}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-[9px] text-gray-500 font-bold tracking-tight">
+                                    <MapPin className="w-3 h-3 opacity-70 shrink-0" />
+                                    <span
+                                      className={`bg-white/80 border text-gray-800 rounded font-bold w-fit block truncate max-w-full ${isSplit ? "text-[9px] px-1 py-0.5" : "text-xs px-2 py-0.5"}`}
+                                      title={getNome(espacos, aula.espaco_id)}
+                                    >
+                                      {getNome(espacos, aula.espaco_id) ||
+                                        "S/ Sala"}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             );
@@ -565,7 +570,7 @@ export default function ModoGrade({
                             >
                               {aulaCopiada ? (
                                 <div className="flex gap-4">
-                                  <span title="Colar aqui">📋</span>
+                                  <Clipboard className="w-4 h-4 cursor-crosshair opacity-50 hover:opacity-100 hover:text-green-600 transition-all active:scale-90" onClick={() => colarAula(dia.id, slot.id)} title="Colar aqui" />
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -574,7 +579,7 @@ export default function ModoGrade({
                                     className="text-red-600 hover:scale-125 transition-transform font-bold"
                                     title="Cancelar Cópia"
                                   >
-                                    ✕
+                                    <X className="w-3 h-3" />
                                   </button>
                                 </div>
                               ) : (
@@ -606,7 +611,7 @@ export default function ModoGrade({
                   onClick={() => setModalAberto(false)}
                   className="text-white hover:opacity-70 font-bold text-xl"
                 >
-                  ✕
+                  <X className="w-3 h-3" />
                 </button>
               </div>
 
@@ -794,7 +799,7 @@ export default function ModoGrade({
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all border-4 border-red-600">
             <form onSubmit={limparTurma}>
               <div className="bg-red-600 text-white px-6 py-4 flex items-center gap-3">
-                <span className="text-3xl">⚠️</span>
+                <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <div>
                   <h3 className="font-black text-xl leading-tight">
                     ATENÇÃO: EXCLUSÃO EM MASSA

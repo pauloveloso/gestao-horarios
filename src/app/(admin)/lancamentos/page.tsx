@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useMasterData } from "../components/MasterDataContext";
 import { useUser } from "../components/UserContext";
+import { Clipboard, CalendarDays, FolderOpen } from "lucide-react";
 
 import ModoPlanilha from "./components/ModoPlanilha";
 import ModoGrade from "./components/ModoGrade";
@@ -48,7 +49,7 @@ export default function LancamentosPage() {
       .eq("versao_id", rascunhoId);
 
     if (error) {
-      console.error("🚨 Erro na View de Choques:", error.message);
+      console.error("[Erro na View de Choques]:", error.message);
     }
 
     if (data) {
@@ -245,7 +246,7 @@ export default function LancamentosPage() {
                 : "text-green-400 hover:text-white"
             }`}
           >
-            📋 Planilha
+            <Clipboard className="w-4 h-4" /> Planilha
           </button>
           <button
             onClick={() => setModoAtivo("GRADE")}
@@ -255,14 +256,14 @@ export default function LancamentosPage() {
                 : "text-green-400 hover:text-white"
             }`}
           >
-            🗓️ Grade
+            <CalendarDays className="w-4 h-4" /> Grade
           </button>
         </div>
       </div>
 
       {!versaoRascunho ? (
-        <div className="bg-white border border-gray-200 p-12 rounded-xl text-center shadow-sm flex flex-col items-center justify-center">
-          <span className="text-6xl mb-4 opacity-50">📁</span>
+        <div className="flex-1 flex flex-col items-center justify-center bg-white m-6 rounded-2xl shadow-xl border border-gray-100/50 p-8">
+          <FolderOpen className="w-16 h-16 mb-4 text-gray-300" />
           <h2 className="text-2xl font-black text-gray-800 mb-2">
             Nenhum Rascunho Ativo
           </h2>

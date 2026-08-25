@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useUser } from "../../components/UserContext";
+import { Download, Eye, Inbox } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { PDFPublicoDocument } from "@/app/components/PDFPublicoDocument";
@@ -121,7 +123,7 @@ export default function VisualizarHorariosAdminPage() {
     carregarAulasEStrutura();
 
     console.log(
-      "🟢 Iniciando conexão WebSocket para a versão:",
+      "[Iniciando conexão WebSocket para a versão]:",
       versaoSelecionada,
     );
 
@@ -379,7 +381,7 @@ export default function VisualizarHorariosAdminPage() {
                 disabled
                 className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm h-9 min-w-[150px]"
               >
-                🖨️ BAIXAR PDF
+                <Download className="w-4 h-4 inline-block -mt-1 mr-1" /> BAIXAR PDF
               </button>
             ) : (
               <PDFDownloadLink
@@ -405,7 +407,7 @@ export default function VisualizarHorariosAdminPage() {
                     </>
                   ) : (
                     <>
-                      <span>📄</span> <span>BAIXAR PDF</span>
+                      <Download className="w-4 h-4 inline-block -mt-1 mr-1" /> <span>BAIXAR PDF</span>
                     </>
                   )
                 }
@@ -424,7 +426,7 @@ export default function VisualizarHorariosAdminPage() {
 
         {!idSelecionado ? (
           <div className="h-[40vh] flex flex-col items-center justify-center text-gray-300 border-4 border-dashed border-gray-100 rounded-3xl">
-            <span className="text-6xl mb-2">👁️</span>
+            <Eye className="w-16 h-16 mx-auto mb-2 text-gray-400" />
             <p className="text-sm font-black text-gray-400 text-center">
               Selecione uma opção nos filtros acima para inspecionar a grade de
               horários.
@@ -454,7 +456,7 @@ export default function VisualizarHorariosAdminPage() {
 
             {turnosOcupados.length === 0 ? (
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center text-gray-500 my-8">
-                <span className="text-5xl block mb-4">📭</span>
+                <Inbox className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                 <p className="text-lg font-bold text-gray-700">
                   Nenhum horário cadastrado
                 </p>

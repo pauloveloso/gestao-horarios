@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { PDFHorariosDocument } from "./components/PDFHorariosDocument";
+import { useMasterData } from "../../components/MasterDataContext";
+import { Download, School, CalendarDays } from "lucide-react";
 
 export default function QuadrosHorariosPage() {
   const [carregando, setCarregando] = useState(true);
@@ -444,7 +446,7 @@ export default function QuadrosHorariosPage() {
                   disabled
                   className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center gap-2 disabled:opacity-50 shadow-sm min-w-[180px] justify-center h-9"
                 >
-                  📄 EXPORTAR PDF
+                  <Download className="w-4 h-4 inline-block -mt-1 mr-1" /> EXPORTAR PDF
                 </button>
               ) : (
                 <PDFDownloadLink
@@ -466,7 +468,7 @@ export default function QuadrosHorariosPage() {
                       </span>
                     ) : (
                       <span className="flex items-center gap-2">
-                        📄 EXPORTAR PDF ({paginas.length}{" "}
+                        <Download className="w-4 h-4 inline-block -mt-1 mr-1" /> EXPORTAR PDF ({paginas.length}{" "}
                         {paginas.length === 1 ? "Quadro" : "Quadros"})
                       </span>
                     )
@@ -484,7 +486,7 @@ export default function QuadrosHorariosPage() {
             </div>
           ) : !cursoSelecionado ? (
             <div className="text-center py-20 text-gray-500 bg-white max-w-xl mx-auto rounded-xl shadow border border-gray-200 p-6 my-10 w-full">
-              <span className="text-5xl block mb-4">🏫</span>
+              <School className="w-16 h-16 mx-auto mb-4 text-gray-400" />
               <p className="font-bold text-lg text-gray-700">
                 Selecione um curso
               </p>
@@ -495,7 +497,7 @@ export default function QuadrosHorariosPage() {
             </div>
           ) : paginas.length === 0 ? (
             <div className="text-center py-20 text-gray-500 bg-white max-w-xl mx-auto rounded-xl shadow border border-gray-200 p-6 my-10 w-full">
-              <span className="text-5xl block mb-4">🗓️</span>
+              <CalendarDays className="w-16 h-16 mx-auto mb-4 text-gray-400" />
               <p className="font-bold text-lg text-gray-700">
                 Nenhum horário localizado.
               </p>

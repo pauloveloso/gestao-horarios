@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { Printer, Building, Inbox } from "lucide-react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { PDFOcupacaoSalasDocument } from "./components/PDFOcupacaoSalasDocument";
 
@@ -228,7 +229,7 @@ export default function RelatorioOcupacaoSalasPage() {
               className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm h-9 min-w-[150px]"
             >
               <span className="flex items-center gap-2">
-                🖨️ BAIXAR PDF
+                <Printer className="w-4 h-4 inline-block -mt-1 mr-1" /> BAIXAR PDF
               </span>
             </button>
           ) : (
@@ -253,7 +254,7 @@ export default function RelatorioOcupacaoSalasPage() {
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    🖨️ BAIXAR PDF
+                    <Printer className="w-4 h-4 inline-block -mt-1 mr-1" /> BAIXAR PDF
                   </span>
                 )
               }
@@ -271,7 +272,7 @@ export default function RelatorioOcupacaoSalasPage() {
 
         {!categoriaSelecionada ? (
           <div className="h-[40vh] flex flex-col items-center justify-center text-gray-300 border-4 border-dashed border-gray-100 rounded-3xl">
-            <span className="text-6xl mb-2">🏢</span>
+            <Building className="w-16 h-16 mx-auto mb-2 text-gray-400" />
             <p className="text-sm font-black text-gray-400 text-center">
               Selecione uma Categoria de Espaço acima para gerar o relatório
               consolidado.
@@ -279,7 +280,7 @@ export default function RelatorioOcupacaoSalasPage() {
           </div>
         ) : espacosFiltrados.length === 0 ? (
           <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center text-gray-500 my-8">
-            <span className="text-5xl block mb-4">📭</span>
+            <Inbox className="w-16 h-16 mx-auto mb-4 text-gray-400" />
             <p className="text-lg font-bold text-gray-700">
               Nenhum espaço cadastrado
             </p>

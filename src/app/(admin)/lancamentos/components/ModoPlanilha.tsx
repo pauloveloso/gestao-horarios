@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { Trash2, AlertTriangle } from "lucide-react";
 import LinhaPlanilha from "./LinhaPlanilha";
 
 export default function ModoPlanilha({
@@ -61,25 +62,25 @@ export default function ModoPlanilha({
     if (choque.mensagem_customizada) return choque.mensagem_customizada;
     switch (choque.tipo_choque) {
       case "CHOQUE_TURMA":
-        return "🔴 Choque: Turma já possui aula neste horário.";
+        return "[Choque] Turma já possui aula neste horário.";
       case "CHOQUE_ESPACO":
-        return "🔴 Choque: Sala/Laboratório já ocupado.";
+        return "[Choque] Sala/Laboratório já ocupado.";
       case "CHOQUE_DOCENTE":
-        return "🔴 Choque: Professor já alocado em outra turma.";
+        return "[Choque] Professor já alocado em outra turma.";
       case "DESCANSO_DOCENTE":
-        return "🔴 Alerta Trabalhista: Sem descanso interjornada (Mín. 10h).";
+        return "[Alerta Trabalhista] Sem descanso interjornada (Mín. 10h).";
       case "LIMITE_TURNOS":
-        return "🔴 Limite: Professor alocado em 3 turnos hoje.";
+        return "[Limite] Professor alocado em 3 turnos hoje.";
       case "INDISPONIBILIDADE":
-        return "🔴 Indisponibilidade: Horário reservado para atendimento especial.";
+        return "[Indisponibilidade] Horário reservado para atendimento especial.";
       case "DIA_PLANEJAMENTO":
-        return "🟡 Atenção: Dia de planejamento do professor.";
+        return "[Atenção] Dia de planejamento do professor.";
       case "AULAS_GEMINADAS":
-        return "🟡 Limite: Mais de 2 aulas geminadas desta disciplina.";
+        return "[Limite] Mais de 2 aulas geminadas desta disciplina.";
       case "FIM_DE_SEMANA":
-        return "🟡 Atenção: Professor leciona Sexta à noite e Segunda de manhã.";
+        return "[Atenção] Professor leciona Sexta à noite e Segunda de manhã.";
       default:
-        return "⚠️ Problema detectado.";
+        return "[Aviso] Problema detectado.";
     }
   };
 
@@ -503,7 +504,7 @@ export default function ModoPlanilha({
               }}
               className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white rounded shadow-sm text-xs font-black transition-colors uppercase tracking-wider flex items-center justify-center gap-2"
             >
-              <span>🗑️</span> Esvaziar {categoriaFiltro}
+              <Trash2 className="w-4 h-4" /> Esvaziar {categoriaFiltro}
             </button>
           )}
 
@@ -647,7 +648,7 @@ export default function ModoPlanilha({
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all border-4 border-red-600">
             <form onSubmit={limparCategoria}>
               <div className="bg-red-600 text-white px-6 py-4 flex items-center gap-3">
-                <span className="text-3xl">⚠️</span>
+                <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <div>
                   <h3 className="font-black text-xl leading-tight">
                     PERIGO: LIMPEZA EM MASSA

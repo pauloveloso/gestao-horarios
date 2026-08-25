@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { PDFPublicoDocument } from "./components/PDFPublicoDocument";
+import { Download, CalendarDays, Inbox, ArrowLeft, Lock } from "lucide-react";
 
 export default function HomePage() {
   const [carregando, setCarregando] = useState(true);
@@ -359,8 +360,8 @@ export default function HomePage() {
                   disabled
                   className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm h-10 min-w-[150px]"
                 >
-                  <span className="hidden sm:inline">🖨️ BAIXAR PDF</span>
-                  <span className="sm:hidden">🖨️ PDF</span>
+                  <span className="hidden sm:flex items-center"><Download className="w-4 h-4 mr-2" /> BAIXAR PDF</span>
+                  <span className="sm:hidden flex items-center"><Download className="w-4 h-4 mr-1" /> PDF</span>
                 </button>
               ) : (
                 <PDFDownloadLink
@@ -386,8 +387,7 @@ export default function HomePage() {
                       </>
                     ) : (
                       <>
-                        <span>📄</span> <span className="hidden sm:inline">BAIXAR PDF</span>
-                        <span className="sm:hidden">BAIXAR PDF</span>
+                        <Download className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">BAIXAR PDF</span>  <span className="sm:hidden">BAIXAR PDF</span>
                       </>
                     )
                   }
@@ -406,7 +406,7 @@ export default function HomePage() {
         )}
         {!idSelecionado ? (
           <div className="h-[60vh] flex flex-col items-center justify-center text-gray-300 border-4 border-dashed border-gray-100 rounded-3xl">
-            <span className="text-8xl mb-4">📅</span>
+            <CalendarDays className="w-24 h-24 mx-auto mb-4 text-gray-300" />
             <p className="text-xl font-black text-gray-400 text-center px-4">
               Selecione uma opção acima para visualizar o horário.
             </p>
@@ -430,7 +430,7 @@ export default function HomePage() {
 
             {turnosOcupados.length === 0 ? (
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center text-gray-500 my-8">
-                <span className="text-5xl block mb-4">📭</span>
+                <Inbox className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                 <p className="text-lg font-bold text-gray-700">
                   Nenhum horário cadastrado
                 </p>
@@ -597,7 +597,7 @@ export default function HomePage() {
             <span
               className={logado ? "" : "opacity-60 group-hover:opacity-100"}
             >
-              {logado ? "⬅" : "🔒"}
+              {logado ? <ArrowLeft className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
             </span>
             {logado ? "Voltar ao Painel de Gestão" : "Acesso Restrito à Gestão"}
           </Link>
