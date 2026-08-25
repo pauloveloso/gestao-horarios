@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { useUser } from "../components/UserContext";
 
 export default function ReservasPage() {
+  const { user, isCoordenador } = useUser();
   const [carregando, setCarregando] = useState(true);
   const [carregandoGrid, setCarregandoGrid] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState<"ESPACO" | "HORARIO">("HORARIO");
@@ -56,6 +58,7 @@ export default function ReservasPage() {
     data_reserva: "",
     hora_inicio: "",
     hora_fim: "",
+    criado_por: null,
   });
 
   const [formReserva, setFormReserva] = useState({
@@ -314,6 +317,7 @@ export default function ReservasPage() {
             turma_curso: reservaCopiada.turma_curso,
             disciplina_evento: reservaCopiada.disciplina_evento,
             status: "APROVADA",
+            criado_por: user?.id,
           },
         ]);
         await carregarOcupacaoDoEspaco();
@@ -331,6 +335,7 @@ export default function ReservasPage() {
       data_reserva: dataSelecionada,
       hora_inicio: formatarHora(slot.hora_inicio),
       hora_fim: formatarHora(slot.hora_fim),
+      criado_por: null,
     });
     setFormReserva({
       nome_solicitante: "",
@@ -357,6 +362,7 @@ export default function ReservasPage() {
         data_reserva: res.data_reserva,
         hora_inicio: formatarHora(slot.hora_inicio),
         hora_fim: formatarHora(slot.hora_fim),
+        criado_por: res.criado_por,
       });
 
       setFormReserva({
@@ -439,6 +445,10 @@ export default function ReservasPage() {
 
   const salvarReserva = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (dadosReserva.id && !isCoordenador && dadosReserva.criado_por !== user?.id) {
+      alert("Você só tem permissão para alterar reservas criadas por você.");
+      return;
+    }
     setSalvando(true);
     try {
       const payload = {
@@ -462,6 +472,7 @@ export default function ReservasPage() {
             dia_semana: dadosReserva.dia_semana,
             data_reserva: dadosReserva.data_reserva,
             status: "APROVADA",
+            criado_por: user?.id,
           },
         ]);
       }
@@ -476,6 +487,10 @@ export default function ReservasPage() {
 
   const excluirReserva = async () => {
     if (!dadosReserva.id) return;
+    if (!isCoordenador && dadosReserva.criado_por !== user?.id) {
+      alert("Você só tem permissão para excluir reservas criadas por você.");
+      return;
+    }
     if (
       !window.confirm(
         "Tem certeza que deseja excluir esta reserva permanentemente?",
@@ -658,7 +673,7 @@ export default function ReservasPage() {
                   >
                     ⧉ Copiar para Colar
                   </button>
-                  {dadosReserva.id && (
+                  {dadosReserva.id && (isCoordenador || dadosReserva.criado_por === user?.id) && (
                     <button
                       type="button"
                       onClick={excluirReserva}
@@ -679,8 +694,8 @@ export default function ReservasPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={salvando}
-                    className={`w-2/3 py-2.5 rounded-lg font-black text-white transition-colors text-sm disabled:opacity-50 ${dadosReserva.id ? "bg-indigo-600 hover:bg-indigo-700" : "bg-green-600 hover:bg-green-700"}`}
+                    disabled={salvando || (dadosReserva.id && !isCoordenador && dadosReserva.criado_por !== user?.id)}
+                    className={`w-2/3 py-2.5 rounded-lg font-black text-white transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed ${dadosReserva.id ? "bg-indigo-600 hover:bg-indigo-700" : "bg-green-600 hover:bg-green-700"}`}
                   >
                     {salvando
                       ? "Processando..."

@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useMasterData } from "../components/MasterDataContext";
+import { useUser } from "../components/UserContext";
 
 export default function DashboardPage() {
+  const { user, isCoordenador, isAdmin, isProfessorTAE } = useUser();
   const { dadosMestres, carregando: carregandoMestre } = useMasterData();
   const [carregandoAulas, setCarregandoAulas] = useState(true);
 
@@ -265,8 +267,20 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* METRICAS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* PAINEL DO USUARIO / BEM-VINDO */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-black text-gray-800">Olá, {user?.nome || 'Usuário'}</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Seu perfil atual de acesso é: <strong className="text-green-700">{user?.nivel_acesso.replace('_', '/')}</strong>
+          </p>
+        </div>
+      </div>
+
+      {/* METRICAS - VISÍVEL APENAS PARA QUEM GERE HORÁRIOS */}
+      {isCoordenador && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
           <span className="text-[10px] font-black uppercase text-gray-400">
             Total Alocado
@@ -457,6 +471,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

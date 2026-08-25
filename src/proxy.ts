@@ -28,8 +28,10 @@ export async function proxy(request: NextRequest) {
   )
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
+  
+  const user = session?.user;
 
   const pathname = request.nextUrl.pathname
   // Todas as rotas que devem ser protegidas (dentro do grupo (admin))

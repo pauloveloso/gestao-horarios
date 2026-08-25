@@ -9,6 +9,22 @@ export type DiaSemana =
 export type StatusAula = "ATIVO" | "CANCELADO" | "PENDENTE";
 export type GravidadeValidacao = "IMPEDITIVO" | "ALERTA";
 
+export type NivelAcesso =
+  | "PROFESSOR_TAE"
+  | "COORDENADOR"
+  | "COMISSAO"
+  | "DIRECAO"
+  | "ADMINISTRADOR";
+
+export interface UsuarioSistema {
+  id: string; // UUID from auth.users
+  nome: string | null;
+  email: string;
+  nivel_acesso: NivelAcesso;
+  criado_em: string;
+}
+
+
 export interface Curso {
   id: number;
   nome: string;
@@ -87,6 +103,22 @@ export interface ValidacaoLog {
   criado_em: string;
 }
 
+export interface ReservaEspaco {
+  id: string;
+  espaco_id: string;
+  slot_horario_id: string;
+  dia_semana: DiaSemana;
+  data_reserva: string; // date
+  nome_solicitante: string;
+  email_solicitante: string | null;
+  turma_curso: string;
+  disciplina_evento: string;
+  status: string;
+  criado_em: string;
+  criado_por: string | null;
+}
+
+
 export interface GradeHorariaItem {
   aula_id: number;
   turma_id: number;
@@ -119,6 +151,8 @@ export interface Database {
       versoes_grade: { Row: VersaoGrade };
       aulas: { Row: Aula };
       validacoes_logs: { Row: ValidacaoLog };
+      usuarios_sistema: { Row: UsuarioSistema };
+      reservas_espacos: { Row: ReservaEspaco };
     };
     Views: {
       mv_grade_horaria_completa: { Row: GradeHorariaItem };

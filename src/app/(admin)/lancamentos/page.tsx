@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useMasterData } from "../components/MasterDataContext";
+import { useUser } from "../components/UserContext";
 
 import ModoPlanilha from "./components/ModoPlanilha";
 import ModoGrade from "./components/ModoGrade";
@@ -12,9 +13,11 @@ export default function LancamentosPage() {
   const [carregandoAulas, setCarregandoAulas] = useState(true);
 
   const [modoAtivo, setModoAtivo] = useState<"PLANILHA" | "GRADE">("PLANILHA");
+  const { isAdmin } = useUser();
 
   const versaoRascunhoRef = useRef<any>(null);
   const [versaoRascunho, setVersaoRascunho] = useState<any>(null);
+  const [todasVersoes, setTodasVersoes] = useState<any[]>([]);
 
   const [aulas, setAulas] = useState<any[]>([]);
   const [choques, setChoques] = useState<any[]>([]);
@@ -95,15 +98,23 @@ export default function LancamentosPage() {
         const { data: dVersoes } = await supabase
           .from("versoes_grade")
           .select("*")
-          .eq("status", "RASCUNHO")
-          .limit(1);
-
-        const rascunho = dVersoes && dVersoes.length > 0 ? dVersoes[0] : null;
+          .order("data_inicio_vigencia", { ascending: false });
 
         if (!montado) return;
 
-        if (rascunho) {
-          atualizarRascunho(rascunho);
+        if (dVersoes && dVersoes.length > 0) {
+          setTodasVersoes(dVersoes);
+          const rascunho = dVersoes.find((v) => v.status === "RASCUNHO");
+
+          if (isAdmin) {
+            atualizarRascunho(rascunho || dVersoes[0]);
+          } else {
+            if (rascunho) {
+              atualizarRascunho(rascunho);
+            } else {
+              setCarregandoAulas(false);
+            }
+          }
         } else {
           setCarregandoAulas(false);
         }
@@ -200,11 +211,28 @@ export default function LancamentosPage() {
         {versaoRascunho && (
           <div className="hidden md:flex flex-col items-center justify-center px-4">
             <span className="text-[10px] font-black uppercase text-green-200">
-              Editando Rascunho
+              Editando Versão
             </span>
-            <span className="text-xs font-bold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-200 mt-0.5 tracking-widest uppercase">
-              {versaoRascunho.nome}
-            </span>
+            {isAdmin ? (
+              <select
+                className="text-xs font-bold text-gray-800 bg-white px-2 py-0.5 rounded border border-gray-300 mt-0.5"
+                value={versaoRascunho.id}
+                onChange={(e) => {
+                  const sel = todasVersoes.find((v) => v.id === e.target.value);
+                  if (sel) atualizarRascunho(sel);
+                }}
+              >
+                {todasVersoes.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.nome} ({v.status})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="text-xs font-bold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-200 mt-0.5 tracking-widest uppercase">
+                {versaoRascunho.nome}
+              </span>
+            )}
           </div>
         )}
 
