@@ -3,6 +3,21 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { 
+  LayoutDashboard, 
+  CalendarDays, 
+  GitBranch, 
+  Eye, 
+  FileSpreadsheet, 
+  FileDown, 
+  Calendar, 
+  MapPin, 
+  GraduationCap, 
+  BookOpen, 
+  DoorOpen, 
+  Users, 
+  ShieldCheck 
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { MasterDataProvider } from "./components/MasterDataContext";
 import { UserProvider, useUser } from "./components/UserContext";
@@ -28,57 +43,63 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const gruposMenu = [
     {
       titulo: "Visão Geral",
-      itens: [{ nome: "Dashboard", href: "/painel", icone: "📊", visible: true }],
+      itens: [{ nome: "Dashboard", href: "/painel", icone: <LayoutDashboard className="w-5 h-5" />, visible: true }],
       visible: true,
     },
     {
       titulo: "Gestão de Horários",
       itens: [
-        { nome: "Lançamentos", href: "/lancamentos", icone: "🗓️", visible: isCoordenador },
-        { nome: "Gestão de Versões", href: "/cadastros/versoes", icone: "🔄", visible: isComissao },
+        { nome: "Lançamentos", href: "/lancamentos", icone: <CalendarDays className="w-5 h-5" />, visible: isCoordenador },
+        { nome: "Gestão de Versões", href: "/cadastros/versoes", icone: <GitBranch className="w-5 h-5" />, visible: isComissao },
         {
           nome: "Visualizar Horários",
           href: "/relatorios/visualizar-horarios",
-          icone: "👁️",
+          icone: <Eye className="w-5 h-5" />,
           visible: true,
         },
         {
           nome: "Fichas de Matrícula",
           href: "/relatorios/fichas",
-          icone: "📑",
-          visible: isCoordenador,
+          icone: <FileSpreadsheet className="w-5 h-5" />,
+          visible: true,
         },
         {
           nome: "Quadros de Horários",
           href: "/relatorios/horarios",
-          icone: "🗓️",
+          icone: <CalendarDays className="w-5 h-5" />,
           visible: isCoordenador,
         },
         {
           nome: "Exportar PDF Integrado",
           href: "/relatorios/pdf-integrado",
-          icone: "📄",
+          icone: <FileDown className="w-5 h-5" />,
           visible: isComissao,
         },
-        { nome: "Reserva de Espaços", href: "/reservas", icone: "📅", visible: true },
       ],
       visible: true,
     },
     {
-      titulo: "Base de Dados",
+      titulo: "Gestão de Espaços",
       itens: [
-        { nome: "Períodos Letivos", href: "/cadastros/periodos", icone: "📅", visible: isComissao },
-        { nome: "Cursos e Turmas", href: "/cadastros/cursos", icone: "🎓", visible: isCoordenador },
-        { nome: "Disciplinas", href: "/cadastros/disciplinas", icone: "📚", visible: isCoordenador },
-        { nome: "Professores", href: "/cadastros/professores", icone: "👨‍🏫", visible: isCoordenador },
-        { nome: "Espaços Físicos", href: "/cadastros/espacos", icone: "🏫", visible: isComissao },
+        { nome: "Reservas Atuais", href: "/reservas", icone: <Calendar className="w-5 h-5" />, visible: true },
+        { nome: "Ocupação de Salas", href: "/relatorios/ocupacao-salas", icone: <MapPin className="w-5 h-5" />, visible: true },
       ],
-      visible: isCoordenador, // Ocultar o grupo todo se não tiver pelo menos acesso de coordenador
+      visible: true,
+    },
+    {
+      titulo: "Cadastros Básicos",
+      itens: [
+        { nome: "Professores", href: "/cadastros/professores", icone: <Users className="w-5 h-5" />, visible: isCoordenador },
+        { nome: "Cursos", href: "/cadastros/cursos", icone: <GraduationCap className="w-5 h-5" />, visible: isCoordenador },
+        { nome: "Disciplinas", href: "/cadastros/disciplinas", icone: <BookOpen className="w-5 h-5" />, visible: isCoordenador },
+        { nome: "Espaços / Salas", href: "/cadastros/espacos", icone: <DoorOpen className="w-5 h-5" />, visible: isCoordenador },
+      ],
+      visible: isCoordenador,
     },
     {
       titulo: "Administração",
       itens: [
-        { nome: "Usuários do Sistema", href: "/cadastros/usuarios", icone: "👥", visible: isAdmin },
+        { nome: "Usuários do Sistema", href: "/cadastros/usuarios", icone: <ShieldCheck className="w-5 h-5" />, visible: isAdmin },
       ],
       visible: isAdmin,
     },
@@ -232,8 +253,10 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                          {ativo && (
                            <span className="absolute left-0 top-0 bottom-0 w-1.5 bg-green-400 rounded-r-md"></span>
                          )}
-                         <span className="text-lg">{item.icone}</span>
-                         <span className="text-sm">{item.nome}</span>
+                         <span className={`text-lg flex items-center justify-center ${ativo ? "text-green-300" : "text-green-300/70"}`}>
+                           {item.icone}
+                         </span>
+                         <span className="text-sm truncate">{item.nome}</span>
                        </Link>
                     </li>
                   );
