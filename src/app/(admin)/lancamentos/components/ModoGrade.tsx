@@ -570,7 +570,9 @@ export default function ModoGrade({
                             >
                               {aulaCopiada ? (
                                 <div className="flex gap-4">
-                                  <Clipboard className="w-4 h-4 cursor-crosshair opacity-50 hover:opacity-100 hover:text-green-600 transition-all active:scale-90" onClick={() => colarAula(dia.id, slot.id)} title="Colar aqui" />
+                                  <button onClick={() => colarAula(dia.id, slot.id)} title="Colar aqui" className="cursor-crosshair opacity-50 hover:opacity-100 hover:text-green-600 transition-all active:scale-90">
+                                    <Clipboard className="w-4 h-4" />
+                                  </button>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
