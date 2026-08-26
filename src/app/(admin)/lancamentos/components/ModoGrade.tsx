@@ -16,6 +16,7 @@ export default function ModoGrade({
   slots,
   categorias = [],
   recarregarAulas,
+  executeAction,
 }: any) {
   const [filtroTurma, setFiltroTurma] = useState("");
   const [modalAberto, setModalAberto] = useState(false);
@@ -112,13 +113,15 @@ export default function ModoGrade({
       return;
     }
 
-    const { error } = await supabase
-      .from("aulas")
-      .update({ dia_semana: diaId, slot_horario_id: slotId })
-      .eq("id", aulaArrastada.id);
+    const { success, error } = await executeAction({
+      type: 'UPDATE',
+      recordId: aulaArrastada.id,
+      previousData: aulaArrastada,
+      newData: { ...aulaArrastada, dia_semana: diaId, slot_horario_id: slotId }
+    });
 
-    if (error) {
-      alert("Erro ao mover a aula: " + error.message);
+    if (!success) {
+      alert("Erro ao mover a aula: " + error?.message);
     } else {
       recarregarAulas();
     }
@@ -158,9 +161,13 @@ export default function ModoGrade({
       slot_horario_id: slotId,
     };
 
-    const { error } = await supabase.from("aulas").insert(payload);
-    if (error) {
-      alert("Erro ao colar aula: " + error.message);
+    const { success, error } = await executeAction({
+      type: 'INSERT',
+      newData: payload
+    });
+    
+    if (!success) {
+      alert("Erro ao colar aula: " + error?.message);
     } else {
       setAulaCopiada(null);
       recarregarAulas();
@@ -190,24 +197,33 @@ export default function ModoGrade({
     const idDaAula = payload.id;
     delete payload.id;
 
-    let error;
     if (idDaAula) {
-      const { error: e } = await supabase
-        .from("aulas")
-        .update(payload)
-        .eq("id", idDaAula);
-      error = e;
+      const aulaAntiga = aulas.find((a: any) => String(a.id) === String(idDaAula));
+      const { success, error } = await executeAction({
+        type: 'UPDATE',
+        recordId: idDaAula,
+        previousData: aulaAntiga,
+        newData: payload
+      });
+      if (!success) {
+        console.error("Erro no upsert ModoGrade:", error, payload);
+        alert("Erro ao salvar: " + error?.message);
+      } else {
+        setModalAberto(false);
+        recarregarAulas();
+      }
     } else {
-      const { error: e } = await supabase.from("aulas").insert(payload);
-      error = e;
-    }
-
-    if (error) {
-      console.error("Erro no upsert ModoGrade:", error, payload);
-      alert("Erro ao salvar: " + error.message + "\nDetalhes: " + JSON.stringify(error));
-    } else {
-      setModalAberto(false);
-      recarregarAulas();
+      const { success, error } = await executeAction({
+        type: 'INSERT',
+        newData: payload
+      });
+      if (!success) {
+        console.error("Erro no upsert ModoGrade:", error, payload);
+        alert("Erro ao salvar: " + error?.message);
+      } else {
+        setModalAberto(false);
+        recarregarAulas();
+      }
     }
   };
 
@@ -218,9 +234,18 @@ export default function ModoGrade({
       )
     )
       return;
-    const { error } = await supabase.from("aulas").delete().eq("id", id);
-    if (!error) recarregarAulas();
-    else alert("Erro ao excluir: " + error.message);
+      
+    const aulaAntiga = aulas.find((a: any) => String(a.id) === String(id));
+    if (!aulaAntiga) return;
+    
+    const { success, error } = await executeAction({
+      type: 'DELETE',
+      recordId: id,
+      previousData: aulaAntiga
+    });
+    
+    if (success) recarregarAulas();
+    else alert("Erro ao excluir: " + error?.message);
   };
 
   // FUNÇÃO PARA LIMPAR TODAS AS AULAS DA TURMA SELECIONADA

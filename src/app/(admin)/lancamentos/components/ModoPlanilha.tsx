@@ -17,6 +17,7 @@ export default function ModoPlanilha({
   slots,
   categorias = [],
   recarregarAulas,
+  executeAction,
 }: any) {
   const [isProcessando, setIsProcessando] = useState(true);
   const [linhas, setLinhas] = useState<any[]>([]);
@@ -395,29 +396,48 @@ export default function ModoPlanilha({
     };
     const jaExiste = aulasRef.current.some((a: any) => String(a.id) === String(linha.id));
     
-    let error;
     if (jaExiste) {
-      const { error: e } = await supabase.from("aulas").update(payload).eq("id", linha.id);
-      error = e;
+      const aulaAntiga = aulasRef.current.find((a: any) => String(a.id) === String(linha.id));
+      const { success, error } = await executeAction({
+        type: 'UPDATE',
+        recordId: linha.id,
+        previousData: aulaAntiga,
+        newData: payload
+      });
+      if (!success) {
+        console.error("Erro no salvar ModoPlanilha:", error, payload);
+        alert("Falha ao salvar na planilha: " + error?.message);
+      } else {
+        recarregarAulas();
+      }
     } else {
-      const { error: e } = await supabase.from("aulas").insert(payload);
-      error = e;
-    }
-
-    if (error) {
-      console.error("Erro no salvar ModoPlanilha:", error, payload);
-      alert("Falha ao salvar na planilha: " + error.message + "\nDetalhes: " + JSON.stringify(error));
-    } else {
-      recarregarAulas();
+      const { success, error } = await executeAction({
+        type: 'INSERT',
+        newData: payload
+      });
+      if (!success) {
+        console.error("Erro no inserir ModoPlanilha:", error, payload);
+        alert("Falha ao inserir na planilha: " + error?.message);
+      } else {
+        recarregarAulas();
+      }
     }
   };
 
   const removerLinha = useCallback(async (id: string) => {
+    const aulaParaRemover = aulasRef.current.find((a: any) => String(a.id) === id);
     setLinhas((prev) => prev.filter((l: any) => l.id !== id));
     setLinhasVisualizadas((prev) => prev.filter((l: any) => l.id !== id));
-    const { error } = await supabase.from("aulas").delete().eq("id", id);
-    if (!error) recarregarAulas();
-  }, []);
+    
+    if (aulaParaRemover) {
+      const { success } = await executeAction({
+        type: 'DELETE',
+        recordId: id,
+        previousData: aulaParaRemover
+      });
+      if (success) recarregarAulas();
+    }
+  }, [executeAction, recarregarAulas]);
 
   // FUNÇÃO PARA LIMPAR TODAS AS AULAS DA CATEGORIA SELECIONADA
   const limparCategoria = async (e: React.FormEvent) => {

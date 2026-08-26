@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useMasterData } from "../components/MasterDataContext";
 import { useUser } from "../components/UserContext";
-import { Clipboard, CalendarDays, FolderOpen } from "lucide-react";
+import { Clipboard, CalendarDays, FolderOpen, Undo2, Redo2 } from "lucide-react";
 
 import ModoPlanilha from "./components/ModoPlanilha";
 import ModoGrade from "./components/ModoGrade";
+import { useUndoRedo } from "./hooks/useUndoRedo";
 
 export default function LancamentosPage() {
   const { dadosMestres, carregando: carregandoMestre } = useMasterData();
@@ -15,6 +16,7 @@ export default function LancamentosPage() {
 
   const [modoAtivo, setModoAtivo] = useState<"PLANILHA" | "GRADE">("PLANILHA");
   const { isAdmin } = useUser();
+  const { executeAction, undo, redo, canUndo, canRedo } = useUndoRedo();
 
   const versaoRascunhoRef = useRef<any>(null);
   const [versaoRascunho, setVersaoRascunho] = useState<any>(null);
@@ -153,7 +155,8 @@ export default function LancamentosPage() {
           setAulas((prevAulas) => {
             let novasAulas = [...prevAulas];
             if (payload.eventType === "INSERT") {
-              novasAulas.push(payload.new);
+              const exists = novasAulas.some((a) => a.id === payload.new.id);
+              if (!exists) novasAulas.push(payload.new);
             } else if (payload.eventType === "UPDATE") {
               const idx = novasAulas.findIndex((a) => a.id === payload.new.id);
               if (idx > -1) novasAulas[idx] = payload.new;
@@ -252,6 +255,25 @@ export default function LancamentosPage() {
             <CalendarDays className="w-4 h-4" /> Grade
           </button>
         </div>
+
+        <div className="flex gap-2 bg-green-950 p-1 rounded-lg shadow-inner">
+          <button
+            onClick={undo}
+            disabled={!canUndo}
+            title="Desfazer"
+            className="p-2 rounded-md transition-all text-green-400 hover:text-white disabled:opacity-30 disabled:hover:text-green-400 disabled:cursor-not-allowed"
+          >
+            <Undo2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={redo}
+            disabled={!canRedo}
+            title="Refazer"
+            className="p-2 rounded-md transition-all text-green-400 hover:text-white disabled:opacity-30 disabled:hover:text-green-400 disabled:cursor-not-allowed"
+          >
+            <Redo2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {!versaoRascunho ? (
@@ -280,6 +302,7 @@ export default function LancamentosPage() {
               slots={slots}
               categorias={categorias}
               recarregarAulas={() => buscarAulas(false)}
+              executeAction={executeAction}
             />
           )}
 
@@ -296,6 +319,7 @@ export default function LancamentosPage() {
               slots={slots}
               categorias={categorias}
               recarregarAulas={() => buscarAulas(false)}
+              executeAction={executeAction}
             />
           )}
         </>
