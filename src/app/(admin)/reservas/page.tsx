@@ -14,9 +14,7 @@ export default function ReservasPage() {
 
   // Dados Estruturais do Banco
   const [semestreAtivo, setSemestreAtivo] = useState<any>(null);
-  const [versaoPublicadaId, setVersaoPublicadaId] = useState<string | null>(
-    null,
-  ); // NOVO ESTADO
+  const [versoesAtivasIds, setVersoesAtivasIds] = useState<string[]>([]);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [espacos, setEspacos] = useState<any[]>([]);
   const [slots, setSlots] = useState<any[]>([]);
@@ -124,19 +122,25 @@ export default function ReservasPage() {
         if (versoesDb && versoesDb.length > 0) {
           const hoje = new Date().toISOString().split("T")[0];
 
-          // 1. Tenta achar a versão PUBLICADA que já está valendo hoje
-          let versaoAtiva = versoesDb.find(
+          // 1. Achar versão RASCUNHO mais recente
+          const versaoRascunho = versoesDb.find((v) => v.status === "RASCUNHO");
+          
+          // 2. Achar versão PUBLICADA
+          let versaoPublicada = versoesDb.find(
             (v) => v.status === "PUBLICADA" && v.data_inicio_vigencia <= hoje,
           );
+          if (!versaoPublicada)
+            versaoPublicada = versoesDb.find((v) => v.status === "PUBLICADA");
 
-          // 2. Se não achar, pega a última PUBLICADA (mesmo que a vigência seja pro futuro)
-          if (!versaoAtiva)
-            versaoAtiva = versoesDb.find((v) => v.status === "PUBLICADA");
+          const idsAtivos = [];
+          if (versaoPublicada) idsAtivos.push(versaoPublicada.id);
+          if (versaoRascunho) idsAtivos.push(versaoRascunho.id);
+          
+          if (idsAtivos.length === 0 && versoesDb.length > 0) {
+             idsAtivos.push(versoesDb[0].id);
+          }
 
-          // 3. Se não houver NENHUMA publicada (em fase de testes), pega o Rascunho mais recente
-          if (!versaoAtiva) versaoAtiva = versoesDb[0];
-
-          setVersaoPublicadaId(versaoAtiva.id);
+          setVersoesAtivasIds(idsAtivos);
         }
 
         // LÓGICA DE ENVELOPE (Mantida)
@@ -199,9 +203,9 @@ export default function ReservasPage() {
         .select("*")
         .eq("espaco_id", espacoSelecionado);
 
-      // FILTRA PARA MOSTRAR APENAS AS AULAS DA VERSÃO PUBLICADA
-      if (versaoPublicadaId) {
-        queryAulas = queryAulas.eq("versao_id", versaoPublicadaId);
+      // FILTRA PARA MOSTRAR APENAS AS AULAS DAS VERSÕES ATIVAS
+      if (versoesAtivasIds.length > 0) {
+        queryAulas = queryAulas.in("versao_id", versoesAtivasIds);
       }
 
       const [{ data: aulas }, { data: reservas }] = await Promise.all([
@@ -226,7 +230,7 @@ export default function ReservasPage() {
 
   useEffect(() => {
     carregarOcupacaoDoEspaco();
-  }, [espacoSelecionado, dataSegundaFeira, versaoPublicadaId]);
+  }, [espacoSelecionado, dataSegundaFeira, versoesAtivasIds]);
 
   const espacosFiltrados = espacos.filter(
     (e) => String(e.categoria_id) === String(categoriaSelecionada),
@@ -395,9 +399,9 @@ export default function ReservasPage() {
         .eq("dia_semana", diaDaSemana)
         .eq("slot_horario_id", slotBuscaId);
 
-      // FILTRA A BUSCA APENAS PARA A VERSÃO PUBLICADA (TIRANDO O EQ STATUS ATIVO)
-      if (versaoPublicadaId) {
-        queryAulas = queryAulas.eq("versao_id", versaoPublicadaId);
+      // FILTRA A BUSCA APENAS PARA AS VERSÕES ATIVAS
+      if (versoesAtivasIds.length > 0) {
+        queryAulas = queryAulas.in("versao_id", versoesAtivasIds);
       }
 
       const { data: aulas } = await queryAulas;
@@ -454,7 +458,7 @@ export default function ReservasPage() {
     try {
       const payload = {
         nome_solicitante: formReserva.nome_solicitante,
-        email_solicitante: formReserva.email_solicitante || null,
+        email_solicitante: user?.email || null,
         turma_curso: formReserva.turma_curso,
         disciplina_evento: formReserva.disciplina_evento,
       };
@@ -606,22 +610,7 @@ export default function ReservasPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-gray-500 uppercase mb-1">
-                  E-mail (Opcional)
-                </label>
-                <input
-                  type="email"
-                  value={formReserva.email_solicitante}
-                  onChange={(e) =>
-                    setFormReserva({
-                      ...formReserva,
-                      email_solicitante: e.target.value,
-                    })
-                  }
-                  className="w-full border border-gray-300 rounded p-2 text-sm focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none"
-                />
-              </div>
+
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

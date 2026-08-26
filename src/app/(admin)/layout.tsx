@@ -20,7 +20,8 @@ import {
   Lock,
   ShieldAlert,
   X,
-  LogOut
+  LogOut,
+  List
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { MasterDataProvider } from "./components/MasterDataContext";
@@ -85,7 +86,8 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       titulo: "Gestão de Espaços",
       itens: [
-        { nome: "Reservas Atuais", href: "/reservas", icone: <Calendar className="w-5 h-5" />, visible: true },
+        { nome: "Reserva de Espaço", href: "/reservas", icone: <Calendar className="w-5 h-5" />, visible: true },
+        { nome: "Consulta Reservas", href: "/minhas-reservas", icone: <List className="w-5 h-5" />, visible: true },
         { nome: "Ocupação de Salas", href: "/relatorios/ocupacao-salas", icone: <MapPin className="w-5 h-5" />, visible: true },
       ],
       visible: true,

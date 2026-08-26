@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { BotaoExportarPDF } from "@/app/components/BotaoExportarPDF";
 import { PDFFichasDocument } from "./components/PDFFichasDocument";
 import { useMasterData } from "../../components/MasterDataContext";
 import { Download, School, FileText } from "lucide-react";
@@ -536,40 +536,17 @@ export default function FichasMatriculaPage() {
                 </select>
               </div>
 
-              {!(isClient && paginas.length > 0) ? (
-                <button
-                  disabled
-                  className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm min-w-[180px] h-9"
-                >
-                  <Download className="w-4 h-4 inline-block -mt-1 mr-1" /> EXPORTAR PDF
-                </button>
-              ) : (
-                <PDFDownloadLink
-                  document={
-                    <PDFFichasDocument
-                      paginas={paginas}
-                      versaoAtivaDetalhes={versaoAtivaDetalhes}
-                      originUrl={typeof window !== "undefined" ? window.location.origin : ""}
-                    />
-                  }
-                  fileName={`FICHAS_MATRICULA_${getCursoNomeLimpo()}_${getSiglaLimpa()}.pdf`}
-                  className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm min-w-[180px] whitespace-nowrap h-9"
-                >
-                  {({ loading }) =>
-                    loading ? (
-                      <span className="flex items-center gap-2">
-                        <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        GERANDO...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <Download className="w-4 h-4 inline-block -mt-1 mr-1" /> EXPORTAR PDF ({paginas.length}{" "}
-                        {paginas.length === 1 ? "Página" : "Páginas"})
-                      </span>
-                    )
-                  }
-                </PDFDownloadLink>
-              )}
+              <BotaoExportarPDF
+                disabled={!(isClient && paginas.length > 0)}
+                fileName={`FICHAS_MATRICULA_${getCursoNomeLimpo()}_${getSiglaLimpa()}.pdf`}
+                document={
+                  <PDFFichasDocument
+                    paginas={paginas}
+                    versaoAtivaDetalhes={versaoAtivaDetalhes}
+                    originUrl={typeof window !== "undefined" ? window.location.origin : ""}
+                  />
+                }
+              />
             </div>
           </div>
         </header>

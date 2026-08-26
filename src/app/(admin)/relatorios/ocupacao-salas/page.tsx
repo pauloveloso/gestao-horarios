@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Printer, Building, Inbox } from "lucide-react";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { BotaoExportarPDF } from "@/app/components/BotaoExportarPDF";
 import { PDFOcupacaoSalasDocument } from "./components/PDFOcupacaoSalasDocument";
 
 export default function RelatorioOcupacaoSalasPage() {
@@ -223,43 +223,19 @@ export default function RelatorioOcupacaoSalasPage() {
             ))}
           </select>
 
-          {!(isClient && espacosFiltrados.length > 0) ? (
-            <button
-              disabled
-              className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm h-9 min-w-[150px]"
-            >
-              <span className="flex items-center gap-2">
-                <Printer className="w-4 h-4 inline-block -mt-1 mr-1" /> BAIXAR PDF
-              </span>
-            </button>
-          ) : (
-            <PDFDownloadLink
-              document={
-                <PDFOcupacaoSalasDocument
-                  dados={dados}
-                  infoVersao={infoVersao}
-                  infoCategoria={infoCategoria}
-                  espacosFiltrados={espacosFiltrados}
-                  todosTurnos={todosTurnos}
-                />
-              }
-              fileName={`IFNMG_Salas_${getTituloSeguro()}.pdf`}
-              className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm h-9 min-w-[150px]"
-            >
-              {({ loading }) =>
-                loading ? (
-                  <span className="flex items-center gap-2">
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    GERANDO...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Printer className="w-4 h-4 inline-block -mt-1 mr-1" /> BAIXAR PDF
-                  </span>
-                )
-              }
-            </PDFDownloadLink>
-          )}
+          <BotaoExportarPDF
+            disabled={!(isClient && espacosFiltrados.length > 0)}
+            fileName={`IFNMG_Salas_${getTituloSeguro()}.pdf`}
+            document={
+              <PDFOcupacaoSalasDocument
+                dados={dados}
+                infoVersao={infoVersao}
+                infoCategoria={infoCategoria}
+                espacosFiltrados={espacosFiltrados}
+                todosTurnos={todosTurnos}
+              />
+            }
+          />
         </div>
       </div>
 

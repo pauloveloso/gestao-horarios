@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useMasterData } from "../components/MasterDataContext";
 import { useUser } from "../components/UserContext";
-import { RefreshCw, Users, Building, ShieldAlert, ThumbsUp, AlertTriangle, Sparkles } from "lucide-react";
+import { RefreshCw, Users, Building, ShieldAlert, ThumbsUp, AlertTriangle, Sparkles, List } from "lucide-react";
 
 export default function DashboardPage() {
   const { user, isCoordenador, isAdmin, isProfessorTAE } = useUser();
@@ -276,6 +276,13 @@ export default function DashboardPage() {
             Seu perfil atual de acesso é: <strong className="text-green-700">{user?.nivel_acesso.replace('_', '/')}</strong>
           </p>
         </div>
+        <Link 
+          href="/minhas-reservas"
+          className="flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold transition-colors border border-green-200 text-sm shadow-sm"
+        >
+          <List className="w-4 h-4" />
+          {isCoordenador ? "Gestão de Reservas" : "Consulta Reservas"}
+        </Link>
       </div>
 
       {/* METRICAS - VISÍVEL APENAS PARA QUEM GERE HORÁRIOS */}

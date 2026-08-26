@@ -21,7 +21,7 @@ export default function GestaoVersoesPage() {
     nome: "",
     semestre: "",
   });
-  const [novoRascunho, setNovoRascunho] = useState({ nome: "", semestre: "" });
+  const [novoRascunho, setNovoRascunho] = useState({ nome: "", semestre: "", status: "RASCUNHO" });
   const [idVersaoOrigemRecarregar, setIdVersaoOrigemRecarregar] = useState("");
 
   const carregarVersoes = async () => {
@@ -46,23 +46,33 @@ export default function GestaoVersoesPage() {
 
   const criarRascunho = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (novoRascunho.status === "RASCUNHO") {
+      const temRascunho = versoes.some((v) => v.status === "RASCUNHO");
+      if (temRascunho) {
+        alert("Já existe uma versão de rascunho. Não é permitido criar mais de um rascunho oficial simultâneo.");
+        return;
+      }
+    }
+
     const { error } = await supabase.from("versoes_grade").insert({
       nome: novoRascunho.nome,
       semestre: novoRascunho.semestre,
-      status: "RASCUNHO",
+      status: novoRascunho.status,
     });
 
     if (!error) {
       setModalNovoRascunho(false);
-      setNovoRascunho({ nome: "", semestre: "" });
+      setNovoRascunho({ nome: "", semestre: "", status: "RASCUNHO" });
       carregarVersoes();
     } else {
-      alert("Erro ao criar rascunho: " + error.message);
+      alert("Erro ao criar versão: " + error.message);
     }
   };
 
   const salvarEdicao = async (e: React.FormEvent) => {
     e.preventDefault();
+
     const { error } = await supabase
       .from("versoes_grade")
       .update({ nome: dadosEdicao.nome, semestre: dadosEdicao.semestre })
@@ -235,14 +245,12 @@ export default function GestaoVersoesPage() {
             horários.
           </p>
         </div>
-        {rascunhos.length === 0 && (
-          <button
-            onClick={() => setModalNovoRascunho(true)}
-            className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm w-full md:w-auto h-9"
-          >
-            + CRIAR RASCUNHO INICIAL
-          </button>
-        )}
+        <button
+          onClick={() => setModalNovoRascunho(true)}
+          className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm w-full md:w-auto h-9"
+        >
+          + NOVA VERSÃO
+        </button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -264,6 +272,9 @@ export default function GestaoVersoesPage() {
               if (versao.status === "RASCUNHO") {
                 badgeClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
                 labelStatus = "EM EDIÇÃO (RASCUNHO)";
+              } else if (versao.status === "TESTE") {
+                badgeClass = "bg-purple-100 text-purple-800 border-purple-200";
+                labelStatus = "VERSÃO DE TESTE";
               } else if (versao.status === "PUBLICADA") {
                 if (versao.data_inicio_vigencia > hoje) {
                   badgeClass = "bg-blue-100 text-blue-800 border-blue-200";
@@ -304,11 +315,11 @@ export default function GestaoVersoesPage() {
                     </span>
                   </td>
                   <td className="p-4 text-right space-x-2">
-                    {versao.status === "RASCUNHO" && (
+                    {(versao.status === "RASCUNHO" || versao.status === "TESTE") && (
                       <button
                         onClick={() => excluirVersao(versao.id)}
                         className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded transition-colors"
-                        title="Excluir Rascunho Permanentemente"
+                        title="Excluir Permanentemente"
                       >
                         🗑️
                       </button>
@@ -349,6 +360,17 @@ export default function GestaoVersoesPage() {
                           🚀 Publicar
                         </button>
                       </>
+                    )}
+                    {versao.status === "TESTE" && (
+                      <button
+                        onClick={() => {
+                          setVersaoAlvo(versao);
+                          setModalRecarregar(true);
+                        }}
+                        className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition-colors"
+                      >
+                        🔄 Recarregar
+                      </button>
                     )}
 
                     {isPrevia && (
@@ -504,7 +526,7 @@ export default function GestaoVersoesPage() {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
             <form onSubmit={criarRascunho}>
               <div className="bg-gray-800 text-white px-6 py-4 font-bold">
-                Criar Rascunho Inicial
+                Criar Nova Versão
               </div>
               <div className="p-6 space-y-4">
                 <input
@@ -530,6 +552,20 @@ export default function GestaoVersoesPage() {
                   }
                   className="w-full border rounded p-2"
                 />
+                <select
+                  required
+                  value={novoRascunho.status}
+                  onChange={(e) =>
+                    setNovoRascunho({
+                      ...novoRascunho,
+                      status: e.target.value,
+                    })
+                  }
+                  className="w-full border rounded p-2 outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  <option value="RASCUNHO">Rascunho (Oficial)</option>
+                  <option value="TESTE">Versão de Teste</option>
+                </select>
               </div>
               <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
                 <button

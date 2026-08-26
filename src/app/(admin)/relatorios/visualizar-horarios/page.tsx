@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useUser } from "../../components/UserContext";
 import { Download, Eye, Inbox } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { BotaoExportarPDF } from "@/app/components/BotaoExportarPDF";
 import { PDFPublicoDocument } from "@/app/components/PDFPublicoDocument";
 
 export default function VisualizarHorariosAdminPage() {
@@ -376,43 +376,21 @@ export default function VisualizarHorariosAdminPage() {
           </select>
 
           <div className="flex gap-2 w-full xl:w-auto mt-4 md:mt-0">
-            {(!idSelecionado || turnosOcupados.length === 0 || !isClient) ? (
-              <button
-                disabled
-                className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm h-9 min-w-[150px]"
-              >
-                <Download className="w-4 h-4 inline-block -mt-1 mr-1" /> BAIXAR PDF
-              </button>
-            ) : (
-              <PDFDownloadLink
-                document={
-                  <PDFPublicoDocument
-                    dados={dados}
-                    turnosOcupados={turnosOcupados}
-                    diasSemana={diasSemana}
-                    tipoFiltro={tipoFiltro}
-                    idSelecionado={idSelecionado}
-                    titulo={obterTituloGrade()}
-                    dataVigencia={formatarData(infoVersao?.data_inicio_vigencia)}
-                  />
-                }
-                fileName={`IFNMG_${tituloSeguro}_Inspecao.pdf`}
-                className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm h-9 min-w-[150px] whitespace-nowrap"
-              >
-                {({ loading }) =>
-                  loading ? (
-                    <>
-                      <div className="w-3 h-3 border-2 border-green-800 border-t-transparent rounded-full animate-spin"></div>
-                      <span>GERANDO...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4 inline-block -mt-1 mr-1" /> <span>BAIXAR PDF</span>
-                    </>
-                  )
-                }
-              </PDFDownloadLink>
-            )}
+            <BotaoExportarPDF
+              disabled={!idSelecionado || turnosOcupados.length === 0}
+              fileName={`IFNMG_${tituloSeguro}_Inspecao.pdf`}
+              document={
+                <PDFPublicoDocument
+                  dados={dados}
+                  turnosOcupados={turnosOcupados}
+                  diasSemana={diasSemana}
+                  tipoFiltro={tipoFiltro}
+                  idSelecionado={idSelecionado}
+                  titulo={obterTituloGrade()}
+                  dataVigencia={formatarData(infoVersao?.data_inicio_vigencia)}
+                />
+              }
+            />
           </div>
         </div>
       </div>

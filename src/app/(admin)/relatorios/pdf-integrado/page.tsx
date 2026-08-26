@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { BotaoExportarPDF } from "@/app/components/BotaoExportarPDF";
 import { PDFIntegradoDocument } from "./components/PDFIntegradoDocument";
 import { Download } from "lucide-react";
 
@@ -193,33 +193,11 @@ export default function ExportarPDFIntegradoPage() {
               </option>
             ))}
           </select>
-          {!(isClient && dados && dados.grupos.length > 0) ? (
-            <button
-              disabled
-              className="bg-green-500 disabled:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm min-w-[150px] h-9"
-            >
-              <Download className="w-4 h-4 inline-block -mt-1 mr-1" /> BAIXAR PDF
-            </button>
-          ) : (
-            <PDFDownloadLink
-              document={<PDFIntegradoDocument dados={dados} />}
-              fileName={`Horarios_Integrado_IFNMG.pdf`}
-              className="bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm min-w-[150px] whitespace-nowrap h-9"
-            >
-              {({ loading }) =>
-                loading ? (
-                  <span className="flex items-center gap-2">
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    GERANDO...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Download className="w-4 h-4 inline-block -mt-1 mr-1" /> BAIXAR PDF
-                  </span>
-                )
-              }
-            </PDFDownloadLink>
-          )}
+          <BotaoExportarPDF
+            disabled={!(isClient && dados && dados.grupos.length > 0)}
+            fileName={`Horarios_Integrado_IFNMG.pdf`}
+            document={<PDFIntegradoDocument dados={dados} />}
+          />
         </div>
       </div>
 

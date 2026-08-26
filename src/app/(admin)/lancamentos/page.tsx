@@ -104,17 +104,16 @@ export default function LancamentosPage() {
         if (!montado) return;
 
         if (dVersoes && dVersoes.length > 0) {
-          setTodasVersoes(dVersoes);
-          const rascunho = dVersoes.find((v) => v.status === "RASCUNHO");
+          const versoesEditaveis = isAdmin ? dVersoes : dVersoes.filter((v) => v.status === "RASCUNHO" || v.status === "TESTE");
+          setTodasVersoes(versoesEditaveis);
+          const rascunho = versoesEditaveis.find((v) => v.status === "RASCUNHO");
 
-          if (isAdmin) {
-            atualizarRascunho(rascunho || dVersoes[0]);
+          if (rascunho) {
+            atualizarRascunho(rascunho);
+          } else if (versoesEditaveis.length > 0) {
+            atualizarRascunho(versoesEditaveis[0]);
           } else {
-            if (rascunho) {
-              atualizarRascunho(rascunho);
-            } else {
-              setCarregandoAulas(false);
-            }
+            setCarregandoAulas(false);
           }
         } else {
           setCarregandoAulas(false);
@@ -214,26 +213,20 @@ export default function LancamentosPage() {
             <span className="text-[10px] font-black uppercase text-green-200">
               Editando Versão
             </span>
-            {isAdmin ? (
-              <select
-                className="text-xs font-bold text-gray-800 bg-white px-2 py-0.5 rounded border border-gray-300 mt-0.5"
-                value={versaoRascunho.id}
-                onChange={(e) => {
-                  const sel = todasVersoes.find((v) => v.id === e.target.value);
-                  if (sel) atualizarRascunho(sel);
-                }}
-              >
-                {todasVersoes.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.nome} ({v.status})
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <span className="text-xs font-bold text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-200 mt-0.5 tracking-widest uppercase">
-                {versaoRascunho.nome}
-              </span>
-            )}
+            <select
+              className="text-xs font-bold text-gray-800 bg-white px-2 py-0.5 rounded border border-gray-300 mt-0.5 max-w-[150px] overflow-hidden text-ellipsis"
+              value={versaoRascunho.id}
+              onChange={(e) => {
+                const sel = todasVersoes.find((v) => v.id === e.target.value);
+                if (sel) atualizarRascunho(sel);
+              }}
+            >
+              {todasVersoes.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.nome} ({v.status})
+                </option>
+              ))}
+            </select>
           </div>
         )}
 
