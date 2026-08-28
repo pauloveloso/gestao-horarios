@@ -174,7 +174,7 @@ export default function MinhasReservasPage() {
                   onChange={(e) =>
                     setFormReserva({ ...formReserva, nome_solicitante: e.target.value })
                   }
-                  className="w-full border border-gray-300 rounded p-2 text-sm focus:border-indigo-600 outline-none"
+                  className="w-full border border-gray-300 rounded p-2 text-sm focus:border-indigo-600 outline-none text-gray-900"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -189,7 +189,7 @@ export default function MinhasReservasPage() {
                     onChange={(e) =>
                       setFormReserva({ ...formReserva, turma_curso: e.target.value })
                     }
-                    className="w-full border border-gray-300 rounded p-2 text-sm focus:border-indigo-600 outline-none"
+                    className="w-full border border-gray-300 rounded p-2 text-sm focus:border-indigo-600 outline-none text-gray-900"
                   />
                 </div>
                 <div>
@@ -203,7 +203,7 @@ export default function MinhasReservasPage() {
                     onChange={(e) =>
                       setFormReserva({ ...formReserva, disciplina_evento: e.target.value })
                     }
-                    className="w-full border border-gray-300 rounded p-2 text-sm focus:border-indigo-600 outline-none"
+                    className="w-full border border-gray-300 rounded p-2 text-sm focus:border-indigo-600 outline-none text-gray-900"
                   />
                 </div>
               </div>

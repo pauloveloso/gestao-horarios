@@ -699,7 +699,7 @@ export default function ModoGrade({
                   </label>
                   <select
                     required
-                    className="w-full border rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                    className="w-full border rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                     value={dadosModal.disciplina_id}
                     onChange={(e) =>
                       setDadosModal({
@@ -731,7 +731,7 @@ export default function ModoGrade({
                       Professor
                     </label>
                     <select
-                      className="w-full border rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                      className="w-full border rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                       value={dadosModal.professor_id}
                       onChange={(e) =>
                         setDadosModal({
@@ -753,7 +753,7 @@ export default function ModoGrade({
                       Sala / Espaço
                     </label>
                     <select
-                      className="w-full border rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                      className="w-full border rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                       value={dadosModal.espaco_id}
                       onChange={(e) =>
                         setDadosModal({

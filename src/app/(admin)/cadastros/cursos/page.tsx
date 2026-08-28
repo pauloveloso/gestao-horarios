@@ -456,7 +456,7 @@ export default function CursosPage() {
                     onChange={(e) =>
                       setDadosCurso({ ...dadosCurso, nome: e.target.value })
                     }
-                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
                     placeholder="Ex: Técnico em Informática Integrado"
                   />
                 </div>
@@ -474,7 +474,7 @@ export default function CursosPage() {
                         modalidade: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                   >
                     <option value="INTEGRADO">Técnico Integrado</option>
                     <option value="SUBSEQUENTE">Subsequente</option>
@@ -586,7 +586,7 @@ export default function CursosPage() {
                         codigo: e.target.value.toUpperCase(),
                       })
                     }
-                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 font-bold"
+                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 font-bold text-gray-900"
                     placeholder="Ex: 1INFOA, 3PBSI, 2º BADM"
                   />
                 </div>
@@ -604,7 +604,7 @@ export default function CursosPage() {
                         turno_padrao: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                   >
                     <option value="MATUTINO">Matutino</option>
                     <option value="VESPERTINO">Vespertino</option>

@@ -606,7 +606,7 @@ export default function ReservasPage() {
                       nome_solicitante: e.target.value,
                     })
                   }
-                  className="w-full border border-gray-300 rounded p-2 text-sm focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none"
+                  className="w-full border border-gray-300 rounded p-2 text-sm focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none text-gray-900"
                 />
               </div>
 
@@ -627,7 +627,7 @@ export default function ReservasPage() {
                         turma_curso: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded p-2 text-sm focus:border-green-600 outline-none"
+                    className="w-full border border-gray-300 rounded p-2 text-sm focus:border-green-600 outline-none text-gray-900"
                   />
                 </div>
                 <div>
@@ -644,7 +644,7 @@ export default function ReservasPage() {
                         disciplina_evento: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded p-2 text-sm focus:border-green-600 outline-none"
+                    className="w-full border border-gray-300 rounded p-2 text-sm focus:border-green-600 outline-none text-gray-900"
                   />
                 </div>
               </div>

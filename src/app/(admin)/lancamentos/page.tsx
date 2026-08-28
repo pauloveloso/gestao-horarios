@@ -233,10 +233,10 @@ export default function LancamentosPage() {
           </div>
         )}
 
-        <div className="flex bg-green-950 p-1 rounded-lg shadow-inner">
+        <div className="flex bg-black/20 p-1 rounded-lg shadow-inner">
           <button
             onClick={() => setModoAtivo("PLANILHA")}
-            className={`px-6 py-2 rounded-md font-bold text-xs uppercase tracking-widest transition-all ${
+            className={`flex items-center justify-center gap-2 px-6 py-2 rounded-md font-bold text-xs uppercase tracking-widest transition-all ${
               modoAtivo === "PLANILHA"
                 ? "bg-green-600 text-white shadow-sm"
                 : "text-green-400 hover:text-white"
@@ -246,7 +246,7 @@ export default function LancamentosPage() {
           </button>
           <button
             onClick={() => setModoAtivo("GRADE")}
-            className={`px-6 py-2 rounded-md font-bold text-xs uppercase tracking-widest transition-all ${
+            className={`flex items-center justify-center gap-2 px-6 py-2 rounded-md font-bold text-xs uppercase tracking-widest transition-all ${
               modoAtivo === "GRADE"
                 ? "bg-green-600 text-white shadow-sm"
                 : "text-green-400 hover:text-white"
@@ -256,12 +256,12 @@ export default function LancamentosPage() {
           </button>
         </div>
 
-        <div className="flex gap-2 bg-green-950 p-1 rounded-lg shadow-inner">
+        <div className="flex gap-2 bg-black/20 p-1 rounded-lg shadow-inner">
           <button
             onClick={undo}
             disabled={!canUndo}
             title="Desfazer"
-            className="p-2 rounded-md transition-all text-green-400 hover:text-white disabled:opacity-30 disabled:hover:text-green-400 disabled:cursor-not-allowed"
+            className="flex items-center justify-center p-2 rounded-md transition-all text-green-400 hover:text-white disabled:opacity-30 disabled:hover:text-green-400 disabled:cursor-not-allowed"
           >
             <Undo2 className="w-4 h-4" />
           </button>
@@ -269,7 +269,7 @@ export default function LancamentosPage() {
             onClick={redo}
             disabled={!canRedo}
             title="Refazer"
-            className="p-2 rounded-md transition-all text-green-400 hover:text-white disabled:opacity-30 disabled:hover:text-green-400 disabled:cursor-not-allowed"
+            className="flex items-center justify-center p-2 rounded-md transition-all text-green-400 hover:text-white disabled:opacity-30 disabled:hover:text-green-400 disabled:cursor-not-allowed"
           >
             <Redo2 className="w-4 h-4" />
           </button>

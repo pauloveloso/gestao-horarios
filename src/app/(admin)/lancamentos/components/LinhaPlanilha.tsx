@@ -33,6 +33,19 @@ const mapearMensagem = (choque: any) => {
   }
 };
 
+const isCorEscura = (corBase: string) => {
+  if (!corBase) return false;
+  let hex = corBase.replace('#', '');
+  if (hex.length === 3) {
+    hex = hex.split('').map(char => char + char).join('');
+  }
+  const r = parseInt(hex.substring(0, 2), 16) || 0;
+  const g = parseInt(hex.substring(2, 4), 16) || 0;
+  const b = parseInt(hex.substring(4, 6), 16) || 0;
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return yiq < 128;
+};
+
 interface LinhaPlanilhaProps {
   linha: any;
   turmas: any[];
@@ -104,6 +117,9 @@ const LinhaPlanilha = memo(({
     ].includes(c.tipo_choque),
   );
 
+  const fundoEscuro = isCorEscura(corHexadecimal);
+  const corTexto = fundoEscuro ? "text-white" : "text-gray-900";
+
   let classeLinha =
     "border-b border-gray-200 transition-all group hover:brightness-95 ";
   if (temCritico)
@@ -139,23 +155,23 @@ const LinhaPlanilha = memo(({
             onChange={(e) =>
               atualizarCampo(linha.id, "turma_id", e.target.value)
             }
-            className="w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold text-gray-800"
+            className={`w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold ${corTexto}`}
           >
-            <option value="">Selecione...</option>
+            <option value="" className="text-gray-900 bg-white">Selecione...</option>
             {cursos
               .filter(
                 (c: any) =>
                   getCategoriaCurso(c) === categoriaFiltro,
               )
               .map((curso: any) => (
-                <optgroup key={curso.id} label={curso.nome}>
+                <optgroup key={curso.id} label={curso.nome} className="text-gray-900 bg-white">
                   {turmas
                     .filter(
                       (t: any) =>
                         String(t.curso_id) === String(curso.id),
                     )
                     .map((t: any) => (
-                      <option key={t.id} value={t.id}>
+                      <option key={t.id} value={t.id} className="text-gray-900 bg-white">
                         {t.codigo}
                       </option>
                     ))}
@@ -183,11 +199,11 @@ const LinhaPlanilha = memo(({
                 e.target.value,
               )
             }
-            className="w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold text-gray-800 disabled:opacity-50"
+            className={`w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold ${corTexto} disabled:opacity-50`}
           >
-            <option value="">Selecione...</option>
+            <option value="" className="text-gray-900 bg-white">Selecione...</option>
             {dFiltradas.map((d: any) => (
-              <option key={d.id} value={d.id}>
+              <option key={d.id} value={d.id} className="text-gray-900 bg-white">
                 {d.nome}
               </option>
             ))}
@@ -212,11 +228,11 @@ const LinhaPlanilha = memo(({
                 e.target.value,
               )
             }
-            className="w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none"
+            className={`w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold ${corTexto}`}
           >
-            <option value="">(Nenhum)</option>
+            <option value="" className="text-gray-900 bg-white">(Nenhum)</option>
             {professores.map((p: any) => (
-              <option key={p.id} value={p.id}>
+              <option key={p.id} value={p.id} className="text-gray-900 bg-white">
                 {p.nome}
               </option>
             ))}
@@ -237,9 +253,9 @@ const LinhaPlanilha = memo(({
             onChange={(e) =>
               atualizarCampo(linha.id, "espaco_id", e.target.value)
             }
-            className="w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none"
+            className={`w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold ${corTexto}`}
           >
-            <option value="">(Nenhum)</option>
+            <option value="" className="text-gray-900 bg-white">(Nenhum)</option>
             {categorias.map((cat: any) => {
               const espacosDaCat = espacos.filter(
                 (e: any) =>
@@ -247,9 +263,9 @@ const LinhaPlanilha = memo(({
               );
               if (espacosDaCat.length === 0) return null;
               return (
-                <optgroup key={cat.id} label={cat.nome}>
+                <optgroup key={cat.id} label={cat.nome} className="text-gray-900 bg-white">
                   {espacosDaCat.map((e: any) => (
-                    <option key={e.id} value={e.id}>
+                    <option key={e.id} value={e.id} className="text-gray-900 bg-white">
                       {e.nome}
                     </option>
                   ))}
@@ -262,9 +278,9 @@ const LinhaPlanilha = memo(({
               );
               if (semCat.length === 0) return null;
               return (
-                <optgroup label="Outros / Sem Categoria">
+                <optgroup label="Outros / Sem Categoria" className="text-gray-900 bg-white">
                   {semCat.map((e: any) => (
-                    <option key={e.id} value={e.id}>
+                    <option key={e.id} value={e.id} className="text-gray-900 bg-white">
                       {e.nome}
                     </option>
                   ))}
@@ -283,15 +299,15 @@ const LinhaPlanilha = memo(({
             onChange={(e) =>
               atualizarCampo(linha.id, "dia_semana", e.target.value)
             }
-            className="w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none"
+            className={`w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold ${corTexto}`}
           >
-            <option value="">Selecione...</option>
-            <option value="SEGUNDA">Segunda-feira</option>
-            <option value="TERCA">Terça-feira</option>
-            <option value="QUARTA">Quarta-feira</option>
-            <option value="QUINTA">Quinta-feira</option>
-            <option value="SEXTA">Sexta-feira</option>
-            <option value="SABADO">Sábado</option>
+            <option value="" className="text-gray-900 bg-white">Selecione...</option>
+            <option value="SEGUNDA" className="text-gray-900 bg-white">Segunda-feira</option>
+            <option value="TERCA" className="text-gray-900 bg-white">Terça-feira</option>
+            <option value="QUARTA" className="text-gray-900 bg-white">Quarta-feira</option>
+            <option value="QUINTA" className="text-gray-900 bg-white">Quinta-feira</option>
+            <option value="SEXTA" className="text-gray-900 bg-white">Sexta-feira</option>
+            <option value="SABADO" className="text-gray-900 bg-white">Sábado</option>
           </select>
         )}
       </td>
@@ -315,11 +331,11 @@ const LinhaPlanilha = memo(({
                 e.target.value,
               )
             }
-            className="w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none"
+            className={`w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold ${corTexto}`}
           >
-            <option value="">Selecione...</option>
+            <option value="" className="text-gray-900 bg-white">Selecione...</option>
             {slots.map((s: any) => (
-              <option key={s.id} value={s.id}>
+              <option key={s.id} value={s.id} className="text-gray-900 bg-white">
                 {formatarHora(s.hora_inicio)} -{" "}
                 {formatarHora(s.hora_fim)}
               </option>
@@ -330,7 +346,7 @@ const LinhaPlanilha = memo(({
 
       <td className="p-2 text-center">
         {linha.id.length > 2 && (
-          <div className="flex items-center justify-center gap-1.5">
+          <div className="inline-flex items-center justify-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-lg shadow-sm border border-gray-100/50 backdrop-blur-sm transition-colors hover:bg-white">
             {(temCritico || temAlerta) && (
               <span
                 className="font-bold cursor-help text-lg animate-pulse"

@@ -306,7 +306,7 @@ export default function CadastroProfessoresPage() {
                     type="text"
                     required
                     autoFocus
-                    className="w-full border border-gray-300 rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full border border-gray-300 rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
                     value={dadosModal.nome}
                     onChange={(e) =>
                       setDadosModal({ ...dadosModal, nome: e.target.value })
@@ -318,7 +318,7 @@ export default function CadastroProfessoresPage() {
                     Dia de Planejamento (Folga/Reunião)
                   </label>
                   <select
-                    className="w-full border border-gray-300 rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                    className="w-full border border-gray-300 rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                     value={dadosModal.dia_planejamento}
                     onChange={(e) =>
                       setDadosModal({
@@ -385,7 +385,7 @@ export default function CadastroProfessoresPage() {
                 <input
                   type="text"
                   placeholder="Ex: Mestrado, Tratamento de Saúde, Capacitação..."
-                  className="w-full border border-green-300 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-green-300 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
                   value={motivoGeral}
                   onChange={(e) => setMotivoGeral(e.target.value)}
                 />

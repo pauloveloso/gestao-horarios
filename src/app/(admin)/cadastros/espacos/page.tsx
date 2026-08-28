@@ -406,7 +406,7 @@ export default function EspacosPage() {
                       nome: e.target.value,
                     })
                   }
-                  className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
                   placeholder="Ex: Laboratórios de Saúde"
                 />
               </div>
@@ -460,7 +460,7 @@ export default function EspacosPage() {
                     onChange={(e) =>
                       setDadosEspaco({ ...dadosEspaco, nome: e.target.value })
                     }
-                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 font-medium"
+                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 font-medium text-gray-900"
                     placeholder="Ex: Sala 1 - Técnico"
                   />
                 </div>
@@ -478,7 +478,7 @@ export default function EspacosPage() {
                         categoria_id: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                   >
                     {categorias.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -502,7 +502,7 @@ export default function EspacosPage() {
                         capacidade: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
                     placeholder="Ex: 40"
                   />
                 </div>

@@ -404,7 +404,7 @@ export default function GestaoVersoesPage() {
                   required
                   value={idVersaoOrigemRecarregar}
                   onChange={(e) => setIdVersaoOrigemRecarregar(e.target.value)}
-                  className="w-full border rounded p-2 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border rounded p-2 outline-none focus:ring-2 focus:ring-blue-400 text-gray-900"
                 >
                   <option value="">Selecione...</option>
                   {versoes
@@ -451,7 +451,7 @@ export default function GestaoVersoesPage() {
                   onChange={(e) =>
                     setDadosEdicao({ ...dadosEdicao, nome: e.target.value })
                   }
-                  className="w-full border rounded p-2"
+                  className="w-full border rounded p-2 text-gray-900"
                   placeholder="Nome"
                 />
                 <input
@@ -461,7 +461,7 @@ export default function GestaoVersoesPage() {
                   onChange={(e) =>
                     setDadosEdicao({ ...dadosEdicao, semestre: e.target.value })
                   }
-                  className="w-full border rounded p-2"
+                  className="w-full border rounded p-2 text-gray-900"
                   placeholder="Semestre"
                 />
               </div>
@@ -498,7 +498,7 @@ export default function GestaoVersoesPage() {
                   required
                   value={dataVigencia}
                   onChange={(e) => setDataVigencia(e.target.value)}
-                  className="w-full border rounded p-2"
+                  className="w-full border rounded p-2 text-gray-900"
                 />
               </div>
               <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
@@ -537,7 +537,7 @@ export default function GestaoVersoesPage() {
                   onChange={(e) =>
                     setNovoRascunho({ ...novoRascunho, nome: e.target.value })
                   }
-                  className="w-full border rounded p-2"
+                  className="w-full border rounded p-2 text-gray-900"
                 />
                 <input
                   required
@@ -550,7 +550,7 @@ export default function GestaoVersoesPage() {
                       semestre: e.target.value,
                     })
                   }
-                  className="w-full border rounded p-2"
+                  className="w-full border rounded p-2 text-gray-900"
                 />
                 <select
                   required
@@ -561,7 +561,7 @@ export default function GestaoVersoesPage() {
                       status: e.target.value,
                     })
                   }
-                  className="w-full border rounded p-2 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border rounded p-2 outline-none focus:ring-2 focus:ring-blue-400 text-gray-900"
                 >
                   <option value="RASCUNHO">Rascunho (Oficial)</option>
                   <option value="TESTE">Versão de Teste</option>

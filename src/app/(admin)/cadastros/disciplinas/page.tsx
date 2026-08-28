@@ -372,7 +372,7 @@ export default function DisciplinasPage() {
                         nome: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
                     placeholder="Ex: Algoritmos e Lógica de Programação"
                   />
                 </div>
@@ -391,7 +391,7 @@ export default function DisciplinasPage() {
                           sigla: e.target.value,
                         })
                       }
-                      className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 uppercase"
+                      className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 uppercase text-gray-900"
                       placeholder="Ex: ALP"
                     />
                   </div>
@@ -411,7 +411,7 @@ export default function DisciplinasPage() {
                           carga_horaria_semanal: e.target.value,
                         })
                       }
-                      className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
                     />
                   </div>
                 </div>
