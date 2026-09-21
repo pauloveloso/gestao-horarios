@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useUser } from "../../components/UserContext";
 
 export default function DisciplinasPage() {
+  const { user, isCoordenador } = useUser();
   const [carregando, setCarregando] = useState(true);
 
   // Estados de Dados
@@ -30,7 +32,13 @@ export default function DisciplinasPage() {
         supabase.from("disciplinas").select("*").order("nome"),
       ]);
 
-      if (dCursos) setCursos(dCursos);
+      if (dCursos) {
+        setCursos(dCursos);
+        // Auto-selecionar curso do coordenador
+        if (isCoordenador && user?.curso_id && !cursoSelecionado) {
+          setCursoSelecionado(user.curso_id);
+        }
+      }
       if (dDisciplinas) setDisciplinas(dDisciplinas);
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
@@ -83,7 +91,7 @@ export default function DisciplinasPage() {
       montado = false;
       supabase.removeChannel(canal);
     };
-  }, []);
+  }, [isCoordenador, user, cursoSelecionado]);
 
   // ==========================================================================
   // FUNÇÕES DE CRUD - DISCIPLINAS
@@ -246,12 +254,14 @@ export default function DisciplinasPage() {
                   </h2>
                   <p className="text-sm text-gray-500">{cursoAtual?.nome}</p>
                 </div>
-                <button
-                  onClick={() => abrirModalDisciplina()}
-                  className="bg-green-600 text-white px-4 py-2 rounded shadow text-sm font-bold hover:bg-green-700 transition-colors"
-                >
-                  + Nova Disciplina
-                </button>
+                {(!isCoordenador || String(cursoSelecionado) === String(user?.curso_id)) && (
+                  <button
+                    onClick={() => abrirModalDisciplina()}
+                    className="bg-green-600 text-white px-4 py-2 rounded shadow text-sm font-bold hover:bg-green-700 transition-colors"
+                  >
+                    + Nova Disciplina
+                  </button>
+                )}
               </div>
 
               <div className="p-0 overflow-x-auto">
@@ -294,22 +304,24 @@ export default function DisciplinasPage() {
                           </span>
                         </td>
                         <td className="p-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() => abrirModalDisciplina(disciplina)}
-                              className="text-blue-600 hover:bg-blue-50 p-2 rounded transition-colors"
-                              title="Editar"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              onClick={() => excluirDisciplina(disciplina.id)}
-                              className="text-red-600 hover:bg-red-50 p-2 rounded transition-colors"
-                              title="Excluir"
-                            >
-                              🗑️
-                            </button>
-                          </div>
+                          {(!isCoordenador || String(cursoSelecionado) === String(user?.curso_id)) && (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => abrirModalDisciplina(disciplina)}
+                                className="text-blue-600 hover:bg-blue-50 p-2 rounded transition-colors"
+                                title="Editar"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => excluirDisciplina(disciplina.id)}
+                                className="text-red-600 hover:bg-red-50 p-2 rounded transition-colors"
+                                title="Excluir"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
