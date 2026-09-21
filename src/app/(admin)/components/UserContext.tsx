@@ -39,6 +39,14 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UsuarioSistema | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Remove o nick do email que o Google Workspace pode colar ao final do full_name
+  // Ex: "Paulo Veloso Santos Junior paulo.junior" => "Paulo Veloso Santos Junior"
+  const limparNome = (nome: string | undefined): string => {
+    if (!nome) return "Usuário";
+    // Remove qualquer sufixo no padrão "palavra.palavra" no final da string
+    return nome.replace(/\s+[a-z0-9]+\.[a-z0-9]+\s*$/i, "").trim();
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -71,7 +79,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             setUser({
               id: session.user.id,
               email: session.user.email || "",
-              nome: session.user.user_metadata?.full_name || "Usuário",
+              nome: limparNome(session.user.user_metadata?.full_name),
               nivel_acesso: "PROFESSOR_TAE", // default
               criado_em: new Date().toISOString()
             });
@@ -85,7 +93,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
           setUser({
             id: session.user.id,
             email: session.user.email || "",
-            nome: session.user.user_metadata?.full_name || "Usuário",
+            nome: limparNome(session.user.user_metadata?.full_name),
             nivel_acesso: "PROFESSOR_TAE", // default
             criado_em: new Date().toISOString()
           });

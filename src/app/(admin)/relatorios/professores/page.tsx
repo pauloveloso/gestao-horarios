@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Printer } from "lucide-react";
+import { Printer, BookOpen } from "lucide-react";
+import { useUser } from "../../components/UserContext";
+import { useMasterData } from "../../components/MasterDataContext";
 
 export default function RelatorioProfessoresPage() {
+  const { user } = useUser();
+  const { dadosMestres } = useMasterData();
   const [carregando, setCarregando] = useState(true);
 
   // Estados para o Controle de Versão
@@ -14,6 +18,9 @@ export default function RelatorioProfessoresPage() {
   const [professores, setProfessores] = useState<any[]>([]);
   const [aulas, setAulas] = useState<any[]>([]);
   const [filtro, setFiltro] = useState("");
+
+  // IDs de professores que atuam no curso do coordenador (null = sem filtro)
+  const [professorIdsDoCurso, setProfessorIdsDoCurso] = useState<Set<string> | null>(null);
 
   // 1. Carrega primeiro as versões
   useEffect(() => {
@@ -46,13 +53,32 @@ export default function RelatorioProfessoresPage() {
           supabase.from("professores").select("*").order("nome").limit(2000),
           supabase
             .from("aulas")
-            .select("professor_id")
+            .select("professor_id, turma_id")
             .eq("versao_id", versaoSelecionada)
             .limit(10000),
         ]);
 
         if (dProf) setProfessores(dProf);
-        if (dAulas) setAulas(dAulas);
+        if (dAulas) {
+          setAulas(dAulas);
+
+          // Filtro para coordenadores: extrai apenas os professor_ids do seu curso
+          if (user?.nivel_acesso === "COORDENADOR" && user?.curso_id) {
+            const turmasDoCurso = new Set(
+              (dadosMestres?.turmas || [])
+                .filter((t: any) => String(t.curso_id) === String(user.curso_id))
+                .map((t: any) => String(t.id))
+            );
+            const profIds = new Set(
+              dAulas
+                .filter((a) => turmasDoCurso.has(String(a.turma_id)) && a.professor_id)
+                .map((a) => String(a.professor_id))
+            );
+            setProfessorIdsDoCurso(profIds);
+          } else {
+            setProfessorIdsDoCurso(null);
+          }
+        }
       } catch (error) {
         console.error("Erro ao carregar relatório:", error);
       } finally {
@@ -61,9 +87,16 @@ export default function RelatorioProfessoresPage() {
     };
 
     carregarRelatorio();
-  }, [versaoSelecionada]);
+  }, [versaoSelecionada, user, dadosMestres]);
 
   const relatorioCompleto = professores
+    .filter((prof) => {
+      // Se houver filtro de coordenador, aplica; senão, mostra todos
+      if (professorIdsDoCurso !== null) {
+        return professorIdsDoCurso.has(String(prof.id));
+      }
+      return true;
+    })
     .map((prof) => {
       const totalAulas = aulas.filter(
         (a) => String(a.professor_id) === String(prof.id),
@@ -71,6 +104,10 @@ export default function RelatorioProfessoresPage() {
       return { ...prof, totalAulas };
     })
     .filter((p) => p.nome.toLowerCase().includes(filtro.toLowerCase()));
+
+  const nomeCursoFiltrado = professorIdsDoCurso !== null && user?.curso_id
+    ? (dadosMestres?.cursos || []).find((c: any) => String(c.id) === String(user.curso_id))?.nome || "Seu Curso"
+    : null;
 
   if (carregando && !versaoSelecionada) {
     return (
@@ -105,7 +142,9 @@ export default function RelatorioProfessoresPage() {
             )}
           </h1>
           <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
-            Controle de ocupação e distribuição de aulas no campus.
+            {nomeCursoFiltrado
+              ? `Exibindo apenas professores do curso: ${nomeCursoFiltrado}`
+              : "Controle de ocupação e distribuição de aulas no campus."}
           </p>
         </div>
 
@@ -144,6 +183,16 @@ export default function RelatorioProfessoresPage() {
           */}
         </div>
       </div>
+
+      {/* Banner de filtro ativo para coordenadores */}
+      {nomeCursoFiltrado && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center gap-3">
+          <BookOpen className="w-4 h-4 text-blue-600 shrink-0" />
+          <p className="text-sm text-blue-800 font-medium">
+            Visão filtrada: exibindo apenas os <strong>{professorIdsDoCurso?.size ?? 0} professor(es)</strong> com aulas nas turmas do curso <strong>{nomeCursoFiltrado}</strong>.
+          </p>
+        </div>
+      )}
 
       {/* FORMATO DE LISTA COM CABEÇALHO FIXO */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex-1 flex flex-col print:shadow-none print:border-gray-300 print:overflow-visible print:block">

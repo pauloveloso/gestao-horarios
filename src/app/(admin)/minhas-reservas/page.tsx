@@ -15,6 +15,8 @@ export default function MinhasReservasPage() {
   const [termoBusca, setTermoBusca] = useState("");
   const [reservaEmEdicao, setReservaEmEdicao] = useState<any>(null);
   const [salvando, setSalvando] = useState(false);
+  const [selecionados, setSelecionados] = useState<string[]>([]);
+  const [excluindoLote, setExcluindoLote] = useState(false);
   const [formReserva, setFormReserva] = useState({
     nome_solicitante: "",
     turma_curso: "",
@@ -148,6 +150,39 @@ export default function MinhasReservasPage() {
       return 0;
     });
 
+  const idsPermitidos = reservasFiltradas
+    .filter(r => isCoordenador || r.criado_por === user?.id)
+    .map(r => r.id);
+
+  const toggleSelecionado = (id: string) => {
+    setSelecionados((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleTodos = () => {
+    if (selecionados.length === idsPermitidos.length && idsPermitidos.length > 0) {
+      setSelecionados([]);
+    } else {
+      setSelecionados(idsPermitidos);
+    }
+  };
+
+  const excluirEmLote = async () => {
+    if (!window.confirm(`Tem certeza que deseja excluir as ${selecionados.length} reservas selecionadas?`)) return;
+    
+    setExcluindoLote(true);
+    try {
+      await supabase.from("reservas_espacos").delete().in("id", selecionados);
+      setReservas(reservas.filter((r) => !selecionados.includes(r.id)));
+      setSelecionados([]);
+    } catch (error) {
+      alert("Erro ao excluir reservas em lote.");
+    } finally {
+      setExcluindoLote(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-10 flex flex-col h-screen overflow-hidden">
       {reservaEmEdicao && (
@@ -253,10 +288,22 @@ export default function MinhasReservasPage() {
       <main className="max-w-7xl mx-auto mt-6 p-4 w-full flex-1 flex flex-col min-h-0">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
           <div className="p-4 bg-gray-50 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h2 className="font-black text-gray-800 text-lg flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-green-600" />
-              Lista de Reservas
-            </h2>
+            <div className="flex items-center gap-4">
+              <h2 className="font-black text-gray-800 text-lg flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-green-600" />
+                Lista de Reservas
+              </h2>
+              {selecionados.length > 0 && (
+                <button
+                  onClick={excluirEmLote}
+                  disabled={excluindoLote}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">{excluindoLote ? "Excluindo..." : `Excluir (${selecionados.length})`}</span>
+                </button>
+              )}
+            </div>
             
             <div className="relative w-full sm:w-72">
               <input
@@ -296,6 +343,15 @@ export default function MinhasReservasPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
                     <tr>
+                      <th className="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider w-10">
+                        <input
+                          type="checkbox"
+                          checked={selecionados.length === idsPermitidos.length && idsPermitidos.length > 0}
+                          onChange={toggleTodos}
+                          disabled={idsPermitidos.length === 0}
+                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 w-4 h-4 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                      </th>
                       <th className="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider">
                         Data e Horário
                       </th>
@@ -315,7 +371,16 @@ export default function MinhasReservasPage() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
                     {reservasFiltradas.map((r) => (
-                      <tr key={r.id} className="hover:bg-green-50/30 transition-colors">
+                      <tr key={r.id} className={`hover:bg-green-50/30 transition-colors ${selecionados.includes(r.id) ? 'bg-green-50' : ''}`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={selecionados.includes(r.id)}
+                            onChange={() => toggleSelecionado(r.id)}
+                            disabled={!isCoordenador && r.criado_por !== user?.id}
+                            className="rounded border-gray-300 text-green-600 focus:ring-green-500 w-4 h-4 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          />
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-bold text-gray-900">
                             {formatarData(r.data_reserva)}

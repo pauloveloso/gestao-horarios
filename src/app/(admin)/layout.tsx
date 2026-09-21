@@ -66,7 +66,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           nome: "Fichas de Matrícula",
           href: "/relatorios/fichas",
           icone: <FileSpreadsheet className="w-5 h-5" />,
-          visible: true,
+          visible: isCoordenador,
         },
         {
           nome: "Quadros de Horários",
@@ -276,7 +276,6 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         <div className="p-4 bg-green-950/50 border-t border-green-800 shrink-0 space-y-2">
           <Link
             href="/"
-            target="_blank"
             className="flex items-center justify-center gap-2 w-full bg-green-800 hover:bg-green-700 text-white py-2 rounded-lg text-xs font-bold transition-colors"
           >
             <Eye className="w-4 h-4" /> Visão Pública

@@ -61,8 +61,8 @@ export default function ReservasPage() {
   });
 
   const [formReserva, setFormReserva] = useState({
-    nome_solicitante: "",
-    email_solicitante: "",
+    nome_solicitante: user?.nome || "",
+    email_solicitante: user?.email || "",
     turma_curso: "",
     disciplina_evento: "",
   });
@@ -343,8 +343,8 @@ export default function ReservasPage() {
       criado_por: null,
     });
     setFormReserva({
-      nome_solicitante: "",
-      email_solicitante: "",
+      nome_solicitante: user?.nome || "",
+      email_solicitante: user?.email || "",
       turma_curso: "",
       disciplina_evento: "",
     });

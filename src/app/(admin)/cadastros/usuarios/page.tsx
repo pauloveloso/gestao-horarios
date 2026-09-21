@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "../../components/UserContext";
+import { useMasterData } from "../../components/MasterDataContext";
 import { UsuarioSistema } from "@/types/database";
 import Link from "next/link";
 
 export default function UsuariosPage() {
   const { isAdmin } = useUser();
+  const { dadosMestres } = useMasterData();
   const [usuarios, setUsuarios] = useState<UsuarioSistema[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [salvandoId, setSalvandoId] = useState<string | null>(null);
@@ -42,9 +44,9 @@ export default function UsuariosPage() {
         .from("usuarios_sistema")
         .update({ nivel_acesso: novoNivel })
         .eq("id", id);
-        
+
       if (error) throw error;
-      
+
       setUsuarios((prev) =>
         prev.map((u) =>
           u.id === id ? { ...u, nivel_acesso: novoNivel as any } : u
@@ -52,6 +54,29 @@ export default function UsuariosPage() {
       );
     } catch (error) {
       alert("Erro ao alterar nível de acesso. Verifique se você é administrador.");
+      console.error(error);
+    } finally {
+      setSalvandoId(null);
+    }
+  };
+
+  const alterarCurso = async (id: string, novoCursoId: string | null) => {
+    setSalvandoId(id);
+    try {
+      const { error } = await supabase
+        .from("usuarios_sistema")
+        .update({ curso_id: novoCursoId })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setUsuarios((prev) =>
+        prev.map((u) =>
+          u.id === id ? { ...u, curso_id: novoCursoId } : u
+        )
+      );
+    } catch (error) {
+      alert("Erro ao vincular curso. Verifique se você é administrador.");
       console.error(error);
     } finally {
       setSalvandoId(null);
@@ -118,18 +143,35 @@ export default function UsuariosPage() {
                       <div className="text-xs text-gray-500">{u.email}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <select
-                        disabled={salvandoId === u.id}
-                        value={u.nivel_acesso}
-                        onChange={(e) => alterarNivel(u.id, e.target.value)}
-                        className={`bg-white border rounded p-1.5 text-xs font-bold w-full max-w-[200px] outline-none transition-colors ${salvandoId === u.id ? 'opacity-50 cursor-not-allowed' : 'hover:border-green-400 focus:border-green-600 border-gray-200'}`}
-                      >
-                        {niveis.map((n) => (
-                          <option key={n.value} value={n.value}>
-                            {n.label}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex flex-col gap-2">
+                        <select
+                          disabled={salvandoId === u.id}
+                          value={u.nivel_acesso}
+                          onChange={(e) => alterarNivel(u.id, e.target.value)}
+                          className={`bg-white border rounded p-1.5 text-xs font-bold w-full max-w-[200px] outline-none transition-colors ${salvandoId === u.id ? 'opacity-50 cursor-not-allowed' : 'hover:border-green-400 focus:border-green-600 border-gray-200'}`}
+                        >
+                          {niveis.map((n) => (
+                            <option key={n.value} value={n.value}>
+                              {n.label}
+                            </option>
+                          ))}
+                        </select>
+                        {u.nivel_acesso === "COORDENADOR" && (
+                          <select
+                            disabled={salvandoId === u.id}
+                            value={u.curso_id || ""}
+                            onChange={(e) => alterarCurso(u.id, e.target.value || null)}
+                            className={`bg-blue-50 border rounded p-1.5 text-xs font-bold w-full max-w-[200px] outline-none transition-colors text-blue-800 ${salvandoId === u.id ? 'opacity-50 cursor-not-allowed' : 'hover:border-blue-400 focus:border-blue-600 border-blue-200'}`}
+                          >
+                            <option value="">Vincular Curso...</option>
+                            {dadosMestres?.cursos?.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.nome}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       {salvandoId === u.id ? (

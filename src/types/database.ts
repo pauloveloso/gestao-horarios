@@ -21,6 +21,7 @@ export interface UsuarioSistema {
   nome: string | null;
   email: string;
   nivel_acesso: NivelAcesso;
+  curso_id?: string | null;
   criado_em: string;
 }
 
