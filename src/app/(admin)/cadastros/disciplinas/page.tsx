@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useUser } from "../../components/UserContext";
 
 export default function DisciplinasPage() {
-  const { user, isCoordenador } = useUser();
+  const { user } = useUser();
   const [carregando, setCarregando] = useState(true);
 
   // Estados de Dados
@@ -35,7 +35,7 @@ export default function DisciplinasPage() {
       if (dCursos) {
         setCursos(dCursos);
         // Auto-selecionar curso do coordenador
-        if (isCoordenador && user?.curso_id && !cursoSelecionado) {
+        if (user?.nivel_acesso === "COORDENADOR" && user?.curso_id && !cursoSelecionado) {
           setCursoSelecionado(user.curso_id);
         }
       }
@@ -91,7 +91,7 @@ export default function DisciplinasPage() {
       montado = false;
       supabase.removeChannel(canal);
     };
-  }, [isCoordenador, user, cursoSelecionado]);
+  }, [user, cursoSelecionado]);
 
   // ==========================================================================
   // FUNÇÕES DE CRUD - DISCIPLINAS
@@ -254,7 +254,7 @@ export default function DisciplinasPage() {
                   </h2>
                   <p className="text-sm text-gray-500">{cursoAtual?.nome}</p>
                 </div>
-                {(!isCoordenador || String(cursoSelecionado) === String(user?.curso_id)) && (
+                {(user?.nivel_acesso !== "COORDENADOR" || String(cursoSelecionado) === String(user?.curso_id)) && (
                   <button
                     onClick={() => abrirModalDisciplina()}
                     className="bg-green-600 text-white px-4 py-2 rounded shadow text-sm font-bold hover:bg-green-700 transition-colors"
@@ -304,7 +304,7 @@ export default function DisciplinasPage() {
                           </span>
                         </td>
                         <td className="p-4 text-right">
-                          {(!isCoordenador || String(cursoSelecionado) === String(user?.curso_id)) && (
+                          {(user?.nivel_acesso !== "COORDENADOR" || String(cursoSelecionado) === String(user?.curso_id)) && (
                             <div className="flex justify-end gap-2">
                               <button
                                 onClick={() => abrirModalDisciplina(disciplina)}
