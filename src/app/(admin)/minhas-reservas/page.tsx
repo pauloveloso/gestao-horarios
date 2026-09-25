@@ -309,7 +309,7 @@ export default function MinhasReservasPage() {
                 placeholder="Buscar por evento, espaço ou pessoa..."
                 value={termoBusca}
                 onChange={(e) => setTermoBusca(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none bg-white text-gray-900"
               />
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
             </div>

@@ -236,7 +236,7 @@ export default function UsuariosPage() {
               placeholder="Buscar por nome ou e-mail..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all"
+              className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all bg-white text-gray-900"
             />
           </div>
         </div>
@@ -280,14 +280,14 @@ export default function UsuariosPage() {
                             disabled={isSalvando}
                             value={u.nivel_acesso}
                             onChange={(e) => alterarNivel(u.id, e.target.value)}
-                            className={`bg-white border rounded p-1.5 text-xs font-bold w-full max-w-[200px] outline-none transition-colors ${
+                            className={`bg-white text-gray-900 border rounded p-1.5 text-xs font-bold w-full max-w-[200px] outline-none transition-colors ${
                               isSalvando
                                 ? "opacity-50 cursor-not-allowed"
                                 : "hover:border-green-400 focus:border-green-600 border-gray-200"
                             }`}
                           >
                             {niveis.map((n) => (
-                              <option key={n.value} value={n.value}>
+                              <option key={n.value} value={n.value} className="bg-white text-gray-900">
                                 {n.label}
                               </option>
                             ))}
@@ -303,9 +303,9 @@ export default function UsuariosPage() {
                                   : "hover:border-blue-400 focus:border-blue-600 border-blue-200"
                               }`}
                             >
-                              <option value="">Vincular Curso...</option>
+                              <option value="" className="bg-white text-gray-900">Vincular Curso...</option>
                               {dadosMestres?.cursos?.map((c) => (
-                                <option key={c.id} value={c.id}>
+                                <option key={c.id} value={c.id} className="bg-white text-gray-900">
                                   {c.nome}
                                 </option>
                               ))}
@@ -395,7 +395,7 @@ export default function UsuariosPage() {
                   value={formEdicao.nome}
                   onChange={(e) => setFormEdicao({ ...formEdicao, nome: e.target.value })}
                   placeholder="Nome do usuário"
-                  className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all font-medium"
+                  className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all font-medium bg-white text-gray-900"
                 />
               </div>
 
@@ -409,7 +409,7 @@ export default function UsuariosPage() {
                   value={formEdicao.email}
                   onChange={(e) => setFormEdicao({ ...formEdicao, email: e.target.value })}
                   placeholder="exemplo@ifnmg.edu.br"
-                  className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all font-medium"
+                  className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all font-medium bg-white text-gray-900"
                 />
               </div>
 
@@ -425,10 +425,10 @@ export default function UsuariosPage() {
                       nivel_acesso: e.target.value as UsuarioSistema["nivel_acesso"],
                     })
                   }
-                  className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all font-bold"
+                  className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all font-bold bg-white text-gray-900"
                 >
                   {niveis.map((n) => (
-                    <option key={n.value} value={n.value}>
+                    <option key={n.value} value={n.value} className="bg-white text-gray-900">
                       {n.label}
                     </option>
                   ))}
@@ -445,9 +445,9 @@ export default function UsuariosPage() {
                     onChange={(e) => setFormEdicao({ ...formEdicao, curso_id: e.target.value || null })}
                     className="w-full text-xs px-3 py-2 border border-blue-200 bg-blue-50/50 rounded-lg outline-none focus:border-blue-600 text-blue-900 font-bold"
                   >
-                    <option value="">Selecione um curso...</option>
+                    <option value="" className="bg-white text-gray-900">Selecione um curso...</option>
                     {dadosMestres?.cursos?.map((c) => (
-                      <option key={c.id} value={c.id}>
+                      <option key={c.id} value={c.id} className="bg-white text-gray-900">
                         {c.nome}
                       </option>
                     ))}
