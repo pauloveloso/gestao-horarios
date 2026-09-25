@@ -629,7 +629,7 @@ export default function DashboardPage() {
       <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-base font-black uppercase tracking-tight text-white">
-            Dashboard Institucional
+            Painel Principal
           </h1>
           <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
             {user?.nivel_acesso === "PROFESSOR_TAE" ? "Meu Painel Pessoal" : "Visão estratégica da grade de horários"}

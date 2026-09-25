@@ -48,7 +48,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const gruposMenu = [
     {
       titulo: "Visão Geral",
-      itens: [{ nome: "Dashboard", href: "/painel", icone: <LayoutDashboard className="w-5 h-5" />, visible: true }],
+      itens: [{ nome: "Painel Principal", href: "/painel", icone: <LayoutDashboard className="w-5 h-5" />, visible: true }],
       visible: true,
     },
     {
