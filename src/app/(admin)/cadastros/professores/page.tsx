@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 
 export default function CadastroProfessoresPage() {
   const [professores, setProfessores] = useState<any[]>([]);
@@ -202,19 +203,29 @@ export default function CadastroProfessoresPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto p-4 md:p-6">
-      <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+      <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black text-green-800">Professores</h1>
-          <p className="text-sm text-gray-500 font-medium">
+          <h1 className="text-base font-black uppercase tracking-tight text-white">
+            Professores
+          </h1>
+          <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
             Gerencie os docentes e suas disponibilidades
           </p>
         </div>
-        <button
-          onClick={abrirModalNovo}
-          className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg shadow-sm text-sm font-bold flex items-center gap-2"
-        >
-          + Cadastrar Professor
-        </button>
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+          <Link
+            href="/painel"
+            className="bg-green-800 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase transition-colors border border-green-700/50 flex items-center gap-2"
+          >
+            <span>⬅</span> Voltar ao Painel
+          </Link>
+          <button
+            onClick={abrirModalNovo}
+            className="bg-white text-green-800 hover:bg-green-50 px-4 py-2 rounded-lg font-bold text-xs uppercase transition-colors shadow-sm flex items-center gap-2"
+          >
+            + Cadastrar Professor
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

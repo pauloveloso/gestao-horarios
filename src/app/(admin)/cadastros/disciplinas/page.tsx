@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "../../components/UserContext";
+import Link from "next/link";
 
 export default function DisciplinasPage() {
   const { user } = useUser();
@@ -187,14 +188,23 @@ export default function DisciplinasPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-black text-green-800">
-          Matriz Curricular
-        </h1>
-        <p className="text-sm text-gray-500 font-medium mt-1">
-          Gerencie as disciplinas ofertadas e associe-as aos seus respectivos
-          cursos.
-        </p>
+      <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-base font-black uppercase tracking-tight text-white">
+            Matriz Curricular
+          </h1>
+          <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
+            Gerencie as disciplinas ofertadas e associe-as aos seus respectivos cursos
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/painel"
+            className="bg-green-800 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase transition-colors border border-green-700/50 flex items-center gap-2"
+          >
+            <span>⬅</span> Voltar ao Painel
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">

@@ -262,28 +262,26 @@ export default function MinhasReservasPage() {
           </div>
         </div>
       )}
-      <header className="bg-green-800 text-white px-6 py-3 shadow-md shrink-0">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-xl font-black italic tracking-tighter">
-                SGH <span className="font-light not-italic text-green-200">| IFNMG</span>
-              </h1>
-              <p className="text-[11px] font-medium text-green-100 uppercase tracking-widest mt-0.5">
-                {isCoordenador ? "Gestão de Todas as Reservas" : "Consulta Reservas"}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center bg-green-900/40 px-3 py-2 rounded-xl border border-green-700/50">
-            <Link
-              href="/"
-              className="bg-white text-green-800 px-3 py-1.5 rounded text-xs font-bold shadow-sm hover:bg-green-50 transition-all active:scale-95 flex items-center gap-2"
-            >
-              <span>⬅</span> Início
-            </Link>
-          </div>
+      {/* BARRA DE TÍTULOS SUPERIOR - PADRÃO OCUPAÇÃO DE SALAS */}
+      <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 mx-3 md:mx-auto max-w-7xl w-full mt-2">
+        <div>
+          <h1 className="text-base font-black uppercase tracking-tight text-white">
+            {isCoordenador ? "Gestão de Todas as Reservas" : "Consulta Reservas"}
+          </h1>
+          <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
+            Histórico e Gerenciamento de Agendamentos
+          </p>
         </div>
-      </header>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/painel"
+            className="bg-green-800 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase transition-colors border border-green-700/50 flex items-center gap-2"
+          >
+            <span>⬅</span> Voltar ao Painel
+          </Link>
+        </div>
+      </div>
 
       <main className="max-w-7xl mx-auto mt-6 p-4 w-full flex-1 flex flex-col min-h-0">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
