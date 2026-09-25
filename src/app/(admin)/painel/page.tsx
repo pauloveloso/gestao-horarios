@@ -65,11 +65,11 @@ export default function DashboardPage() {
     }
   }, [versaoSelecionada, dadosMestres, user]);
 
-  const carregarDadosProfessor = async () => {
+  /*const carregarDadosProfessor = async () => {
     setCarregandoAulas(true);
     try {
       const nomeUsuario = user?.nome?.trim().toLowerCase() || "";
-      const prof = dadosMestres?.professores?.find(p => 
+      const prof = dadosMestres?.professores?.find(p =>
         p.nome?.trim().toLowerCase() === nomeUsuario
       );
       setProfessorVinculado(prof || null);
@@ -95,7 +95,51 @@ export default function DashboardPage() {
     } finally {
       setCarregandoAulas(false);
     }
-  };
+  };*/
+
+  const carregarDadosProfessor = async () => {
+  setCarregandoAulas(true);
+  try {
+    // Função auxiliar para remover acentos, TODOS os espaços e deixar minúsculo
+    const limparString = (str) => {
+      return str
+        ? str.normalize("NFD")
+             .replace(/[\u0300-\u036f]/g, "") // Remove os acentos
+             .replace(/\s+/g, "")             // Remove todos os espaços em branco
+             .toLowerCase()                   // Converte para letras minúsculas
+        : "";
+    };
+
+    const nomeUsuarioLimpo = limparString(user?.nome);
+
+    const prof = dadosMestres?.professores?.find(p =>
+      limparString(p.nome) === nomeUsuarioLimpo
+    );
+
+    setProfessorVinculado(prof || null);
+
+    if (prof) {
+      const { data: aulas } = await supabase
+        .from("aulas")
+        .select("*")
+        .eq("versao_id", versaoSelecionada)
+        .eq("professor_id", prof.id);
+      setAulasProfessor(aulas || []);
+    }
+
+    const hoje = new Date().toISOString().split("T")[0];
+    const { data: reservas } = await supabase
+      .from("reservas_espacos")
+      .select("*")
+      .eq("criado_por", user?.id)
+      .gte("data_reserva", hoje)
+      .order("data_reserva", { ascending: true })
+      .limit(5);
+    setReservasProfessor(reservas || []);
+  } finally {
+    setCarregandoAulas(false);
+  }
+};
 
   const carregarDadosEDiagnosticar = async () => {
     if (!dadosMestres) return;

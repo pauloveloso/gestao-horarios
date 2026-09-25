@@ -124,7 +124,7 @@ export default function ReservasPage() {
 
           // 1. Achar versão RASCUNHO mais recente
           const versaoRascunho = versoesDb.find((v) => v.status === "RASCUNHO");
-          
+
           // 2. Achar versão PUBLICADA
           let versaoPublicada = versoesDb.find(
             (v) => v.status === "PUBLICADA" && v.data_inicio_vigencia <= hoje,
@@ -135,9 +135,9 @@ export default function ReservasPage() {
           const idsAtivos = [];
           if (versaoPublicada) idsAtivos.push(versaoPublicada.id);
           if (versaoRascunho) idsAtivos.push(versaoRascunho.id);
-          
+
           if (idsAtivos.length === 0 && versoesDb.length > 0) {
-             idsAtivos.push(versoesDb[0].id);
+            idsAtivos.push(versoesDb[0].id);
           }
 
           setVersoesAtivasIds(idsAtivos);
@@ -546,7 +546,7 @@ export default function ReservasPage() {
             className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors text-xs font-bold"
             title="Pressione ESC para cancelar"
           >
-            <X className="w-4 h-4 inline-block -mt-1 mr-1" /> Cancelar
+            <X className="w-4 h-4 inline-block -mt-1 mr-1" /> Finalizar
           </button>
         </div>
       )}
