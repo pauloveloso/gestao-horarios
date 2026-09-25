@@ -98,48 +98,48 @@ export default function DashboardPage() {
   };*/
 
   const carregarDadosProfessor = async () => {
-  setCarregandoAulas(true);
-  try {
-    // Função auxiliar para remover acentos, TODOS os espaços e deixar minúsculo
-    const limparString = (str) => {
-      return str
-        ? str.normalize("NFD")
-             .replace(/[\u0300-\u036f]/g, "") // Remove os acentos
-             .replace(/\s+/g, "")             // Remove todos os espaços em branco
-             .toLowerCase()                   // Converte para letras minúsculas
-        : "";
-    };
+    setCarregandoAulas(true);
+    try {
+      // Função auxiliar para remover acentos, TODOS os espaços e deixar minúsculo
+      const limparString = (str: any) => {
+        return str
+          ? str.normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Remove os acentos
+            .replace(/\s+/g, "")             // Remove todos os espaços em branco
+            .toLowerCase()                   // Converte para letras minúsculas
+          : "";
+      };
 
-    const nomeUsuarioLimpo = limparString(user?.nome);
+      const nomeUsuarioLimpo = limparString(user?.nome);
 
-    const prof = dadosMestres?.professores?.find(p =>
-      limparString(p.nome) === nomeUsuarioLimpo
-    );
+      const prof = dadosMestres?.professores?.find(p =>
+        limparString(p.nome) === nomeUsuarioLimpo
+      );
 
-    setProfessorVinculado(prof || null);
+      setProfessorVinculado(prof || null);
 
-    if (prof) {
-      const { data: aulas } = await supabase
-        .from("aulas")
+      if (prof) {
+        const { data: aulas } = await supabase
+          .from("aulas")
+          .select("*")
+          .eq("versao_id", versaoSelecionada)
+          .eq("professor_id", prof.id);
+        setAulasProfessor(aulas || []);
+      }
+
+      const hoje = new Date().toISOString().split("T")[0];
+      const { data: reservas } = await supabase
+        .from("reservas_espacos")
         .select("*")
-        .eq("versao_id", versaoSelecionada)
-        .eq("professor_id", prof.id);
-      setAulasProfessor(aulas || []);
+        .eq("criado_por", user?.id)
+        .gte("data_reserva", hoje)
+        .order("data_reserva", { ascending: true })
+        .limit(5);
+      setReservasProfessor(reservas || []);
+    } finally {
+      setCarregandoAulas(false);
     }
-
-    const hoje = new Date().toISOString().split("T")[0];
-    const { data: reservas } = await supabase
-      .from("reservas_espacos")
-      .select("*")
-      .eq("criado_por", user?.id)
-      .gte("data_reserva", hoje)
-      .order("data_reserva", { ascending: true })
-      .limit(5);
-    setReservasProfessor(reservas || []);
-  } finally {
-    setCarregandoAulas(false);
-  }
-};
+  };
 
   const carregarDadosEDiagnosticar = async () => {
     if (!dadosMestres) return;
@@ -215,7 +215,7 @@ export default function DashboardPage() {
         if (
           prof &&
           String(prof.dia_planejamento).toUpperCase() ===
-            String(aulaAtual.dia_semana).toUpperCase()
+          String(aulaAtual.dia_semana).toUpperCase()
         ) {
           secundarios.push({
             tipo: "Dia de Planejamento",
@@ -669,7 +669,7 @@ export default function DashboardPage() {
             )}
           </p>
         </div>
-        <Link 
+        <Link
           href="/minhas-reservas"
           className="flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold transition-colors border border-green-200 text-sm shadow-sm"
         >
