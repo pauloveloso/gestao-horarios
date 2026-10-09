@@ -162,16 +162,20 @@ const dias = [
 
 interface PDFIntegradoProps {
   dados: any;
+  filtroModulo?: string;
 }
 
-export const PDFIntegradoDocument = ({ dados }: PDFIntegradoProps) => {
+export const PDFIntegradoDocument = ({ dados, filtroModulo = "TODOS" }: PDFIntegradoProps) => {
   const getAulasNoSlot = (turmaId: string, diaId: string, slotId: string) => {
     return (
       dados?.aulas?.filter(
         (a: any) =>
           String(a.turma_id) === String(turmaId) &&
           a.dia_semana === diaId &&
-          String(a.slot_horario_id) === String(slotId)
+          String(a.slot_horario_id) === String(slotId) &&
+          (filtroModulo === "TODOS" ||
+            (a.modulo || "INTEGRAL") === filtroModulo ||
+            (a.modulo || "INTEGRAL") === "INTEGRAL")
       ) || []
     );
   };

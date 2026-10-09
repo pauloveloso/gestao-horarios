@@ -8,12 +8,14 @@ interface BotaoExportarPDFProps {
   document: React.ReactElement<any, string | React.JSXElementConstructor<any>>;
   fileName: string;
   disabled?: boolean;
+  className?: string;
 }
 
 export function BotaoExportarPDF({
   document,
   fileName,
   disabled = false,
+  className,
 }: BotaoExportarPDFProps) {
   const [isClient, setIsClient] = useState(false);
 
@@ -21,11 +23,15 @@ export function BotaoExportarPDF({
     setIsClient(true);
   }, []);
 
+  const baseStyle =
+    className ||
+    "bg-green-600 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm h-10 min-w-[150px] whitespace-nowrap";
+
   if (!isClient || disabled) {
     return (
       <button
         disabled
-        className="bg-green-600 disabled:bg-gray-400 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm h-10 min-w-[150px]"
+        className={`${baseStyle} ${disabled ? "disabled:bg-gray-400 opacity-60 cursor-not-allowed" : ""}`}
       >
         <span className="flex items-center gap-2">
           <Download className="w-4 h-4 inline-block -mt-1" />
@@ -40,7 +46,7 @@ export function BotaoExportarPDF({
     <PDFDownloadLink
       document={document}
       fileName={fileName}
-      className="bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-sm h-10 min-w-[150px] whitespace-nowrap"
+      className={`${baseStyle} hover:bg-green-500`}
     >
       {({ loading }) =>
         loading ? (

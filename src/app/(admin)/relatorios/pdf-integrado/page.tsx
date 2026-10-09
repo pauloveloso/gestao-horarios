@@ -11,6 +11,7 @@ export default function ExportarPDFIntegradoPage() {
   const [gerandoPDF, setGerandoPDF] = useState(false);
   const [versoes, setVersoes] = useState<any[]>([]);
   const [versaoSelecionada, setVersaoSelecionada] = useState("");
+  const [filtroModulo, setFiltroModulo] = useState<string>("TODOS");
   const [dados, setDados] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
 
@@ -147,7 +148,10 @@ export default function ExportarPDFIntegradoPage() {
         (a: any) =>
           String(a.turma_id) === String(turmaId) &&
           a.dia_semana === diaId &&
-          String(a.slot_horario_id) === String(slotId),
+          String(a.slot_horario_id) === String(slotId) &&
+          (filtroModulo === "TODOS" ||
+            (a.modulo || "INTEGRAL") === filtroModulo ||
+            (a.modulo || "INTEGRAL") === "INTEGRAL"),
       ) || []
     );
   };
@@ -170,34 +174,60 @@ export default function ExportarPDFIntegradoPage() {
     );
 
   return (
-    <div className="space-y-6 pb-20 max-w-7xl mx-auto">
-      <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col lg:flex-row justify-between items-center gap-4">
-        <div>
-          <h1 className="text-base font-black uppercase tracking-tight text-white">
+    <div className="space-y-6 pb-20">
+      <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col xl:flex-row justify-between items-center gap-4">
+        <div className="shrink-0">
+          <h1 className="text-base font-black uppercase tracking-tight text-white flex items-center gap-3">
             Relatório Integrado (Oficial)
           </h1>
           <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
             Exportação em Alta Resolução (PDF Dinâmico)
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 justify-end w-full lg:w-auto">
-          <select
-            value={versaoSelecionada}
-            onChange={(e) => setVersaoSelecionada(e.target.value)}
-            disabled={gerandoPDF}
-            className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[200px]"
-          >
-            {versoes.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.nome} ({v.semestre})
-              </option>
-            ))}
-          </select>
-          <BotaoExportarPDF
-            disabled={!(isClient && dados && dados.grupos.length > 0)}
-            fileName={`Horarios_Integrado_IFNMG.pdf`}
-            document={<PDFIntegradoDocument dados={dados} />}
-          />
+        <div className="flex items-center gap-2 flex-nowrap shrink-0 overflow-x-auto max-w-full">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <label className="text-[11px] font-bold text-green-200 uppercase tracking-wider whitespace-nowrap">
+              Versão:
+            </label>
+            <select
+              value={versaoSelecionada}
+              onChange={(e) => setVersaoSelecionada(e.target.value)}
+              disabled={gerandoPDF}
+              className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[180px] truncate h-9"
+            >
+              {versoes.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.nome} ({v.semestre})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <label className="text-[11px] font-bold text-green-200 uppercase tracking-wider whitespace-nowrap">
+              Módulo:
+            </label>
+            <select
+              value={filtroModulo}
+              onChange={(e) => setFiltroModulo(e.target.value)}
+              disabled={gerandoPDF}
+              className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[160px] truncate h-9"
+              title="Filtrar por Módulo / Trimestre"
+            >
+              <option value="TODOS">Todos os Módulos</option>
+              <option value="INTEGRAL">Anual / Integral</option>
+              <option value="MODULO_1">1º Trimestre (M1)</option>
+              <option value="MODULO_2">2º Trimestre (M2)</option>
+              <option value="MODULO_3">3º Trimestre (M3)</option>
+            </select>
+          </div>
+          <div className="shrink-0">
+            <BotaoExportarPDF
+              disabled={!(isClient && dados && dados.grupos.length > 0)}
+              fileName={`Horarios_Integrado_IFNMG${filtroModulo !== "TODOS" ? `_${filtroModulo}` : ""}.pdf`}
+              className="bg-green-600 hover:bg-green-500 text-white px-3.5 py-1.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5 shadow-sm h-9 min-w-[125px] whitespace-nowrap"
+              document={<PDFIntegradoDocument dados={dados} filtroModulo={filtroModulo} />}
+            />
+          </div>
         </div>
       </div>
 

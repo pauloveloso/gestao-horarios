@@ -46,6 +46,89 @@ export async function executarValidacoes(
 }
 
 // ============================================================
+// CLASSIFICAÇÃO E CONFLITO TEMPORAL DE AULAS
+// ============================================================
+
+export type TempoCategoria =
+  | "MODULO_1"
+  | "MODULO_2"
+  | "MODULO_3"
+  | "INTEGRAL"
+  | "SUPERIOR_SEM1"
+  | "SUPERIOR_SEM2";
+
+export function classificarTempoAula(
+  modalidade: string,
+  modulo: string | null | undefined,
+  semestreVersao: string | null | undefined,
+): TempoCategoria {
+  if (modalidade === "INTEGRADO") {
+    if (modulo === "MODULO_1" || modulo === "MODULO_2" || modulo === "MODULO_3") {
+      return modulo;
+    }
+    return "INTEGRAL";
+  }
+
+  const sem = (semestreVersao || "").toLowerCase();
+  if (sem.includes(".2") || sem.includes("-2") || sem.includes("2º")) {
+    return "SUPERIOR_SEM2";
+  }
+  return "SUPERIOR_SEM1";
+}
+
+export function conflitamTempo(t1: TempoCategoria, t2: TempoCategoria): boolean {
+  if (t1 === "INTEGRAL" || t2 === "INTEGRAL") return true;
+  if (t1 === t2) return true;
+
+  if (
+    (t1 === "MODULO_1" && t2 === "SUPERIOR_SEM1") ||
+    (t1 === "SUPERIOR_SEM1" && t2 === "MODULO_1")
+  ) {
+    return true;
+  }
+  if (
+    (t1 === "MODULO_2" && (t2 === "SUPERIOR_SEM1" || t2 === "SUPERIOR_SEM2")) ||
+    (t2 === "MODULO_2" && (t1 === "SUPERIOR_SEM1" || t1 === "SUPERIOR_SEM2"))
+  ) {
+    return true;
+  }
+  if (
+    (t1 === "MODULO_3" && t2 === "SUPERIOR_SEM2") ||
+    (t1 === "SUPERIOR_SEM2" && t2 === "MODULO_3")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+async function obterTempoAulaAtual(
+  supabase: any,
+  aula: any,
+): Promise<TempoCategoria> {
+  const [resTurma, resVersao] = await Promise.all([
+    aula.turma_id
+      ? supabase
+          .from("turmas")
+          .select("cursos(modalidade)")
+          .eq("id", aula.turma_id)
+          .single()
+      : Promise.resolve({ data: null }),
+    aula.versao_id
+      ? supabase
+          .from("versoes_grade")
+          .select("semestre")
+          .eq("id", aula.versao_id)
+          .single()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const modalidade = (resTurma.data as any)?.cursos?.modalidade || "INTEGRADO";
+  const semestre = (resVersao.data as any)?.semestre || "";
+  return classificarTempoAula(modalidade, aula.modulo, semestre);
+}
+
+// ============================================================
 // REGRAS IMPEDITIVAS (Gravidade: IMPEDITIVO)
 // ============================================================
 
@@ -53,16 +136,20 @@ async function validarChoqueTurma(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
   const supabase = await createClient();
-  // A própria constraint UNIQUE do banco já impede isso na maioria dos casos,
-  // mas podemos verificar se houve alguma falha de concorrência rara.
-  const { count } = await supabase
+  let query = supabase
     .from("aulas")
-    .select("*", { head: true, count: "exact" })
+    .select("id, modulo", { count: "exact" })
     .eq("turma_id", aula.turma_id)
     .eq("dia_semana", aula.dia_semana)
     .eq("slot_horario_id", aula.slot_horario_id)
     .eq("status", "ATIVO")
     .neq("id", aula.id);
+
+  if (aula.modulo && aula.modulo !== "INTEGRAL") {
+    query = query.or(`modulo.eq.INTEGRAL,modulo.eq.${aula.modulo},modulo.is.null`);
+  }
+
+  const { count } = await query;
 
   if ((count || 0) > 0) {
     return {
@@ -81,16 +168,37 @@ async function validarChoqueEspaco(
   const supabase = await createClient();
   if (!aula.espaco_id) return null;
 
-  const { count } = await supabase
+  const tempoAulaAtual = await obterTempoAulaAtual(supabase, aula);
+
+  const { data: concorrentes } = await supabase
     .from("aulas")
-    .select("*", { head: true, count: "exact" })
+    .select(`
+      id,
+      modulo,
+      versao_id,
+      turmas (
+        cursos (modalidade)
+      ),
+      versoes_grade (
+        semestre
+      )
+    `)
     .eq("espaco_id", aula.espaco_id)
     .eq("dia_semana", aula.dia_semana)
     .eq("slot_horario_id", aula.slot_horario_id)
     .eq("status", "ATIVO")
     .neq("id", aula.id);
 
-  if ((count || 0) > 0) {
+  if (!concorrentes || concorrentes.length === 0) return null;
+
+  const temChoque = concorrentes.some((conc: any) => {
+    const mod = conc.turmas?.cursos?.modalidade || "INTEGRADO";
+    const sem = conc.versoes_grade?.semestre || "";
+    const tempoConc = classificarTempoAula(mod, conc.modulo, sem);
+    return conflitamTempo(tempoAulaAtual, tempoConc);
+  });
+
+  if (temChoque) {
     const { data: espaco } = await supabase
       .from("espacos")
       .select("nome")
@@ -110,16 +218,39 @@ async function validarChoqueDocente(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
   const supabase = await createClient();
-  const { count } = await supabase
+  if (!aula.professor_id) return null;
+
+  const tempoAulaAtual = await obterTempoAulaAtual(supabase, aula);
+
+  const { data: concorrentes } = await supabase
     .from("aulas")
-    .select("*", { head: true, count: "exact" })
+    .select(`
+      id,
+      modulo,
+      versao_id,
+      turmas (
+        cursos (modalidade)
+      ),
+      versoes_grade (
+        semestre
+      )
+    `)
     .eq("professor_id", aula.professor_id)
     .eq("dia_semana", aula.dia_semana)
     .eq("slot_horario_id", aula.slot_horario_id)
     .eq("status", "ATIVO")
     .neq("id", aula.id);
 
-  if ((count || 0) > 0) {
+  if (!concorrentes || concorrentes.length === 0) return null;
+
+  const temChoque = concorrentes.some((conc: any) => {
+    const mod = conc.turmas?.cursos?.modalidade || "INTEGRADO";
+    const sem = conc.versoes_grade?.semestre || "";
+    const tempoConc = classificarTempoAula(mod, conc.modulo, sem);
+    return conflitamTempo(tempoAulaAtual, tempoConc);
+  });
+
+  if (temChoque) {
     const { data: prof } = await supabase
       .from("professores")
       .select("nome")
@@ -139,8 +270,6 @@ async function validarDescansoDocente(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
   const supabase = await createClient();
-  // Regra: Professor tem aulas nos dois últimos horários de um dia e nos dois primeiros do seguinte.
-  // Mapeamento de dias
   const diasMap: Record<string, number> = {
     SEGUNDA: 1,
     TERCA: 2,
@@ -151,7 +280,7 @@ async function validarDescansoDocente(
     DOMINGO: 7,
   };
   const diaAtualNum = diasMap[aula.dia_semana];
-  if (!diaAtualNum || diaAtualNum === 7) return null; // Ignora domingo como "dia anterior"
+  if (!diaAtualNum || diaAtualNum === 7) return null;
 
   const diaSeguinteNum = diaAtualNum + 1;
   const diaSeguinteKey = Object.keys(diasMap).find(
@@ -160,8 +289,6 @@ async function validarDescansoDocente(
 
   if (!diaSeguinteKey) return null;
 
-  // Obter IDs dos slots: Últimos (14, 15) e Primeiros (1, 2) - Ajuste conforme seus IDs reais
-  // Idealmente, buscar dinamicamente baseado no hora_inicio
   const { data: slotsTodos } = await supabase
     .from("slots_horarios")
     .select("id, hora_inicio")
@@ -175,26 +302,39 @@ async function validarDescansoDocente(
   ].filter(Boolean);
   const idsPrimeiros = [slotsTodos[0]?.id, slotsTodos[1]?.id].filter(Boolean);
 
-  // Verifica se a aula atual é um dos últimos horários
   const isUltimoHoje = idsUltimos.includes(aula.slot_horario_id);
   if (!isUltimoHoje) return null;
 
-  // Conta quantas aulas o professor tem nos primeiros horários do dia seguinte
-  const { count } = await supabase
+  const { data: aulasSeguintes } = await supabase
     .from("aulas")
-    .select("*", { head: true, count: "exact" })
+    .select(`
+      id,
+      modulo,
+      turmas (cursos (modalidade)),
+      versoes_grade (semestre)
+    `)
     .eq("professor_id", aula.professor_id)
     .eq("dia_semana", diaSeguinteKey)
     .in("slot_horario_id", idsPrimeiros)
     .eq("status", "ATIVO");
 
-  if ((count || 0) >= 2) {
-    return {
-      regra: "DESCANSO_DOCENTE",
-      gravidade: "IMPEDITIVO",
-      mensagem: `O professor está alocado nos dois últimos horários de ${aula.dia_semana} e terá duas aulas no início de ${diaSeguinteKey}. Isso viola a regra de descanso.`,
-      dadosConflito: { professor_id: aula.professor_id },
-    };
+  if (aulasSeguintes && aulasSeguintes.length > 0) {
+    const tempoAulaAtual = await obterTempoAulaAtual(supabase, aula);
+    const conflitam = aulasSeguintes.filter((a: any) => {
+      const mod = a.turmas?.cursos?.modalidade || "INTEGRADO";
+      const sem = a.versoes_grade?.semestre || "";
+      const tempoConc = classificarTempoAula(mod, a.modulo, sem);
+      return conflitamTempo(tempoAulaAtual, tempoConc);
+    });
+
+    if (conflitam.length >= 2) {
+      return {
+        regra: "DESCANSO_DOCENTE",
+        gravidade: "IMPEDITIVO",
+        mensagem: `O professor está alocado nos dois últimos horários de ${aula.dia_semana} e terá duas aulas no início de ${diaSeguinteKey}. Isso viola a regra de descanso.`,
+        dadosConflito: { professor_id: aula.professor_id },
+      };
+    }
   }
 
   return null;
@@ -204,8 +344,6 @@ async function validarLimiteTurnos(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
   const supabase = await createClient();
-  // Definir faixas de turnos (ajustar IDs conforme seus slots)
-  // Exemplo simplificado: Manhã (slots 1-5), Tarde (6-10), Noite (11+)
   const { data: slotAtual } = await supabase
     .from("slots_horarios")
     .select("hora_inicio")
@@ -219,23 +357,34 @@ async function validarLimiteTurnos(
   else if (hora < 18) turnoAtual = "TARDE";
   else turnoAtual = "NOITE";
 
-  // Buscar todas as aulas do professor no dia
   const { data: aulasDoDia } = await supabase
     .from("aulas")
-    .select("slot_horario_id, slots_horarios(hora_inicio)")
+    .select(`
+      slot_horario_id,
+      modulo,
+      slots_horarios(hora_inicio),
+      turmas (cursos (modalidade)),
+      versoes_grade (semestre)
+    `)
     .eq("professor_id", aula.professor_id)
     .eq("dia_semana", aula.dia_semana)
     .eq("status", "ATIVO");
 
   if (!aulasDoDia) return null;
 
+  const tempoAulaAtual = await obterTempoAulaAtual(supabase, aula);
   const turnosOcupados = new Set<string>([turnoAtual]);
 
   for (const a of aulasDoDia) {
-    const h = parseInt((a.slots_horarios as any).hora_inicio.split(":")[0]);
-    if (h < 12) turnosOcupados.add("MANHA");
-    else if (h < 18) turnosOcupados.add("TARDE");
-    else turnosOcupados.add("NOITE");
+    const mod = (a.turmas as any)?.cursos?.modalidade || "INTEGRADO";
+    const sem = (a.versoes_grade as any)?.semestre || "";
+    const tempoConc = classificarTempoAula(mod, a.modulo, sem);
+    if (conflitamTempo(tempoAulaAtual, tempoConc)) {
+      const h = parseInt((a.slots_horarios as any)?.hora_inicio?.split(":")[0] || "0");
+      if (h < 12) turnosOcupados.add("MANHA");
+      else if (h < 18) turnosOcupados.add("TARDE");
+      else turnosOcupados.add("NOITE");
+    }
   }
 
   if (turnosOcupados.size > 2) {

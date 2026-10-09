@@ -127,6 +127,7 @@ interface AulaInput {
   slot_horario_id: number;
   dia_semana: string;
   versao_id: number;
+  modulo?: string;
 }
 
 export async function salvarAulaComValidacoes(dados: AulaInput) {
@@ -155,6 +156,7 @@ export async function salvarAulaComValidacoes(dados: AulaInput) {
           slot_horario_id: dados.slot_horario_id,
           dia_semana: dados.dia_semana,
           versao_id: dados.versao_id,
+          modulo: dados.modulo || "INTEGRAL",
           status: "ATIVO",
         },
       ])

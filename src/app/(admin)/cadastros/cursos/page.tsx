@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "../../components/UserContext";
 import Link from "next/link";
+import {
+  MODALIDADES_CURSO,
+  formatarNomeCompletoModalidade,
+} from "@/lib/modalidades";
 
 export default function CursosPage() {
   const { user } = useUser();
@@ -323,7 +327,7 @@ export default function CursosPage() {
                       {curso.nome}
                     </p>
                     <p className="text-xs text-gray-500 uppercase font-medium">
-                      {curso.modalidade}
+                      {formatarNomeCompletoModalidade(curso.modalidade)}
                     </p>
                   </div>
                 </div>
@@ -504,15 +508,11 @@ export default function CursosPage() {
                     }
                     className="w-full border border-gray-300 rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                   >
-                    <option value="INTEGRADO">Técnico Integrado</option>
-                    <option value="SUBSEQUENTE">Subsequente</option>
-                    <option value="CONCOMITANTE">
-                      Concomitante / Subsequente
-                    </option>
-                    <option value="SUPERIOR">
-                      Superior (Bacharelado/Licenciatura/Tecnólogo)
-                    </option>
-                    <option value="POS_GRADUACAO">Pós-Graduação</option>
+                    {MODALIDADES_CURSO.map((m) => (
+                      <option key={m.valor} value={m.valor}>
+                        {m.ordem} - {m.nomeCompleto}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

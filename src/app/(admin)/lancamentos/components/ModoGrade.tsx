@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { CircleX, AlertCircle, Trash2, MapPin, Clipboard, AlertTriangle, Users, X } from "lucide-react";
+import {
+  MODALIDADES_CURSO,
+  normalizarModalidade,
+} from "@/lib/modalidades";
 
 export default function ModoGrade({
   versaoId,
@@ -19,6 +23,8 @@ export default function ModoGrade({
   executeAction,
 }: any) {
   const [filtroTurma, setFiltroTurma] = useState("");
+  const [filtroCategoria, setFiltroCategoria] = useState<string>("TODAS");
+  const [filtroModulo, setFiltroModulo] = useState<string>("TODOS");
   const [modalAberto, setModalAberto] = useState(false);
   const [dadosModal, setDadosModal] = useState<any>(null);
   const [aulaCopiada, setAulaCopiada] = useState<any>(null);
@@ -78,7 +84,10 @@ export default function ModoGrade({
       (a: any) =>
         a.dia_semana === diaId &&
         String(a.slot_horario_id) === String(horaId) &&
-        String(a.turma_id) === String(filtroTurma),
+        String(a.turma_id) === String(filtroTurma) &&
+        (filtroModulo === "TODOS" ||
+          (a.modulo || "INTEGRAL") === filtroModulo ||
+          (a.modulo || "INTEGRAL") === "INTEGRAL"),
     );
   };
 
@@ -159,6 +168,7 @@ export default function ModoGrade({
       espaco_id: aulaCopiada.espaco_id || null,
       dia_semana: diaId,
       slot_horario_id: slotId,
+      modulo: aulaCopiada.modulo || (filtroModulo !== "TODOS" ? filtroModulo : "INTEGRAL"),
     };
 
     const { success, error } = await executeAction({
@@ -183,13 +193,18 @@ export default function ModoGrade({
       disciplina_id: aulaExistente?.disciplina_id || "",
       professor_id: aulaExistente?.professor_id || "",
       espaco_id: aulaExistente?.espaco_id || "",
+      modulo: aulaExistente?.modulo || (filtroModulo !== "TODOS" ? filtroModulo : "INTEGRAL"),
     });
     setModalAberto(true);
   };
 
   const salvarAula = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...dadosModal, versao_id: versaoId };
+    const payload = {
+      ...dadosModal,
+      versao_id: versaoId,
+      modulo: dadosModal.modulo || "INTEGRAL",
+    };
 
     if (payload.professor_id === "") payload.professor_id = null;
     if (payload.espaco_id === "") payload.espaco_id = null;
@@ -284,6 +299,18 @@ export default function ModoGrade({
     (t: any) => String(t.id) === String(filtroTurma),
   );
 
+  const cursoAtualObj = turmaAtualObj
+    ? cursos.find((c: any) => String(c.id) === String(turmaAtualObj.curso_id))
+    : null;
+
+  const isIntegrado =
+    (cursoAtualObj?.modalidade || "").toUpperCase() === "INTEGRADO";
+
+  // Se turma não é INTEGRADO, força módulo INTEGRAL
+  if (filtroTurma && !isIntegrado && filtroModulo !== "INTEGRAL") {
+    setFiltroModulo("INTEGRAL");
+  }
+
   const disciplinasFiltradas = turmaAtualObj
     ? disciplinas
         .filter(
@@ -301,7 +328,12 @@ export default function ModoGrade({
       ));
     }
 
-    const cursosOrdenados = [...cursos].sort((a, b) =>
+    const cursosFiltrados = cursos.filter((c: any) => {
+      if (filtroCategoria === "TODAS") return true;
+      return normalizarModalidade(c.modalidade) === filtroCategoria;
+    });
+
+    const cursosOrdenados = [...cursosFiltrados].sort((a, b) =>
       a.nome.localeCompare(b.nome),
     );
 
@@ -349,7 +381,50 @@ export default function ModoGrade({
             </button>
           )}
 
-          <label className="text-xs text-gray-500 font-bold uppercase hidden md:block">
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs text-gray-500 font-bold uppercase hidden md:block">
+              Categoria:
+            </label>
+            <select
+              className="px-3 py-2 bg-white border border-gray-300 focus:border-green-500 text-gray-700 rounded outline-none text-sm font-bold shadow-sm cursor-pointer"
+              value={filtroCategoria}
+              onChange={(e) => {
+                setFiltroCategoria(e.target.value);
+                setFiltroTurma("");
+                setAulaCopiada(null);
+              }}
+              title="Filtrar turmas por Categoria / Modalidade de Curso"
+            >
+              <option value="TODAS">Todas as Categorias</option>
+              {MODALIDADES_CURSO.map((m) => (
+                <option key={m.valor} value={m.valor}>
+                  {m.ordem} - {m.nomeExibicao}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {isIntegrado && (
+            <>
+              <label className="text-xs text-gray-500 font-bold uppercase hidden md:block">
+                Módulo:
+              </label>
+              <select
+                className="px-3 py-2 bg-white border border-gray-300 focus:border-green-500 text-gray-700 rounded outline-none text-sm font-bold shadow-sm cursor-pointer"
+                value={filtroModulo}
+                onChange={(e) => setFiltroModulo(e.target.value)}
+                title="Filtrar por Módulo / Trimestre"
+              >
+                <option value="TODOS">Todos os Módulos</option>
+                <option value="INTEGRAL">Anual / Integral</option>
+                <option value="MODULO_1">1º Trimestre (M1)</option>
+                <option value="MODULO_2">2º Trimestre (M2)</option>
+                <option value="MODULO_3">3º Trimestre (M3)</option>
+              </select>
+            </>
+          )}
+
+          <label className="text-xs text-gray-500 font-bold uppercase hidden md:block ml-2">
             Visualizando Turma:
           </label>
           <select
@@ -584,6 +659,27 @@ export default function ModoGrade({
                                         "S/ Sala"}
                                     </span>
                                   </div>
+                                  {aula.modulo && aula.modulo !== "INTEGRAL" && (
+                                    <div className="mt-0.5">
+                                      <span
+                                        className={`inline-block px-1.5 py-0.5 rounded font-black tracking-wider uppercase ${
+                                          isSplit ? "text-[8px]" : "text-[10px]"
+                                        } ${
+                                          aula.modulo === "MODULO_1"
+                                            ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                            : aula.modulo === "MODULO_2"
+                                              ? "bg-sky-100 text-sky-800 border border-sky-300"
+                                              : "bg-purple-100 text-purple-800 border border-purple-300"
+                                        }`}
+                                      >
+                                        {aula.modulo === "MODULO_1"
+                                          ? "1º Trim (M1)"
+                                          : aula.modulo === "MODULO_2"
+                                            ? "2º Trim (M2)"
+                                            : "3º Trim (M3)"}
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             );
@@ -795,6 +891,30 @@ export default function ModoGrade({
                       })()}
                     </select>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                    Vigência (Módulo / Trimestre)
+                  </label>
+                  <select
+                    className="w-full border rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900 font-bold"
+                    value={dadosModal.modulo || "INTEGRAL"}
+                    onChange={(e) =>
+                      setDadosModal({
+                        ...dadosModal,
+                        modulo: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="INTEGRAL">Anual / Integral (Todo o ciclo)</option>
+                    <option value="MODULO_1">1º Trimestre (Módulo 1)</option>
+                    <option value="MODULO_2">2º Trimestre (Módulo 2)</option>
+                    <option value="MODULO_3">3º Trimestre (Módulo 3)</option>
+                  </select>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Defina se a aula vigora em todo o período ou apenas durante o trimestre especificado.
+                  </p>
                 </div>
               </div>
 

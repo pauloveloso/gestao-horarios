@@ -24,6 +24,7 @@ export default function QuadrosHorariosPage() {
 
   const [semestreSelecionado, setSemestreSelecionado] = useState<string>("");
   const [cursoSelecionado, setCursoSelecionado] = useState<string>("");
+  const [filtroModulo, setFiltroModulo] = useState<string>("TODOS");
 
   const [paginas, setPaginas] = useState<any[]>([]);
   const [versaoAtivaDetalhes, setVersaoAtivaDetalhes] = useState<any>(null);
@@ -135,9 +136,12 @@ export default function QuadrosHorariosPage() {
           (c) => String(c.id) === String(cursoSelecionado),
         );
         const turmaIds = turmas?.map((t) => String(t.id)) || [];
-        const aulasDoCurso = (aulas || []).filter((a) =>
-          turmaIds.includes(String(a.turma_id)),
-        );
+        const aulasDoCurso = (aulas || []).filter((a) => {
+          if (!turmaIds.includes(String(a.turma_id))) return false;
+          if (filtroModulo === "TODOS") return true;
+          const modulo = a.modulo || "INTEGRAL";
+          return modulo === filtroModulo || modulo === "INTEGRAL";
+        });
 
         const turnosBase = [
           {
@@ -216,7 +220,7 @@ export default function QuadrosHorariosPage() {
     }
 
     processarQuadros();
-  }, [semestreSelecionado, cursoSelecionado, versoes, slotsTotais, cursos]);
+  }, [semestreSelecionado, cursoSelecionado, filtroModulo, versoes, slotsTotais, cursos]);
 
   const formatarHora = (hora: string) => (hora ? hora.substring(0, 5) : "");
 
@@ -367,6 +371,13 @@ export default function QuadrosHorariosPage() {
     );
   }
 
+  const cursoSelecionadoObj = cursos.find(
+    (c) => String(c.id) === String(cursoSelecionado),
+  );
+  const isCursoIntegrado =
+    (cursoSelecionadoObj?.modalidade || "").toUpperCase() === "INTEGRADO" ||
+    cursoSelecionadoObj?.nome?.toLowerCase().includes("integrado");
+
   return (
     <>
       <style
@@ -385,35 +396,34 @@ export default function QuadrosHorariosPage() {
         }}
       />
 
-      <div className="min-h-screen bg-gray-50 p-2 text-gray-900">
-        <header className="bg-green-900 p-4 shadow-md sticky top-0 z-50 border-b border-green-800 rounded-xl max-w-7xl mx-auto my-2 text-white">
-          <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/painel"
-                className="bg-white/20 hover:bg-white/30 px-3 py-2 rounded text-xs font-bold transition-colors text-white"
-              >
-                ⬅ Painel
-              </Link>
-              <div>
-                <h1 className="text-base font-black uppercase tracking-tight text-white">
-                  Quadros de Horários
-                </h1>
-                <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider">
-                  Visualização Limpa e Exportação para PDF
-                </p>
-              </div>
+      <div className="space-y-6 pb-20">
+        <header className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col xl:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-3 shrink-0">
+            <Link
+              href="/painel"
+              className="bg-white/20 hover:bg-white/30 px-2.5 py-1.5 rounded text-xs font-bold transition-colors text-white whitespace-nowrap"
+            >
+              ⬅ Painel
+            </Link>
+            <div>
+              <h1 className="text-base font-black uppercase tracking-tight text-white flex items-center gap-3">
+                Quadros de Horários
+              </h1>
+              <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
+                Visualização Limpa e Exportação para PDF
+              </p>
             </div>
+          </div>
 
-            <div className="flex flex-wrap items-center gap-4 justify-end">
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-bold text-green-200 uppercase tracking-wider">
-                  Semestre (Org):
+            <div className="flex items-center gap-2 flex-nowrap shrink-0 overflow-x-auto max-w-full">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <label className="text-[11px] font-bold text-green-200 uppercase tracking-wider whitespace-nowrap">
+                  Semestre:
                 </label>
                 <select
                   value={semestreSelecionado}
                   onChange={(e) => setSemestreSelecionado(e.target.value)}
-                  className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[200px] truncate"
+                  className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[130px] truncate h-9"
                 >
                   {semestres.map((s) => (
                     <option key={s} value={s}>
@@ -423,14 +433,14 @@ export default function QuadrosHorariosPage() {
                 </select>
               </div>
 
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-bold text-green-200 uppercase tracking-wider">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <label className="text-[11px] font-bold text-green-200 uppercase tracking-wider whitespace-nowrap">
                   Curso:
                 </label>
                 <select
                   value={cursoSelecionado}
                   onChange={(e) => setCursoSelecionado(e.target.value)}
-                  className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[250px] truncate"
+                  className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[210px] truncate h-9"
                 >
                   <option value="">Selecione um curso...</option>
                   {cursos.map((c) => (
@@ -441,19 +451,40 @@ export default function QuadrosHorariosPage() {
                 </select>
               </div>
 
-              <BotaoExportarPDF
-                disabled={!(isClient && paginas.length > 0)}
-                fileName={`QUADRO_HORARIOS_${getCursoNomeLimpo()}_${getSiglaLimpa()}.pdf`}
-                document={
-                  <PDFHorariosDocument
-                    paginas={paginas}
-                    versaoAtivaDetalhes={versaoAtivaDetalhes}
-                    originUrl={typeof window !== "undefined" ? window.location.origin : ""}
-                  />
-                }
-              />
+              {isCursoIntegrado && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <label className="text-[11px] font-bold text-green-200 uppercase tracking-wider whitespace-nowrap">
+                    Módulo:
+                  </label>
+                  <select
+                    value={filtroModulo}
+                    onChange={(e) => setFiltroModulo(e.target.value)}
+                    className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[155px] truncate h-9"
+                  >
+                    <option value="TODOS">Todos (Integral+M1..)</option>
+                    <option value="INTEGRAL">Anual / Integral</option>
+                    <option value="MODULO_1">1º Trimestre (M1)</option>
+                    <option value="MODULO_2">2º Trimestre (M2)</option>
+                    <option value="MODULO_3">3º Trimestre (M3)</option>
+                  </select>
+                </div>
+              )}
+
+              <div className="shrink-0">
+                <BotaoExportarPDF
+                  disabled={!(isClient && paginas.length > 0)}
+                  fileName={`QUADRO_HORARIOS_${getCursoNomeLimpo()}_${getSiglaLimpa()}.pdf`}
+                  className="bg-green-600 hover:bg-green-500 text-white px-3.5 py-1.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5 shadow-sm h-9 min-w-[125px] whitespace-nowrap"
+                  document={
+                    <PDFHorariosDocument
+                      paginas={paginas}
+                      versaoAtivaDetalhes={versaoAtivaDetalhes}
+                      originUrl={typeof window !== "undefined" ? window.location.origin : ""}
+                    />
+                  }
+                />
+              </div>
             </div>
-          </div>
         </header>
 
         <main className="py-4 flex flex-col items-center overflow-x-auto">

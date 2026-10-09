@@ -26,12 +26,21 @@ export interface UsuarioSistema {
 }
 
 
+export type ModalidadeCurso =
+  | "FIC"
+  | "INTEGRADO"
+  | "SUBSEQUENTE_CONCOMITANTE"
+  | "SUPERIOR"
+  | "POS_GRADUACAO";
+
 export interface Curso {
-  id: number;
+  id: any;
   nome: string;
-  codigo: string;
-  nivel: string;
-  created_at: string;
+  modalidade: ModalidadeCurso;
+  cor_identificacao?: string;
+  codigo?: string;
+  nivel?: string;
+  created_at?: string;
 }
 
 export interface Professor {
@@ -80,6 +89,8 @@ export interface VersaoGrade {
   created_at: string;
 }
 
+export type ModuloAula = "INTEGRAL" | "MODULO_1" | "MODULO_2" | "MODULO_3";
+
 export interface Aula {
   id: number;
   turma_id: number;
@@ -90,6 +101,7 @@ export interface Aula {
   dia_semana: DiaSemana;
   versao_id: number;
   status: StatusAula;
+  modulo?: ModuloAula;
   created_at: string;
   updated_at: string;
 }

@@ -63,4 +63,5 @@ export interface DadosValidacao {
   dia_semana: string;
   disciplina_id: number;
   versao_id: number;
+  modulo?: string;
 }

@@ -1,0 +1,154 @@
+================================================================================
+                 IFNMG - CAMPUS JANUÁRIA | SISTEMA DE GESTÃO DE HORÁRIOS (SGH)   
+                   RELATÓRIO DE ESPAÇOS FÍSICOS CADASTRADOS POR CATEGORIA        
+================================================================================
+Data de Emissão : 09/10/2026
+Total de Categorias: 9
+Total de Espaços   : 102
+--------------------------------------------------------------------------------
+
+[01] CATEGORIA: COMPLEXO DE LABORATÓRIOS (24 espaços)
+--------------------------------------------------------------------------------
+  01. Laboratório 01 - LCFI - Complexo de Lbs
+  02. Laboratório 02 - LCFI - Complexo de Lbs [Capacidade: 20 alunos]
+  03. Laboratório 03 - LCFI - Complexo de Lbs
+  04. Laboratório 04 - LCFI - Complexo de Lbs
+  05. Laboratório Botânica - LCBI - Complexo de Lbs
+  06. Laboratório Citologia/Histologia - LCBI - Complexo de Lbs [Capacidade: 30 alunos]
+  07. Laboratório de Botânica - Complexo de Lbs
+  08. Laboratório de Entomologia - Complexo de Lbs
+  09. Laboratório de Fisiologia Vegetal - Complexo de Lbs
+  10. Laboratório de Fitopatologia - Complexo de Lbs
+  11. Laboratório de Geo e Topografia - Complexo de Lbs
+  12. Laboratório de Jogos
+  13. Laboratório de Mecanização
+  14. Laboratório de Música (Técnico)
+  15. Laboratório de Química II (Técnico)
+  16. Laboratório Desenho (Técnico)
+  17. Laboratório Desenho e Topografia (Técnico)
+  18. Laboratório EAD (Técnico)
+  19. Laboratório INOVA ADM
+  20. Laboratório Instrumentação - LCFI - Complexo de Lbs
+  21. Laboratório Interações Biológicas - LCBI
+  22. Laboratório Microbiologia - LCBI - Complexo de Lbs
+  23. Laboratório Tecnologias de Materiais (Física) (Técnico)
+  24. Laboratório Zoologia - LCBI - Complexo de Lbs
+
+[02] CATEGORIA: ESPAÇOS ESPORTIVOS E ARTÍSTICOS (3 espaços)
+--------------------------------------------------------------------------------
+  01. Ginásio
+  02. Laboratório de Artes (Técnico)
+  03. Quadra
+
+[03] CATEGORIA: LABORATÓRIOS DE INFORMÁTICA (8 espaços)
+--------------------------------------------------------------------------------
+  01. Laboratório 01 - INF (Superior)
+  02. Laboratório 02 - INF (Superior)
+  03. Laboratório 03 - INF (Superior)
+  04. Laboratório 04 - INF (Técnico)
+  05. Laboratório 05 - INF (Técnico)
+  06. Laboratório 06 - INF (Técnico)
+  07. Laboratório de Manutenção - INF (Técnico)
+  08. Laboratório de Pesquisa - INF (Superior)
+
+[04] CATEGORIA: LABORATÓRIOS DIDÁTICOS GERAIS (1 espaço)
+--------------------------------------------------------------------------------
+  01. CELIN
+
+[05] CATEGORIA: NÚCLEOS E DEPARTAMENTOS (0 espaços)
+--------------------------------------------------------------------------------
+    (Nenhum espaço cadastrado nesta categoria)
+
+[06] CATEGORIA: SALAS ADMINISTRATIVAS E COORDENAÇÕES (14 espaços)
+--------------------------------------------------------------------------------
+  01. Coord. BADM
+  02. Coord. BCAN
+  03. Coord. BCEC
+  04. Coord. BSI
+  05. Coord. EAA
+  06. Coord. Enf.
+  07. Coord. Eventos
+  08. Coord. LCBI
+  09. Coord. LCFI
+  10. Coord. LCMM
+  11. Coord. TA
+  12. Coord. TII
+  13. Coord. TMA
+  14. Sala de apoio - Superior [Capacidade: 20 alunos]
+
+[07] CATEGORIA: SALAS SUPERIOR (21 espaços)
+--------------------------------------------------------------------------------
+  01. Sala 01 (Superior)
+  02. Sala 02 (Superior)
+  03. Sala 03 (Superior)
+  04. Sala 04 (Superior)
+  05. Sala 05 (Superior)
+  06. Sala 06 (Superior)
+  07. Sala 07 (Superior)
+  08. Sala 08 (Superior)
+  09. Sala 09 (Superior)
+  10. Sala 10 (Superior)
+  11. Sala 11 (Superior)
+  12. Sala 12 (Superior)
+  13. Sala 13 (Superior)
+  14. Sala 14 (Superior)
+  15. Sala 15 (Superior)
+  16. Sala 16 (Superior)
+  17. Sala 17 (Superior)
+  18. Sala 18 (Superior)
+  19. Sala 19 (Superior)
+  20. Sala 22 (Superior)
+  21. Sala 23 (Superior)
+
+[08] CATEGORIA: SALAS TÉCNICO (21 espaços)
+--------------------------------------------------------------------------------
+  01. Sala 01 (Técnico)
+  02. Sala 02 (Técnico)
+  03. Sala 03 (Técnico)
+  04. Sala 04 (Técnico)
+  05. Sala 05 (Técnico)
+  06. Sala 06 (Técnico)
+  07. Sala 07 (Técnico)
+  08. Sala 08 (Técnico)
+  09. Sala 09 (Técnico)
+  10. Sala 10 (Técnico)
+  11. Sala 11 (Técnico)
+  12. Sala 12 (Técnico)
+  13. Sala 13 (Técnico)
+  14. Sala 14 (Técnico)
+  15. Sala 15 (Técnico)
+  16. Sala 16 (Técnico)
+  17. Sala 17 (Técnico)
+  18. Sala 18 (Técnico)
+  19. Sala 19 (Técnico)
+  20. Sala 20 (Técnico)
+  21. Sala DG
+
+[09] CATEGORIA: UNIDADES DE PRODUÇÃO E ENSINO (UPE) (10 espaços)
+--------------------------------------------------------------------------------
+  01. Laboratório de Administração (Superior)
+  02. Laboratório de Matemática (Superior)
+  03. Laboratório de Multimeios BIO (Superior)
+  04. UPE: Agroecologia
+  05. UPE: Agroindústria
+  06. UPE: Fruticultura (Culturas Permanentes)
+  07. UPE: Olericultura
+  08. UPE: ZOO-I (Animais de Pequeno Porte)
+  09. UPE: ZOO-II (Animais de Médio Porte)
+  10. UPE: ZOO-III (Animais de Grande Porte)
+
+================================================================================
+RESUMO ESTATÍSTICO POR CATEGORIA:
+--------------------------------------------------------------------------------
+  • Complexo de Laboratórios..................... :  24 espaços
+  • Espaços Esportivos e Artísticos.............. :   3 espaços
+  • Laboratórios de Informática.................. :   8 espaços
+  • Laboratórios Didáticos Gerais................ :   1 espaços
+  • Núcleos e Departamentos...................... :   0 espaços
+  • Salas Administrativas e Coordenações......... :  14 espaços
+  • Salas Superior............................... :  21 espaços
+  • Salas Técnico................................ :  21 espaços
+  • Unidades de Produção e Ensino (UPE).......... :  10 espaços
+--------------------------------------------------------------------------------
+  TOTAL CONSOLIDADO ............................. : 102 espaços
+================================================================================

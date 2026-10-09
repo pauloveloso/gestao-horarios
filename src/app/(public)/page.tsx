@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic"; // Obriga o Next.js a buscar dados novos a cada acesso
 
 import { supabase } from "@/lib/supabase";
+import { formatarNomeModalidade } from "@/lib/modalidades";
 
 /**
  * Página principal de Consulta Pública de Horários do IFNMG - Campus Januária.
@@ -84,7 +85,7 @@ export default async function ConsultaPublicaPage() {
               >
                 <span className="font-medium text-gray-700">{curso.nome}</span>
                 <span className="ml-3 text-xs font-semibold px-2 py-1 bg-green-100 text-green-800 rounded-full">
-                  {curso.modalidade}
+                  {formatarNomeModalidade(curso.modalidade)}
                 </span>
               </li>
             ))}

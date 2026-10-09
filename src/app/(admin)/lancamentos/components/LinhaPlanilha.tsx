@@ -240,6 +240,34 @@ const LinhaPlanilha = memo(({
         )}
       </td>
 
+      {categoriaFiltro === "INTEGRADO" && (
+        <td className="p-2 border-r border-gray-300 overflow-hidden">
+          {linha.id.length > 2 && (
+            <select
+              title={
+                linha.modulo === "MODULO_1"
+                  ? "1º Trimestre (Módulo 1)"
+                  : linha.modulo === "MODULO_2"
+                    ? "2º Trimestre (Módulo 2)"
+                    : linha.modulo === "MODULO_3"
+                      ? "3º Trimestre (Módulo 3)"
+                      : "Anual / Integral"
+              }
+              value={linha.modulo || "INTEGRAL"}
+              onChange={(e) =>
+                atualizarCampo(linha.id, "modulo", e.target.value)
+              }
+              className={`w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[12px] p-1 outline-none font-bold ${corTexto}`}
+            >
+              <option value="INTEGRAL" className="text-gray-900 bg-white">Integral / Anual</option>
+              <option value="MODULO_1" className="text-gray-900 bg-white">1º Trim (M1)</option>
+              <option value="MODULO_2" className="text-gray-900 bg-white">2º Trim (M2)</option>
+              <option value="MODULO_3" className="text-gray-900 bg-white">3º Trim (M3)</option>
+            </select>
+          )}
+        </td>
+      )}
+
       <td className="p-2 border-r border-gray-300 overflow-hidden">
         {linha.id.length > 2 && (
           <select

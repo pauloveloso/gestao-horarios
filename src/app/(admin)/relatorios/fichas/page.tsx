@@ -64,7 +64,13 @@ export default function FichasMatriculaPage() {
         ]);
 
       if (slotsData) setSlotsTotais(slotsData);
-      if (cursosData && cursosData.length > 0) setCursos(cursosData);
+      // Fichas são exclusivas de cursos SUPERIOR
+      if (cursosData && cursosData.length > 0) {
+        const cursosSuperior = cursosData.filter(
+          (c: any) => (c.modalidade || "").toUpperCase() === "SUPERIOR",
+        );
+        setCursos(cursosSuperior);
+      }
 
       if (versoesData && versoesData.length > 0) {
         setVersoes(versoesData);

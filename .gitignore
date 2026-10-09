@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# database dumps & temporary migration scripts
+bancoDesenvolvimento*.sql
+bancoProducao*.sql
+migrar_dados_dev.sql
+generate_migration.py

@@ -34,6 +34,7 @@ export default function VisualizarHorariosAdminPage() {
     "TURMA" | "PROFESSOR" | "ESPACO"
   >("TURMA");
   const [idSelecionado, setIdSelecionado] = useState<string>("");
+  const [filtroModulo, setFiltroModulo] = useState<string>("TODOS");
 
   const relatorioRef = useRef<HTMLDivElement>(null);
 
@@ -202,11 +203,26 @@ export default function VisualizarHorariosAdminPage() {
     (v) => String(v.id) === String(versaoSelecionada),
   );
 
+  // Detecta se a entidade selecionada é turma de curso INTEGRADO
+  const turmaAtualObj =
+    tipoFiltro === "TURMA"
+      ? dados.turmas.find((t: any) => String(t.id) === String(idSelecionado))
+      : null;
+  const cursoAtualObj = turmaAtualObj
+    ? dados.cursos.find((c: any) => String(c.id) === String(turmaAtualObj.curso_id))
+    : null;
+  const mostrarFiltroModulo =
+    tipoFiltro === "TURMA" &&
+    (cursoAtualObj?.modalidade || "").toUpperCase() === "INTEGRADO";
+
   const getAulasPublico = (diaId: string, slotId: string) => {
     return dados.aulas.filter(
       (a: any) =>
         a.dia_semana === diaId &&
         String(a.slot_horario_id) === String(slotId) &&
+        (filtroModulo === "TODOS" ||
+          (a.modulo || "INTEGRAL") === filtroModulo ||
+          (a.modulo || "INTEGRAL") === "INTEGRAL") &&
         (tipoFiltro === "TURMA"
           ? String(a.turma_id) === String(idSelecionado)
           : tipoFiltro === "PROFESSOR"
@@ -216,6 +232,11 @@ export default function VisualizarHorariosAdminPage() {
   };
 
   const aulasDoFiltro = dados.aulas.filter((a: any) => {
+    const matchModulo =
+      filtroModulo === "TODOS" ||
+      (a.modulo || "INTEGRAL") === filtroModulo ||
+      (a.modulo || "INTEGRAL") === "INTEGRAL";
+    if (!matchModulo) return false;
     if (tipoFiltro === "TURMA")
       return String(a.turma_id) === String(idSelecionado);
     if (tipoFiltro === "PROFESSOR")
@@ -280,19 +301,19 @@ export default function VisualizarHorariosAdminPage() {
   }
 
   return (
-    <div className="space-y-6 pb-20 max-w-7xl mx-auto">
-      {/* BARRA DE FILTROS ADAPTADA PARA O CORPO INTERNO */}
-      <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col lg:flex-row justify-between items-center gap-4">
-        <div>
-          <h1 className="text-base font-black uppercase tracking-tight text-white">
+    <div className="space-y-6 pb-20">
+      {/* BARRA DE FILTROS PADRONIZADA COM A TELA DE LANÇAMENTOS */}
+      <div className="bg-green-900 p-4 shadow-sm rounded-xl text-white flex flex-col xl:flex-row justify-between items-center gap-4">
+        <div className="shrink-0">
+          <h1 className="text-base font-black uppercase tracking-tight text-white flex items-center gap-3">
             Visualizador de Horários Interno
           </h1>
-          <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider">
+          <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
             Monitoramento e Atualização em Tempo Real (WebSocket Ativo)
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 justify-end w-full lg:w-auto">
+        <div className="flex items-center gap-2 flex-nowrap shrink-0 overflow-x-auto max-w-full">
           {versoes.length > 0 && (
             <select
               value={versaoSelecionada}
@@ -300,7 +321,8 @@ export default function VisualizarHorariosAdminPage() {
                 setVersaoSelecionada(e.target.value);
                 setIdSelecionado("");
               }}
-              className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all max-w-[200px] shadow-sm"
+              className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all max-w-[170px] truncate shadow-sm shrink-0 h-9"
+              title="Versão da Grade"
             >
               {versoes.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -310,7 +332,7 @@ export default function VisualizarHorariosAdminPage() {
             </select>
           )}
 
-          <div className="flex bg-green-950 rounded-lg p-1 border border-green-900">
+          <div className="flex bg-green-950 rounded-lg p-0.5 border border-green-900 shrink-0">
             {(["TURMA", "PROFESSOR", "ESPACO"] as const).map((t) => (
               <button
                 key={t}
@@ -318,7 +340,7 @@ export default function VisualizarHorariosAdminPage() {
                   setTipoFiltro(t);
                   setIdSelecionado("");
                 }}
-                className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-all ${tipoFiltro === t ? "bg-green-600 text-white shadow-sm" : "text-green-400 hover:text-white"}`}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all whitespace-nowrap ${tipoFiltro === t ? "bg-green-600 text-white shadow-sm" : "text-green-400 hover:text-white"}`}
               >
                 {t === "TURMA"
                   ? "Turmas"
@@ -332,7 +354,7 @@ export default function VisualizarHorariosAdminPage() {
           <select
             value={idSelecionado}
             onChange={(e) => setIdSelecionado(e.target.value)}
-            className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-full sm:w-[200px] truncate h-9 shadow-sm"
+            className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-[180px] truncate h-9 shadow-sm shrink-0"
           >
             <option value="">Escolha...</option>
             {tipoFiltro === "TURMA" &&
@@ -375,10 +397,26 @@ export default function VisualizarHorariosAdminPage() {
               })}
           </select>
 
-          <div className="flex gap-2 w-full xl:w-auto mt-4 md:mt-0">
+          {mostrarFiltroModulo && (
+            <select
+              value={filtroModulo}
+              onChange={(e) => setFiltroModulo(e.target.value)}
+              className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-[150px] truncate h-9 shadow-sm shrink-0"
+              title="Filtrar por Módulo / Trimestre"
+            >
+              <option value="TODOS">Módulos: Todos</option>
+              <option value="INTEGRAL">Anual / Integral</option>
+              <option value="MODULO_1">1º Trimestre (M1)</option>
+              <option value="MODULO_2">2º Trimestre (M2)</option>
+              <option value="MODULO_3">3º Trimestre (M3)</option>
+            </select>
+          )}
+
+          <div className="shrink-0">
             <BotaoExportarPDF
               disabled={!idSelecionado || turnosOcupados.length === 0}
               fileName={`IFNMG_${tituloSeguro}_Inspecao.pdf`}
+              className="bg-green-600 hover:bg-green-500 text-white px-3.5 py-1.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5 shadow-sm h-9 min-w-[125px] whitespace-nowrap"
               document={
                 <PDFPublicoDocument
                   dados={dados}

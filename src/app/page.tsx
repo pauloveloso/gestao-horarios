@@ -35,6 +35,7 @@ export default function HomePage() {
     "TURMA" | "PROFESSOR" | "ESPACO"
   >("TURMA");
   const [idSelecionado, setIdSelecionado] = useState<string>("");
+  const [filtroModulo, setFiltroModulo] = useState<string>("TODOS");
 
   const relatorioRef = useRef<HTMLDivElement>(null);
 
@@ -155,6 +156,9 @@ export default function HomePage() {
       (a: any) =>
         a.dia_semana === diaId &&
         String(a.slot_horario_id) === String(slotId) &&
+        (filtroModulo === "TODOS" ||
+          (a.modulo || "INTEGRAL") === filtroModulo ||
+          (a.modulo || "INTEGRAL") === "INTEGRAL") &&
         (tipoFiltro === "TURMA"
           ? String(a.turma_id) === String(idSelecionado)
           : tipoFiltro === "PROFESSOR"
@@ -164,6 +168,11 @@ export default function HomePage() {
   };
 
   const aulasDoFiltro = dados.aulas.filter((a: any) => {
+    const matchModulo =
+      filtroModulo === "TODOS" ||
+      (a.modulo || "INTEGRAL") === filtroModulo ||
+      (a.modulo || "INTEGRAL") === "INTEGRAL";
+    if (!matchModulo) return false;
     if (tipoFiltro === "TURMA")
       return String(a.turma_id) === String(idSelecionado);
     if (tipoFiltro === "PROFESSOR")
@@ -354,6 +363,19 @@ export default function HomePage() {
                 })}
             </select>
 
+            <select
+              value={filtroModulo}
+              onChange={(e) => setFiltroModulo(e.target.value)}
+              className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-full sm:w-auto h-10 shadow-sm"
+              title="Filtrar por Módulo / Trimestre"
+            >
+              <option value="TODOS">Módulos: Todos</option>
+              <option value="INTEGRAL">Anual / Integral</option>
+              <option value="MODULO_1">1º Trimestre (M1)</option>
+              <option value="MODULO_2">2º Trimestre (M2)</option>
+              <option value="MODULO_3">3º Trimestre (M3)</option>
+            </select>
+
             <div className="flex gap-2 w-full xl:w-auto mt-4 xl:mt-0">
               <BotaoExportarPDF
                 disabled={!idSelecionado || turnosOcupados.length === 0}
@@ -538,6 +560,16 @@ export default function HomePage() {
                                                   title={sala?.nome}
                                                 >
                                                   {sala?.nome || "S/S"}
+                                                </span>
+                                              )}
+
+                                              {aula.modulo && aula.modulo !== "INTEGRAL" && (
+                                                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 leading-tight uppercase mt-0.5">
+                                                  {aula.modulo === "MODULO_1"
+                                                    ? "1º Trim"
+                                                    : aula.modulo === "MODULO_2"
+                                                      ? "2º Trim"
+                                                      : "3º Trim"}
                                                 </span>
                                               )}
                                             </div>

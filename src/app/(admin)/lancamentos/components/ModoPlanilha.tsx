@@ -4,6 +4,10 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { Trash2, AlertTriangle } from "lucide-react";
 import LinhaPlanilha from "./LinhaPlanilha";
+import {
+  normalizarModalidade,
+  formatarNomeModalidade,
+} from "@/lib/modalidades";
 
 export default function ModoPlanilha({
   versaoId,
@@ -23,6 +27,7 @@ export default function ModoPlanilha({
   const [linhas, setLinhas] = useState<any[]>([]);
   const [linhasVisualizadas, setLinhasVisualizadas] = useState<any[]>([]);
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>("");
+  const [filtroModulo, setFiltroModulo] = useState<string>("TODOS");
 
   const limiteVisualizacaoRef = useRef<number>(30);
   const [linhaSendoEditada, setLinhaSendoEditada] = useState<string | null>(null);
@@ -57,6 +62,10 @@ export default function ModoPlanilha({
     dia_semana: "",
     slot_horario_id: "",
     espaco_id: "",
+    modulo:
+      categoriaFiltro === "INTEGRADO" && filtroModulo !== "TODOS"
+        ? filtroModulo
+        : "INTEGRAL",
   });
 
   const mapearMensagem = (choque: any) => {
@@ -86,13 +95,22 @@ export default function ModoPlanilha({
   };
 
   const getCategoriaCurso = (curso: any) => {
-    const mod = (curso.modalidade || "").trim().toUpperCase();
-    return mod ? mod : "SEM MODALIDADE";
+    return normalizarModalidade(curso?.modalidade);
   };
 
   const categoriasDisponiveis = useMemo(() => {
-    const cats = new Set<string>();
-    cursos.forEach((c: any) => cats.add(getCategoriaCurso(c)));
+    // As 5 categorias oficiais sempre disponíveis nas abas
+    const cats = new Set<string>([
+      "FIC",
+      "INTEGRADO",
+      "SUBSEQUENTE_CONCOMITANTE",
+      "SUPERIOR",
+      "POS_GRADUACAO",
+    ]);
+    cursos.forEach((c: any) => {
+      const cat = getCategoriaCurso(c);
+      if (cat) cats.add(cat);
+    });
     const temAulasSemCurso = aulas.some((a: any) => {
       const t = turmas.find(
         (turma: any) => String(turma.id) === String(a.turma_id),
@@ -103,7 +121,21 @@ export default function ModoPlanilha({
       );
     });
     if (temAulasSemCurso) cats.add("AULAS ÓRFÃS / ERRO DE CADASTRO");
-    return Array.from(cats).sort();
+
+    const ordemMap: Record<string, number> = {
+      FIC: 1,
+      INTEGRADO: 2,
+      SUBSEQUENTE_CONCOMITANTE: 3,
+      SUPERIOR: 4,
+      POS_GRADUACAO: 5,
+    };
+
+    return Array.from(cats).sort((a, b) => {
+      const oA = ordemMap[a] || 99;
+      const oB = ordemMap[b] || 99;
+      if (oA !== oB) return oA - oB;
+      return a.localeCompare(b);
+    });
   }, [cursos, aulas, turmas]);
 
   useEffect(() => {
@@ -153,7 +185,14 @@ export default function ModoPlanilha({
     if (!categoriaFiltro) return;
 
     const timer = setTimeout(() => {
-      const aulasMapeadas = aulas.map((a: any) => ({ ...a }));
+      const aulasFiltradas = aulas.filter(
+        (a: any) =>
+          categoriaFiltro !== "INTEGRADO" ||
+          filtroModulo === "TODOS" ||
+          (a.modulo || "INTEGRAL") === filtroModulo ||
+          (a.modulo || "INTEGRAL") === "INTEGRAL",
+      );
+      const aulasMapeadas = aulasFiltradas.map((a: any) => ({ ...a }));
       const mapaDiasOrdenacao: Record<string, number> = {
         SEGUNDA: 1,
         TERCA: 2,
@@ -283,7 +322,7 @@ export default function ModoPlanilha({
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [aulas, turmas, cursos, slots, categoriaFiltro]);
+  }, [aulas, turmas, cursos, slots, categoriaFiltro, filtroModulo]);
 
   // Efeito global para limpar o destaque ao clicar em qualquer lugar
   useEffect(() => {
@@ -393,6 +432,10 @@ export default function ModoPlanilha({
       espaco_id: linha.espaco_id === "" ? null : linha.espaco_id,
       dia_semana: linha.dia_semana,
       slot_horario_id: linha.slot_horario_id,
+      modulo:
+        categoriaFiltro === "INTEGRADO"
+          ? linha.modulo || (filtroModulo !== "TODOS" ? filtroModulo : "INTEGRAL")
+          : "INTEGRAL",
     };
     const jaExiste = aulasRef.current.some((a: any) => String(a.id) === String(linha.id));
     
@@ -498,7 +541,7 @@ export default function ModoPlanilha({
                 : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 hover:text-gray-800"
             }`}
           >
-            {cat}
+            {formatarNomeModalidade(cat)}
           </button>
         ))}
       </div>
@@ -506,7 +549,7 @@ export default function ModoPlanilha({
       <div className="p-4 bg-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-200">
         <div>
           <h2 className="font-bold text-gray-700 text-lg">
-            Planilha: <span className="text-green-700">{categoriaFiltro}</span>
+            Planilha: <span className="text-green-700">{formatarNomeModalidade(categoriaFiltro)}</span>
           </h2>
           <p className="text-sm text-gray-500">
             {isProcessando
@@ -515,7 +558,27 @@ export default function ModoPlanilha({
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+        <div className="flex flex-col md:flex-row gap-3 items-center w-full md:w-auto">
+          {categoriaFiltro === "INTEGRADO" && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-500 font-bold uppercase hidden md:block">
+                Módulo:
+              </label>
+              <select
+                value={filtroModulo}
+                onChange={(e) => setFiltroModulo(e.target.value)}
+                className="px-3 py-2 bg-white border border-gray-300 focus:border-green-500 text-gray-700 rounded text-xs font-bold shadow-sm outline-none cursor-pointer"
+                title="Filtrar por Módulo / Trimestre"
+              >
+                <option value="TODOS">Todos os Módulos</option>
+                <option value="INTEGRAL">Anual / Integral</option>
+                <option value="MODULO_1">1º Trimestre (M1)</option>
+                <option value="MODULO_2">2º Trimestre (M2)</option>
+                <option value="MODULO_3">3º Trimestre (M3)</option>
+              </select>
+            </div>
+          )}
+
           {categoriaFiltro && (
             <button
               onClick={() => {
@@ -524,7 +587,7 @@ export default function ModoPlanilha({
               }}
               className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white rounded shadow-sm text-xs font-black transition-colors uppercase tracking-wider flex items-center justify-center gap-2"
             >
-              <Trash2 className="w-4 h-4" /> Esvaziar {categoriaFiltro}
+              <Trash2 className="w-4 h-4" /> Esvaziar {formatarNomeModalidade(categoriaFiltro)}
             </button>
           )}
 
@@ -549,29 +612,73 @@ export default function ModoPlanilha({
         ) : (
           <table className="w-full border-collapse table-fixed min-w-[1200px]">
             <thead className="sticky top-0 z-[100] shadow-md">
-                  <tr className="bg-green-800 text-white text-sm uppercase tracking-wider text-center">
-                    <th className="p-3 border-r border-green-700 w-[14%] font-black">
-                      Turma
-                    </th>
-                    <th className="p-3 border-r border-green-700 w-[22%] font-black">
-                      Disciplina
-                    </th>
-                    <th className="p-3 border-r border-green-700 w-[20%] font-black">
-                      Professor
-                    </th>
-                    <th className="p-3 border-r border-green-700 w-[11%] font-black">
-                      Sala
-                    </th>
-                    <th className="p-3 border-r border-green-700 w-[11%] font-black">
-                      Dia
-                    </th>
-                    <th className="p-3 border-r border-green-700 w-[12%] font-black">
-                      Horário
-                    </th>
-                    <th className="p-3 w-[10%] font-black">Ação</th>
-                  </tr>
-                </thead>
+              {categoriaFiltro === "INTEGRADO" ? (
+                <tr className="bg-green-800 text-white text-sm uppercase tracking-wider text-center">
+                  <th className="p-3 border-r border-green-700 w-[13%] font-black">
+                    Turma
+                  </th>
+                  <th className="p-3 border-r border-green-700 w-[20%] font-black">
+                    Disciplina
+                  </th>
+                  <th className="p-3 border-r border-green-700 w-[18%] font-black">
+                    Professor
+                  </th>
+                  <th className="p-3 border-r border-green-700 w-[11%] font-black">
+                    Módulo
+                  </th>
+                  <th className="p-3 border-r border-green-700 w-[10%] font-black">
+                    Sala
+                  </th>
+                  <th className="p-3 border-r border-green-700 w-[10%] font-black">
+                    Dia
+                  </th>
+                  <th className="p-3 border-r border-green-700 w-[10%] font-black">
+                    Horário
+                  </th>
+                  <th className="p-3 w-[8%] font-black">Ação</th>
+                </tr>
+              ) : (
+                <tr className="bg-green-800 text-white text-sm uppercase tracking-wider text-center">
+                  <th className="p-3 border-r border-green-700 w-[15%] font-black">
+                    Turma
+                  </th>
+                  <th className="p-3 border-r border-green-700 w-[23%] font-black">
+                    Disciplina
+                  </th>
+                  <th className="p-3 border-r border-green-700 w-[21%] font-black">
+                    Professor
+                  </th>
+                  <th className="p-3 border-r border-green-700 w-[11%] font-black">
+                    Sala
+                  </th>
+                  <th className="p-3 border-r border-green-700 w-[11%] font-black">
+                    Dia
+                  </th>
+                  <th className="p-3 border-r border-green-700 w-[11%] font-black">
+                    Horário
+                  </th>
+                  <th className="p-3 w-[8%] font-black">Ação</th>
+                </tr>
+              )}
+            </thead>
                 <tbody className="text-sm text-left">
+                  {linhasVisualizadas.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={categoriaFiltro === "INTEGRADO" ? 8 : 7}
+                        className="p-12 text-center text-gray-500"
+                      >
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <p className="font-bold text-gray-600 text-base">
+                            Nenhuma aula encontrada para {formatarNomeModalidade(categoriaFiltro)}.
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Cadastre turmas em Cadastros &gt; Cursos ou clique em &quot;+ Adicionar Linha Vazia&quot; acima para lançar aulas diretamente.
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                   {linhasVisualizadas.map((linha: any) => {
                     const temDado =
                       linha.turma_id ||
