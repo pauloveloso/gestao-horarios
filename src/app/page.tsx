@@ -35,7 +35,7 @@ export default function HomePage() {
     "TURMA" | "PROFESSOR" | "ESPACO"
   >("TURMA");
   const [idSelecionado, setIdSelecionado] = useState<string>("");
-  const [filtroModulo, setFiltroModulo] = useState<string>("TODOS");
+  const [filtroModulo, setFiltroModulo] = useState<string>("INTEGRAL");
 
   const relatorioRef = useRef<HTMLDivElement>(null);
 
@@ -151,14 +151,39 @@ export default function HomePage() {
     (v) => String(v.id) === String(versaoSelecionada),
   );
 
+  // Detecta se o item selecionado permite filtro por módulo
+  const turmaAtualObj =
+    tipoFiltro === "TURMA"
+      ? dados.turmas.find((t: any) => String(t.id) === String(idSelecionado))
+      : null;
+  const cursoAtualObj = turmaAtualObj
+    ? dados.cursos?.find((c: any) => String(c.id) === String(turmaAtualObj?.curso_id))
+    : null;
+  const isIntegrado = (cursoAtualObj?.modalidade || "").toUpperCase() === "INTEGRADO";
+  // Habilita o filtro de módulo:
+  // - TURMA: apenas quando o curso é INTEGRADO
+  // - PROFESSOR / ESPACO: sempre (podem ter aulas de turmas integradas)
+  const habilitarFiltroModulo =
+    (tipoFiltro === "TURMA" && isIntegrado) ||
+    tipoFiltro === "PROFESSOR" ||
+    tipoFiltro === "ESPACO";
+
   const getAulasPublico = (diaId: string, slotId: string) => {
     return dados.aulas.filter(
       (a: any) =>
         a.dia_semana === diaId &&
         String(a.slot_horario_id) === String(slotId) &&
-        (filtroModulo === "TODOS" ||
-          (a.modulo || "INTEGRAL") === filtroModulo ||
-          (a.modulo || "INTEGRAL") === "INTEGRAL") &&
+        (
+          tipoFiltro === "TURMA"
+            ? (filtroModulo === "INTEGRAL"
+                ? (a.modulo || "INTEGRAL") === "INTEGRAL"
+                : (a.modulo || "INTEGRAL") === filtroModulo ||
+                  (a.modulo || "INTEGRAL") === "INTEGRAL")
+            : (filtroModulo === "INTEGRAL"
+                ? true
+                : (a.modulo || "INTEGRAL") === filtroModulo ||
+                  (a.modulo || "INTEGRAL") === "INTEGRAL")
+        ) &&
         (tipoFiltro === "TURMA"
           ? String(a.turma_id) === String(idSelecionado)
           : tipoFiltro === "PROFESSOR"
@@ -169,9 +194,15 @@ export default function HomePage() {
 
   const aulasDoFiltro = dados.aulas.filter((a: any) => {
     const matchModulo =
-      filtroModulo === "TODOS" ||
-      (a.modulo || "INTEGRAL") === filtroModulo ||
-      (a.modulo || "INTEGRAL") === "INTEGRAL";
+      tipoFiltro === "TURMA"
+        ? (filtroModulo === "INTEGRAL"
+            ? (a.modulo || "INTEGRAL") === "INTEGRAL"
+            : (a.modulo || "INTEGRAL") === filtroModulo ||
+              (a.modulo || "INTEGRAL") === "INTEGRAL")
+        : (filtroModulo === "INTEGRAL"
+            ? true
+            : (a.modulo || "INTEGRAL") === filtroModulo ||
+              (a.modulo || "INTEGRAL") === "INTEGRAL");
     if (!matchModulo) return false;
     if (tipoFiltro === "TURMA")
       return String(a.turma_id) === String(idSelecionado);
@@ -302,6 +333,7 @@ export default function HomePage() {
                   onClick={() => {
                     setTipoFiltro(t);
                     setIdSelecionado("");
+                    setFiltroModulo("INTEGRAL"); // reseta o módulo ao trocar o tipo
                   }}
                   className={`px-4 py-2 rounded-md text-xs font-bold transition-all ${tipoFiltro === t ? "bg-green-600 text-white shadow-sm" : "text-green-400 hover:text-white"}`}
                 >
@@ -366,10 +398,14 @@ export default function HomePage() {
             <select
               value={filtroModulo}
               onChange={(e) => setFiltroModulo(e.target.value)}
-              className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-full sm:w-auto h-10 shadow-sm"
-              title="Filtrar por Módulo / Trimestre"
+              disabled={!habilitarFiltroModulo}
+              className={`border border-transparent rounded-lg p-2 text-xs font-bold outline-none transition-all w-full sm:w-auto h-10 shadow-sm ${
+                habilitarFiltroModulo
+                  ? "bg-white text-green-800 cursor-pointer hover:border-green-300"
+                  : "bg-green-900/40 text-green-500 cursor-not-allowed opacity-60"
+              }`}
+              title={habilitarFiltroModulo ? "Filtrar por Módulo / Trimestre" : "Disponível apenas para turmas de cursos Integrados"}
             >
-              <option value="TODOS">Módulos: Todos</option>
               <option value="INTEGRAL">Anual / Integral</option>
               <option value="MODULO_1">1º Trimestre (M1)</option>
               <option value="MODULO_2">2º Trimestre (M2)</option>
