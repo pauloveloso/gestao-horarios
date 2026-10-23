@@ -26,8 +26,9 @@ export function useUndoRedo(maxHistory = 30) {
         finalAction.recordId = data.id;
         finalAction.newData = data; 
       } else if (action.type === 'UPDATE') {
-        const { error } = await supabase.from('aulas').update(action.newData).eq('id', action.recordId);
+        const { data, error } = await supabase.from('aulas').update(action.newData).eq('id', action.recordId).select().single();
         if (error) throw error;
+        finalAction.newData = data || action.newData;
       } else if (action.type === 'DELETE') {
         const { error } = await supabase.from('aulas').delete().eq('id', action.recordId);
         if (error) throw error;

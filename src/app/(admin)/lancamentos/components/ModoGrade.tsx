@@ -21,6 +21,7 @@ export default function ModoGrade({
   categorias = [],
   recarregarAulas,
   executeAction,
+  atualizarAulaLocal,
 }: any) {
   const [filtroTurma, setFiltroTurma] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState<string>("TODAS");
@@ -147,12 +148,28 @@ export default function ModoGrade({
 
     if (aulaCopiada) {
       if (isOcupado) {
-        alert(
-          "Este horário já está ocupado! Escolha uma célula vazia ou cancele a cópia.",
+        const aulasExistentes = aulas.filter(
+          (a: any) =>
+            a.dia_semana === diaId &&
+            String(a.slot_horario_id) === String(slotId) &&
+            String(a.turma_id) === String(filtroTurma),
         );
-      } else {
-        colarAula(diaId, slotId);
+        const temIntegral = aulasExistentes.some(
+          (a: any) => (a.modulo || "INTEGRAL") === "INTEGRAL",
+        );
+        const moduloCopiado = aulaCopiada.modulo || "INTEGRAL";
+        const moduloJaExiste = aulasExistentes.some(
+          (a: any) => (a.modulo || "INTEGRAL") === moduloCopiado,
+        );
+
+        if (!isIntegrado || temIntegral || moduloCopiado === "INTEGRAL" || moduloJaExiste) {
+          alert(
+            "Este horário já está ocupado ou colide com as aulas existentes! Cancele a cópia ou escolha outro horário.",
+          );
+          return;
+        }
       }
+      colarAula(diaId, slotId);
       return;
     }
 
@@ -171,7 +188,7 @@ export default function ModoGrade({
       modulo: aulaCopiada.modulo || (filtroModulo !== "TODOS" ? filtroModulo : "INTEGRAL"),
     };
 
-    const { success, error } = await executeAction({
+    const { success, error, data } = await executeAction({
       type: 'INSERT',
       newData: payload
     });
@@ -179,12 +196,39 @@ export default function ModoGrade({
     if (!success) {
       alert("Erro ao colar aula: " + error?.message);
     } else {
+      atualizarAulaLocal?.('INSERT', data || payload);
       setAulaCopiada(null);
       recarregarAulas();
     }
   };
 
   const abrirModal = (diaId: string, horarioId: string, aulaExistente: any) => {
+    let modPadrao = "INTEGRAL";
+    if (isIntegrado) {
+      if (filtroModulo !== "TODOS") {
+        modPadrao = filtroModulo;
+      } else {
+        const aulasExistentesNoSlot = aulas.filter(
+          (a: any) =>
+            a.dia_semana === diaId &&
+            String(a.slot_horario_id) === String(horarioId) &&
+            String(a.turma_id) === String(filtroTurma),
+        );
+        const modulosUsados = aulasExistentesNoSlot.map(
+          (a: any) => a.modulo || "INTEGRAL",
+        );
+        if (modulosUsados.includes("MODULO_1") && !modulosUsados.includes("MODULO_2")) {
+          modPadrao = "MODULO_2";
+        } else if (modulosUsados.includes("MODULO_2") && !modulosUsados.includes("MODULO_3")) {
+          modPadrao = "MODULO_3";
+        } else if (aulasExistentesNoSlot.length > 0 && !modulosUsados.includes("MODULO_1")) {
+          modPadrao = "MODULO_1";
+        } else {
+          modPadrao = aulaExistente?.modulo || "INTEGRAL";
+        }
+      }
+    }
+
     setDadosModal({
       id: aulaExistente?.id || null,
       dia_semana: diaId,
@@ -193,12 +237,12 @@ export default function ModoGrade({
       disciplina_id: aulaExistente?.disciplina_id || "",
       professor_id: aulaExistente?.professor_id || "",
       espaco_id: aulaExistente?.espaco_id || "",
-      modulo: aulaExistente?.modulo || (filtroModulo !== "TODOS" ? filtroModulo : "INTEGRAL"),
+      modulo: aulaExistente?.modulo || modPadrao,
     });
     setModalAberto(true);
   };
 
-  const salvarAula = async (e: React.FormEvent) => {
+  const salvarAula = async (e: React.FormEvent, criarComoNovoModulo = false) => {
     e.preventDefault();
     const payload = {
       ...dadosModal,
@@ -209,12 +253,12 @@ export default function ModoGrade({
     if (payload.professor_id === "") payload.professor_id = null;
     if (payload.espaco_id === "") payload.espaco_id = null;
 
-    const idDaAula = payload.id;
+    const idDaAula = criarComoNovoModulo ? null : payload.id;
     delete payload.id;
 
     if (idDaAula) {
       const aulaAntiga = aulas.find((a: any) => String(a.id) === String(idDaAula));
-      const { success, error } = await executeAction({
+      const { success, error, data } = await executeAction({
         type: 'UPDATE',
         recordId: idDaAula,
         previousData: aulaAntiga,
@@ -224,11 +268,12 @@ export default function ModoGrade({
         console.error("Erro no upsert ModoGrade:", error, payload);
         alert("Erro ao salvar: " + error?.message);
       } else {
+        atualizarAulaLocal?.('UPDATE', data || { ...payload, id: idDaAula }, idDaAula);
         setModalAberto(false);
         recarregarAulas();
       }
     } else {
-      const { success, error } = await executeAction({
+      const { success, error, data } = await executeAction({
         type: 'INSERT',
         newData: payload
       });
@@ -236,6 +281,7 @@ export default function ModoGrade({
         console.error("Erro no upsert ModoGrade:", error, payload);
         alert("Erro ao salvar: " + error?.message);
       } else {
+        atualizarAulaLocal?.('INSERT', data || payload);
         setModalAberto(false);
         recarregarAulas();
       }
@@ -259,8 +305,12 @@ export default function ModoGrade({
       previousData: aulaAntiga
     });
     
-    if (success) recarregarAulas();
-    else alert("Erro ao excluir: " + error?.message);
+    if (success) {
+      atualizarAulaLocal?.('DELETE', aulaAntiga, id);
+      recarregarAulas();
+    } else {
+      alert("Erro ao excluir: " + error?.message);
+    }
   };
 
   // FUNÇÃO PARA LIMPAR TODAS AS AULAS DA TURMA SELECIONADA
@@ -685,6 +735,28 @@ export default function ModoGrade({
                             );
                           })}
 
+                          {!isCelVazia &&
+                            isIntegrado &&
+                            !desabilitado &&
+                            !aulaArrastada &&
+                            aulasNoSlot.length < 3 &&
+                            !aulasNoSlot.some(
+                              (a: any) =>
+                                (a.modulo || "INTEGRAL") === "INTEGRAL",
+                            ) && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  abrirModal(dia.id, slot.id, null);
+                                }}
+                                className="mt-1 w-full py-0.5 text-[10px] font-bold text-green-700 bg-green-50/80 hover:bg-green-100 border border-green-200 border-dashed rounded flex items-center justify-center gap-1 transition-colors"
+                                title="Adicionar outro módulo neste mesmo horário"
+                              >
+                                <span>+ Módulo</span>
+                              </button>
+                            )}
+
                           {isCelVazia && !desabilitado && !aulaArrastada && (
                             <div
                               className={`h-full w-full flex items-center justify-center opacity-0 hover:opacity-100 font-light transition-all ${aulaCopiada ? "text-blue-500 text-3xl" : "text-green-600 text-4xl"}`}
@@ -919,7 +991,7 @@ export default function ModoGrade({
               </div>
 
               <div className="bg-gray-50 px-6 py-4 flex justify-end items-center border-t border-gray-200">
-                <div className="flex gap-3">
+                <div className="flex gap-3 items-center">
                   <button
                     type="button"
                     onClick={() => setModalAberto(false)}
@@ -927,11 +999,21 @@ export default function ModoGrade({
                   >
                     Cancelar
                   </button>
+                  {dadosModal?.id && isIntegrado && dadosModal.modulo !== "INTEGRAL" && (
+                    <button
+                      type="button"
+                      onClick={(e) => salvarAula(e, true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded font-bold text-sm shadow active:scale-95 transition-all"
+                      title="Salva as informações como uma nova aula deste módulo sem sobrescrever a atual"
+                    >
+                      + Salvar como Novo Módulo
+                    </button>
+                  )}
                   <button
                     type="submit"
                     className="bg-green-600 text-white px-6 py-2 rounded font-bold text-base shadow hover:bg-green-700 active:scale-95 transition-all"
                   >
-                    Salvar
+                    {dadosModal?.id ? "Salvar Alterações" : "Salvar"}
                   </button>
                 </div>
               </div>

@@ -60,33 +60,52 @@ export default function LancamentosPage() {
     console.timeEnd("⏱️ Gargalo 2: Tempo da View de Choques");
   };
 
+  const atualizarAulaLocal = (
+    tipo: "INSERT" | "UPDATE" | "DELETE",
+    aula: any,
+    recordId?: string,
+  ) => {
+    setAulas((prev) => {
+      if (tipo === "INSERT") {
+        const id = aula.id;
+        const exists = prev.some((a) => a.id === id);
+        if (exists) return prev.map((a) => (a.id === id ? { ...a, ...aula } : a));
+        return [...prev, aula];
+      }
+      if (tipo === "UPDATE") {
+        const targetId = recordId || aula.id;
+        return prev.map((a) => (a.id === targetId ? { ...a, ...aula } : a));
+      }
+      if (tipo === "DELETE") {
+        const targetId = recordId || aula.id;
+        return prev.filter((a) => a.id !== targetId);
+      }
+      return prev;
+    });
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      buscarChoques();
+    }, 300);
+  };
+
   const buscarAulas = async (cargaInicial = false) => {
     if (!versaoRascunhoRef.current) return;
 
-    if (cargaInicial) {
-      console.time("⏱️ Gargalo 1: Consulta Principal Aulas + Choques");
-      
-      (async () => {
-        try {
-          const { data } = await supabase
-            .from("aulas")
-            .select("*")
-            .eq("versao_id", versaoRascunhoRef.current.id)
-            .limit(5000);
-          if (data) setAulas(data);
-        } catch (e) {
-          console.error(e);
-        } finally {
-          setCarregandoAulas(false);
-          console.timeEnd("⏱️ Gargalo 1: Consulta Principal Aulas + Choques");
-        }
-      })();
-
-      buscarChoques();
-    } else {
-      // Quando não é carga inicial, o canal Realtime (WebSocket) cuidará de atualizar as aulas e os choques
-      console.log("Aguardando via Realtime. Recarga total ignorada.");
+    try {
+      const { data } = await supabase
+        .from("aulas")
+        .select("*")
+        .eq("versao_id", versaoRascunhoRef.current.id)
+        .limit(5000);
+      if (data) setAulas(data);
+    } catch (e) {
+      console.error("Erro ao buscar aulas:", e);
+    } finally {
+      if (cargaInicial) setCarregandoAulas(false);
     }
+
+    buscarChoques();
   };
 
   // ========================================================================
@@ -303,6 +322,7 @@ export default function LancamentosPage() {
               categorias={categorias}
               recarregarAulas={() => buscarAulas(false)}
               executeAction={executeAction}
+              atualizarAulaLocal={atualizarAulaLocal}
             />
           )}
 
@@ -320,6 +340,7 @@ export default function LancamentosPage() {
               categorias={categorias}
               recarregarAulas={() => buscarAulas(false)}
               executeAction={executeAction}
+              atualizarAulaLocal={atualizarAulaLocal}
             />
           )}
         </>

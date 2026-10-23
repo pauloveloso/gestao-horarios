@@ -34,7 +34,7 @@ export default function VisualizarHorariosAdminPage() {
     "TURMA" | "PROFESSOR" | "ESPACO"
   >("TURMA");
   const [idSelecionado, setIdSelecionado] = useState<string>("");
-  const [filtroModulo, setFiltroModulo] = useState<string>("TODOS");
+  const [filtroModulo, setFiltroModulo] = useState<string>("INTEGRAL");
 
   const relatorioRef = useRef<HTMLDivElement>(null);
 
@@ -404,7 +404,6 @@ export default function VisualizarHorariosAdminPage() {
               className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-[150px] truncate h-9 shadow-sm shrink-0"
               title="Filtrar por Módulo / Trimestre"
             >
-              <option value="TODOS">Módulos: Todos</option>
               <option value="INTEGRAL">Anual / Integral</option>
               <option value="MODULO_1">1º Trimestre (M1)</option>
               <option value="MODULO_2">2º Trimestre (M2)</option>

@@ -22,6 +22,7 @@ export default function ModoPlanilha({
   categorias = [],
   recarregarAulas,
   executeAction,
+  atualizarAulaLocal,
 }: any) {
   const [isProcessando, setIsProcessando] = useState(true);
   const [linhas, setLinhas] = useState<any[]>([]);
@@ -32,11 +33,20 @@ export default function ModoPlanilha({
   const limiteVisualizacaoRef = useRef<number>(30);
   const [linhaSendoEditada, setLinhaSendoEditada] = useState<string | null>(null);
   const timerDestaqueRef = useRef<NodeJS.Timeout | null>(null);
+  // Ref que sempre aponta para a versão mais atual de salvarLinhaNoBanco,
+  // permitindo que useCallback com [] deps chame a closure correta.
+  const salvarRef = useRef<(linha: any) => Promise<void>>(async () => {});
   const linhaSendoEditadaRef = useRef<string | null>(null);
 
+  const linhasSalvasRef = useRef<Set<string>>(new Set());
   const aulasRef = useRef(aulas);
   useEffect(() => {
     aulasRef.current = aulas;
+    if (Array.isArray(aulas)) {
+      aulas.forEach((a: any) => {
+        if (a?.id) linhasSalvasRef.current.add(String(a.id));
+      });
+    }
   }, [aulas]);
 
   const linhasRef = useRef(linhas);
@@ -388,7 +398,7 @@ export default function ModoPlanilha({
       novaLinha.dia_semana &&
       novaLinha.slot_horario_id
     ) {
-      salvarLinhaNoBanco(novaLinha);
+      salvarRef.current(novaLinha);
     }
   }, []);
 
@@ -418,12 +428,20 @@ export default function ModoPlanilha({
       linhaAtualizada.dia_semana &&
       linhaAtualizada.slot_horario_id
     ) {
-      await salvarLinhaNoBanco(linhaAtualizada);
+      // Usa salvarRef.current para garantir a versão mais atual da função
+      // (categoriaFiltro / filtroModulo corretos, sem closure stale)
+      await salvarRef.current(linhaAtualizada);
     }
   }, []);
 
   const salvarLinhaNoBanco = async (linha: any) => {
-    const payload = {
+    // Lê categoriaFiltro e filtroModulo do estado atual via closure fresca
+    // (salvarRef.current é atualizado a cada render — ver abaixo)
+    const jaExiste =
+      linhasSalvasRef.current.has(String(linha.id)) ||
+      aulasRef.current.some((a: any) => String(a.id) === String(linha.id));
+
+    const payload: any = {
       id: linha.id,
       versao_id: versaoId,
       turma_id: linha.turma_id,
@@ -437,11 +455,10 @@ export default function ModoPlanilha({
           ? linha.modulo || (filtroModulo !== "TODOS" ? filtroModulo : "INTEGRAL")
           : "INTEGRAL",
     };
-    const jaExiste = aulasRef.current.some((a: any) => String(a.id) === String(linha.id));
-    
+
     if (jaExiste) {
       const aulaAntiga = aulasRef.current.find((a: any) => String(a.id) === String(linha.id));
-      const { success, error } = await executeAction({
+      const { success, error, data } = await executeAction({
         type: 'UPDATE',
         recordId: linha.id,
         previousData: aulaAntiga,
@@ -451,10 +468,16 @@ export default function ModoPlanilha({
         console.error("Erro no salvar ModoPlanilha:", error, payload);
         alert("Falha ao salvar na planilha: " + error?.message);
       } else {
+        linhasSalvasRef.current.add(String(linha.id));
+        const aulaFinal = data || { ...payload, id: linha.id };
+        aulasRef.current = aulasRef.current.map((a: any) =>
+          String(a.id) === String(linha.id) ? aulaFinal : a,
+        );
+        atualizarAulaLocal?.('UPDATE', aulaFinal, linha.id);
         recarregarAulas();
       }
     } else {
-      const { success, error } = await executeAction({
+      const { success, error, data } = await executeAction({
         type: 'INSERT',
         newData: payload
       });
@@ -462,15 +485,24 @@ export default function ModoPlanilha({
         console.error("Erro no inserir ModoPlanilha:", error, payload);
         alert("Falha ao inserir na planilha: " + error?.message);
       } else {
+        linhasSalvasRef.current.add(String(linha.id));
+        const aulaFinal = data || payload;
+        aulasRef.current = [...aulasRef.current.filter((a: any) => String(a.id) !== String(linha.id)), aulaFinal];
+        atualizarAulaLocal?.('INSERT', aulaFinal);
         recarregarAulas();
       }
     }
   };
+  // Atualiza a ref a cada render para que atualizarCampo e duplicarLinha
+  // (useCallback com [] deps) sempre chamem a closure com os valores atuais
+  // de categoriaFiltro e filtroModulo — corrige o bug de reset do módulo.
+  salvarRef.current = salvarLinhaNoBanco;
 
   const removerLinha = useCallback(async (id: string) => {
     const aulaParaRemover = aulasRef.current.find((a: any) => String(a.id) === id);
     setLinhas((prev) => prev.filter((l: any) => l.id !== id));
     setLinhasVisualizadas((prev) => prev.filter((l: any) => l.id !== id));
+    linhasSalvasRef.current.delete(id);
     
     if (aulaParaRemover) {
       const { success } = await executeAction({
@@ -478,9 +510,13 @@ export default function ModoPlanilha({
         recordId: id,
         previousData: aulaParaRemover
       });
-      if (success) recarregarAulas();
+      if (success) {
+        aulasRef.current = aulasRef.current.filter((a: any) => String(a.id) !== id);
+        atualizarAulaLocal?.('DELETE', aulaParaRemover, id);
+        recarregarAulas();
+      }
     }
-  }, [executeAction, recarregarAulas]);
+  }, [executeAction, recarregarAulas, atualizarAulaLocal]);
 
   // FUNÇÃO PARA LIMPAR TODAS AS AULAS DA CATEGORIA SELECIONADA
   const limparCategoria = async (e: React.FormEvent) => {

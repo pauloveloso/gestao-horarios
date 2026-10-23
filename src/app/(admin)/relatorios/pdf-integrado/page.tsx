@@ -11,7 +11,7 @@ export default function ExportarPDFIntegradoPage() {
   const [gerandoPDF, setGerandoPDF] = useState(false);
   const [versoes, setVersoes] = useState<any[]>([]);
   const [versaoSelecionada, setVersaoSelecionada] = useState("");
-  const [filtroModulo, setFiltroModulo] = useState<string>("TODOS");
+  const [filtroModulo, setFiltroModulo] = useState<string>("INTEGRAL");
   const [dados, setDados] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
 
@@ -213,7 +213,6 @@ export default function ExportarPDFIntegradoPage() {
               className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[160px] truncate h-9"
               title="Filtrar por Módulo / Trimestre"
             >
-              <option value="TODOS">Todos os Módulos</option>
               <option value="INTEGRAL">Anual / Integral</option>
               <option value="MODULO_1">1º Trimestre (M1)</option>
               <option value="MODULO_2">2º Trimestre (M2)</option>
@@ -223,7 +222,7 @@ export default function ExportarPDFIntegradoPage() {
           <div className="shrink-0">
             <BotaoExportarPDF
               disabled={!(isClient && dados && dados.grupos.length > 0)}
-              fileName={`Horarios_Integrado_IFNMG${filtroModulo !== "TODOS" ? `_${filtroModulo}` : ""}.pdf`}
+              fileName={`Horarios_Integrado_IFNMG_${filtroModulo}.pdf`}
               className="bg-green-600 hover:bg-green-500 text-white px-3.5 py-1.5 rounded-lg font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5 shadow-sm h-9 min-w-[125px] whitespace-nowrap"
               document={<PDFIntegradoDocument dados={dados} filtroModulo={filtroModulo} />}
             />
