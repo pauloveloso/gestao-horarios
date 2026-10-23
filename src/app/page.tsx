@@ -19,6 +19,7 @@ export default function HomePage() {
 
   const [versoes, setVersoes] = useState<any[]>([]);
   const [versaoSelecionada, setVersaoSelecionada] = useState<string>("");
+  const [versaoVigenteId, setVersaoVigenteId] = useState<string>("");
 
   const [dados, setDados] = useState<any>({
     aulas: [],
@@ -68,11 +69,21 @@ export default function HomePage() {
         setVersoes(versoesFiltradas);
 
         const hoje = new Date().toISOString().split("T")[0];
-        const ativa =
-          versoesFiltradas.find(
-            (v) => v.status === "PUBLICADA" && v.data_inicio_vigencia <= hoje,
-          ) || versoesFiltradas[0];
-        if (ativa) setVersaoSelecionada(ativa.id);
+
+        // Versão vigente = mais recente PUBLICADA com data_inicio_vigencia <= hoje
+        const vigente = versoesFiltradas.find(
+          (v) => v.status === "PUBLICADA" && v.data_inicio_vigencia <= hoje,
+        );
+        if (vigente) setVersaoVigenteId(String(vigente.id));
+
+        // Prévia = PUBLICADA com data_inicio_vigencia > hoje (futura)
+        const previa = versoesFiltradas.find(
+          (v) => v.status === "PUBLICADA" && v.data_inicio_vigencia > hoje,
+        );
+
+        // Seleciona prévia por padrão se existir; senão, a vigente
+        const padrao = previa || vigente || versoesFiltradas[0];
+        if (padrao) setVersaoSelecionada(String(padrao.id));
       } else {
         setCarregando(false);
       }
@@ -150,6 +161,12 @@ export default function HomePage() {
   const infoVersao = versoes.find(
     (v) => String(v.id) === String(versaoSelecionada),
   );
+
+  const hoje = new Date().toISOString().split("T")[0];
+  const isPrevia =
+    infoVersao?.status === "PUBLICADA" &&
+    infoVersao?.data_inicio_vigencia > hoje;
+  const isRascunho = infoVersao?.status === "RASCUNHO";
 
   // Detecta se o item selecionado permite filtro por módulo
   const turmaAtualObj =
@@ -455,11 +472,49 @@ export default function HomePage() {
               <h3 className="text-xl font-bold text-black uppercase mt-1">
                 {obterTituloGrade()}
               </h3>
-              {infoVersao && (
-                <p className="text-xs font-bold text-gray-600 uppercase tracking-widest mt-1">
+              {infoVersao && !isPrevia && !isRascunho && (
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">
                   Vigência: A partir de{" "}
                   {formatarData(infoVersao.data_inicio_vigencia)}
                 </p>
+              )}
+
+              {/* Banner de PRÉVIA com destaque */}
+              {isPrevia && (
+                <div className="mt-3 inline-flex flex-col sm:flex-row items-center gap-3 bg-amber-50 border-2 border-amber-400 rounded-xl px-5 py-3 shadow-md">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-500 text-xl">⚠️</span>
+                    <div className="text-left">
+                      <p className="text-xs font-black uppercase tracking-widest text-amber-700">
+                        PRÉVIA — Horários ainda não vigentes
+                      </p>
+                      <p className="text-sm font-bold text-amber-900">
+                        Entra em vigor em:{" "}
+                        <span className="underline underline-offset-2">
+                          {formatarData(infoVersao.data_inicio_vigencia)}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  {versaoVigenteId && (
+                    <button
+                      onClick={() => setVersaoSelecionada(versaoVigenteId)}
+                      className="flex-shrink-0 bg-green-700 hover:bg-green-600 active:bg-green-800 text-white text-xs font-black uppercase tracking-wider px-4 py-2 rounded-lg transition-all shadow-sm whitespace-nowrap"
+                    >
+                      Ver horários vigentes
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Banner de RASCUNHO — apenas para usuários logados */}
+              {isRascunho && (
+                <div className="mt-3 inline-flex items-center gap-2 bg-gray-100 border border-gray-400 rounded-lg px-4 py-2">
+                  <span className="text-gray-500 text-base">📝</span>
+                  <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">
+                    Rascunho — versão não publicada
+                  </p>
+                </div>
               )}
             </div>
 

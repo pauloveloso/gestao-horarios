@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useMasterData } from "../components/MasterDataContext";
 import { useUser } from "../components/UserContext";
-import { RefreshCw, Users, Building, ShieldAlert, AlertTriangle, Sparkles, List, Calendar, Clock } from "lucide-react";
+import { RefreshCw, Users, Building, ShieldAlert, AlertTriangle, Sparkles, List, Calendar, Clock, MessageSquarePlus } from "lucide-react";
 
 export default function DashboardPage() {
   const { user, isCoordenador } = useUser();
@@ -363,30 +363,43 @@ export default function DashboardPage() {
         </div>
 
         {/* Atalhos de relatório */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
             href="/relatorios/professores"
-            className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-md transition-all flex items-center gap-5 group cursor-pointer"
+            className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-blue-300 hover:shadow-md transition-all flex items-center gap-4 group cursor-pointer"
           >
-            <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors shrink-0">
-              <Users className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors shrink-0">
+              <Users className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h3 className="font-black text-gray-800 group-hover:text-blue-700 transition-colors text-lg">Carga Horária Docente</h3>
-              <p className="text-sm text-gray-500 mt-0.5">Distribuição de aulas e horas dos professores do seu curso.</p>
+              <h3 className="font-black text-gray-800 group-hover:text-blue-700 transition-colors">Carga Horária</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Distribuição de aulas dos professores.</p>
             </div>
           </Link>
 
           <Link
             href="/relatorios/ocupacao-salas"
-            className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-green-300 hover:shadow-md transition-all flex items-center gap-5 group cursor-pointer"
+            className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-green-300 hover:shadow-md transition-all flex items-center gap-4 group cursor-pointer"
           >
-            <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center group-hover:bg-green-100 transition-colors shrink-0">
-              <Building className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center group-hover:bg-green-100 transition-colors shrink-0">
+              <Building className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <h3 className="font-black text-gray-800 group-hover:text-green-700 transition-colors text-lg">Ocupação de Salas</h3>
-              <p className="text-sm text-gray-500 mt-0.5">Espaços utilizados pelas turmas do seu curso.</p>
+              <h3 className="font-black text-gray-800 group-hover:text-green-700 transition-colors">Ocupação de Salas</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Espaços utilizados pelo seu curso.</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/feedback"
+            className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-purple-300 hover:shadow-md transition-all flex items-center gap-4 group cursor-pointer"
+          >
+            <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center group-hover:bg-purple-100 transition-colors shrink-0">
+              <MessageSquarePlus className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-black text-gray-800 group-hover:text-purple-700 transition-colors">Enviar Feedback</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Reporte problemas ou sugestões.</p>
             </div>
           </Link>
         </div>
@@ -731,6 +744,19 @@ export default function DashboardPage() {
               <div>
                 <h3 className="font-black text-gray-800 group-hover:text-green-700 transition-colors text-lg">Ocupação de Salas</h3>
                 <p className="text-sm text-gray-500 mt-0.5">Consolidado físico de espaços e infraestrutura por categoria.</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/feedback"
+              className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:border-purple-300 hover:shadow-md transition-all flex items-center gap-5 group cursor-pointer"
+            >
+              <div className="w-14 h-14 bg-purple-50 rounded-xl flex items-center justify-center group-hover:bg-purple-100 transition-colors shrink-0">
+                <MessageSquarePlus className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-black text-gray-800 group-hover:text-purple-700 transition-colors text-lg">Enviar Feedback</h3>
+                <p className="text-sm text-gray-500 mt-0.5">Reporte problemas ou sugira melhorias ao sistema.</p>
               </div>
             </Link>
           </div>

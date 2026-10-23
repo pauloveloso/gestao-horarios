@@ -106,6 +106,23 @@ export interface Aula {
   updated_at: string;
 }
 
+export type TipoFeedback = "BUG" | "SUGESTAO" | "MELHORIA" | "OUTRO";
+export type StatusFeedback = "ABERTO" | "EM_ANALISE" | "RESOLVIDO" | "DESCARTADO";
+
+export interface Feedback {
+  id: string;
+  tipo: TipoFeedback;
+  titulo: string | null;
+  descricao: string;
+  imagem_url: string | null;
+  usuario_id: string | null;
+  usuario_nome: string | null;
+  usuario_email: string | null;
+  nivel_acesso: NivelAcesso | null;
+  status: StatusFeedback;
+  criado_em: string;
+}
+
 export interface ValidacaoLog {
   id: number;
   aula_id: number;
