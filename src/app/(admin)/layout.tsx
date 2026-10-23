@@ -22,7 +22,8 @@ import {
   X,
   LogOut,
   List,
-  MessageSquarePlus
+  MessageSquarePlus,
+  Inbox
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { MasterDataProvider } from "./components/MasterDataContext";
@@ -107,7 +108,6 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       titulo: "Administração",
       itens: [
         { nome: "Usuários do Sistema", href: "/cadastros/usuarios", icone: <ShieldCheck className="w-5 h-5" />, visible: isAdmin },
-        { nome: "Feedbacks", href: "/admin/feedbacks", icone: <MessageSquarePlus className="w-5 h-5" />, visible: isAdmin },
       ],
       visible: isAdmin,
     },
@@ -115,6 +115,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       titulo: "Suporte",
       itens: [
         { nome: "Enviar Feedback", href: "/feedback", icone: <MessageSquarePlus className="w-5 h-5" />, visible: isCoordenador },
+        { nome: "Ver Feedbacks", href: "/admin/feedbacks", icone: <Inbox className="w-5 h-5" />, visible: isCoordenador },
       ],
       visible: isCoordenador,
     },
