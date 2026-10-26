@@ -352,6 +352,8 @@ export default function FeedbacksPage() {
 
   // ── Filtros ───────────────────────────────────────────────────────────────
   const feedbacksFiltrados = feedbacks.filter((f) => {
+    // Feedbacks descartados só são visíveis para administradores
+    if (!isAdmin && f.status === "DESCARTADO") return false;
     if (filtroStatus !== "TODOS" && f.status !== filtroStatus) return false;
     if (filtroTipo !== "TODOS" && f.tipo !== filtroTipo) return false;
     if (apenasEuFiltro && f.usuario_id !== user?.id) return false;
@@ -359,15 +361,19 @@ export default function FeedbacksPage() {
   });
 
   // Contagens por status (sobre todos, ou filtrados por "Meus" se ativo)
-  const baseCont = apenasEuFiltro
+  // Feedbacks descartados são excluídos da base de contagem para não-admins
+  const baseCont = (apenasEuFiltro
     ? feedbacks.filter((f) => f.usuario_id === user?.id)
-    : feedbacks;
+    : feedbacks
+  ).filter((f) => isAdmin || f.status !== "DESCARTADO");
   const contagens = baseCont.reduce(
     (acc, f) => { acc[f.status] = (acc[f.status] || 0) + 1; return acc; },
     {} as Record<string, number>
   );
 
-  const meusFeedbacksCount = feedbacks.filter((f) => f.usuario_id === user?.id).length;
+  const meusFeedbacksCount = feedbacks
+    .filter((f) => f.usuario_id === user?.id && (isAdmin || f.status !== "DESCARTADO"))
+    .length;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto p-4 md:p-6">
@@ -378,7 +384,12 @@ export default function FeedbacksPage() {
             {isAdmin ? "Gerenciar Feedbacks" : "Feedbacks"}
           </h1>
           <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
-            {feedbacks.length} registro{feedbacks.length !== 1 ? "s" : ""} no total
+            {(() => {
+              const total = isAdmin
+                ? feedbacks.length
+                : feedbacks.filter((f) => f.status !== "DESCARTADO").length;
+              return `${total} registro${total !== 1 ? "s" : ""} no total`;
+            })()}
             {!isAdmin && ` · ${meusFeedbacksCount} enviado${meusFeedbacksCount !== 1 ? "s" : ""} por você`}
           </p>
         </div>
@@ -402,7 +413,7 @@ export default function FeedbacksPage() {
 
       {/* ── Cards de métricas por status ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {TODOS_STATUS.map((s) => {
+        {TODOS_STATUS.filter((s) => isAdmin || s !== "DESCARTADO").map((s) => {
           const cfg = STATUS_CONFIG[s];
           const count = contagens[s] || 0;
           return (
