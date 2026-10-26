@@ -430,7 +430,7 @@ export default function VisualizarHorariosAdminPage() {
               }`}
               title={habilitarFiltroModulo ? "Filtrar por Módulo / Trimestre" : "Disponível apenas para turmas de cursos Integrados"}
             >
-              <option value="INTEGRAL">Anual / Integral</option>
+              <option value="INTEGRAL">Anual / Semestral</option>
               <option value="MODULO_1">1º Trimestre (M1)</option>
               <option value="MODULO_2">2º Trimestre (M2)</option>
               <option value="MODULO_3">3º Trimestre (M3)</option>

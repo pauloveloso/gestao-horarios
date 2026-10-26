@@ -466,7 +466,7 @@ export default function ModoGrade({
                 title="Filtrar por Módulo / Trimestre"
               >
                 <option value="TODOS">Todos os Módulos</option>
-                <option value="INTEGRAL">Anual / Integral</option>
+                <option value="INTEGRAL">Anual / Semestral</option>
                 <option value="MODULO_1">1º Trimestre (M1)</option>
                 <option value="MODULO_2">2º Trimestre (M2)</option>
                 <option value="MODULO_3">3º Trimestre (M3)</option>
@@ -979,7 +979,7 @@ export default function ModoGrade({
                       })
                     }
                   >
-                    <option value="INTEGRAL">Anual / Integral (Todo o ciclo)</option>
+                    <option value="INTEGRAL">Anual / Semestral (Todo o ciclo)</option>
                     <option value="MODULO_1">1º Trimestre (Módulo 1)</option>
                     <option value="MODULO_2">2º Trimestre (Módulo 2)</option>
                     <option value="MODULO_3">3º Trimestre (Módulo 3)</option>

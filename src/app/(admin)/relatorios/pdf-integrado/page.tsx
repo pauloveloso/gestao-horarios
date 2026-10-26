@@ -213,7 +213,7 @@ export default function ExportarPDFIntegradoPage() {
               className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all shadow-sm max-w-[160px] truncate h-9"
               title="Filtrar por Módulo / Trimestre"
             >
-              <option value="INTEGRAL">Anual / Integral</option>
+              <option value="INTEGRAL">Anual / Semestral</option>
               <option value="MODULO_1">1º Trimestre (M1)</option>
               <option value="MODULO_2">2º Trimestre (M2)</option>
               <option value="MODULO_3">3º Trimestre (M3)</option>

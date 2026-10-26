@@ -251,7 +251,7 @@ const LinhaPlanilha = memo(({
                     ? "2º Trimestre (Módulo 2)"
                     : linha.modulo === "MODULO_3"
                       ? "3º Trimestre (Módulo 3)"
-                      : "Anual / Integral"
+                      : "Anual / Semestral"
               }
               value={linha.modulo || "INTEGRAL"}
               onChange={(e) =>
@@ -259,7 +259,7 @@ const LinhaPlanilha = memo(({
               }
               className={`w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[12px] p-1 outline-none font-bold ${corTexto}`}
             >
-              <option value="INTEGRAL" className="text-gray-900 bg-white">Integral / Anual</option>
+              <option value="INTEGRAL" className="text-gray-900 bg-white">Anual / Semestral</option>
               <option value="MODULO_1" className="text-gray-900 bg-white">1º Trim (M1)</option>
               <option value="MODULO_2" className="text-gray-900 bg-white">2º Trim (M2)</option>
               <option value="MODULO_3" className="text-gray-900 bg-white">3º Trim (M3)</option>
