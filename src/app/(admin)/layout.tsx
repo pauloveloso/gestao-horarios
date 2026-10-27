@@ -32,7 +32,21 @@ import { UserProvider, useUser } from "./components/UserContext";
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading: verificandoAuth, isCoordenador, isComissao, isAdmin } = useUser();
+  const { 
+    user, 
+    loading: verificandoAuth, 
+    isCoordenador, 
+    isComissao, 
+    isAdmin,
+    isRealAdmin,
+    visualizarComoProfessor,
+    toggleVisualizacaoProfessor,
+    visaoSimulada,
+    cursoSimuladoId,
+    cursosDisponiveis,
+    mudarVisaoSimulada,
+    mudarCursoSimulado,
+  } = useUser();
 
   const [menuAberto, setMenuAberto] = useState(false);
 
@@ -240,12 +254,73 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        <div className="px-6 py-4 border-b border-green-800 bg-green-900/50">
-          <p className="text-xs text-green-300 uppercase font-bold mb-1">Logado como</p>
-          <p className="font-medium text-sm truncate">{user.nome || user.email}</p>
-          <span className="inline-block mt-2 px-2 py-1 bg-green-800 text-[10px] font-black tracking-wider rounded">
-            {user.nivel_acesso.replace("_", "/")}
-          </span>
+        <div className="px-5 py-4 border-b border-green-800 bg-green-900/50">
+          <p className="text-[11px] text-green-300 uppercase font-bold tracking-wider mb-0.5">Logado como</p>
+          <p className="font-semibold text-sm truncate text-white">{user.nome || user.email}</p>
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <span className={`inline-block px-2 py-0.5 text-[10px] font-black tracking-wider rounded uppercase ${visaoSimulada !== "ADMINISTRADOR" ? "bg-amber-800/80 text-amber-200 border border-amber-600/50" : "bg-green-800 text-white"}`}>
+              {visaoSimulada !== "ADMINISTRADOR" ? `${visaoSimulada.replace("_", "/")} (Visão)` : user.nivel_acesso.replace("_", "/")}
+            </span>
+          </div>
+
+          {isRealAdmin && (
+            <div className="mt-3 pt-3 border-t border-green-800/80 space-y-2.5">
+              <div>
+                <label
+                  htmlFor="select-visao-perfil"
+                  className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-green-300 mb-1"
+                >
+                  <Eye className="w-3 h-3 text-amber-400 shrink-0" />
+                  <span>Visualizar como:</span>
+                </label>
+                <select
+                  id="select-visao-perfil"
+                  value={visaoSimulada}
+                  onChange={(e) => {
+                    const novo = e.target.value as any;
+                    mudarVisaoSimulada(novo);
+                    if (pathname !== "/painel") {
+                      router.push("/painel");
+                    }
+                  }}
+                  className="w-full bg-green-950 text-white text-xs font-medium rounded-lg px-2.5 py-1.5 border border-green-700/80 focus:outline-none focus:ring-1 focus:ring-green-400 cursor-pointer shadow-inner"
+                >
+                  <option value="ADMINISTRADOR">Administrador</option>
+                  <option value="DIRECAO">Direção</option>
+                  <option value="COMISSAO">Comissão</option>
+                  <option value="COORDENADOR">Coordenador</option>
+                  <option value="PROFESSOR_TAE">Professor</option>
+                </select>
+              </div>
+
+              {visaoSimulada === "COORDENADOR" && (
+                <div className="animate-in fade-in duration-200">
+                  <label
+                    htmlFor="select-curso-simulado"
+                    className="block text-[10px] font-black uppercase tracking-wider text-amber-300 mb-1"
+                  >
+                    Curso Coordenado:
+                  </label>
+                  <select
+                    id="select-curso-simulado"
+                    value={cursoSimuladoId || ""}
+                    onChange={(e) => mudarCursoSimulado(e.target.value || null)}
+                    className="w-full bg-green-950 text-amber-200 text-xs font-medium rounded-lg px-2.5 py-1.5 border border-amber-500/70 focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer shadow-inner"
+                  >
+                    {cursosDisponiveis.length === 0 ? (
+                      <option value="">Carregando cursos...</option>
+                    ) : (
+                      cursosDisponiveis.map((c) => (
+                        <option key={c.id} value={String(c.id)}>
+                          {c.nome}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 custom-scrollbar">
@@ -324,6 +399,38 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         </header>
 
         <main className="flex-1 overflow-y-auto bg-gray-50 relative p-4 md:p-8">
+          {isRealAdmin && visaoSimulada !== "ADMINISTRADOR" && (
+            <div className="mb-4 bg-amber-50 border border-amber-300 text-amber-900 px-4 py-2.5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-sm print:hidden">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="bg-amber-500 text-white font-black px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">
+                  Modo Simulação Ativo
+                </span>
+                <span className="font-medium text-amber-950">
+                  Você está navegando com a visão e as permissões de:{" "}
+                  <strong className="font-bold underline decoration-amber-500">
+                    {visaoSimulada === "PROFESSOR_TAE" && "Professor / TAE"}
+                    {visaoSimulada === "COORDENADOR" && (
+                      <>
+                        Coordenador (
+                        {cursosDisponiveis.find((c) => String(c.id) === String(cursoSimuladoId))?.nome || "Curso selecionado"}
+                        )
+                      </>
+                    )}
+                    {visaoSimulada === "COMISSAO" && "Comissão de Horários"}
+                    {visaoSimulada === "DIRECAO" && "Direção"}
+                  </strong>
+                  .
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => mudarVisaoSimulada("ADMINISTRADOR")}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-1 rounded-lg text-xs shadow-sm transition-all active:scale-95 shrink-0 self-start sm:self-auto cursor-pointer"
+              >
+                Voltar para Visão Administrador
+              </button>
+            </div>
+          )}
           <MasterDataProvider>
             {children}
           </MasterDataProvider>

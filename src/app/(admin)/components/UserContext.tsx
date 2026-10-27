@@ -4,6 +4,11 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { UsuarioSistema } from "@/types/database";
 
+export interface CursoSimples {
+  id: string | number;
+  nome: string;
+}
+
 interface UserContextData {
   user: UsuarioSistema | null;
   loading: boolean;
@@ -13,6 +18,14 @@ interface UserContextData {
   isCoordenador: boolean;
   isProfessorTAE: boolean;
   hasAccessAtLeast: (level: UsuarioSistema["nivel_acesso"]) => boolean;
+  isRealAdmin: boolean;
+  visualizarComoProfessor: boolean;
+  toggleVisualizacaoProfessor: () => void;
+  visaoSimulada: UsuarioSistema["nivel_acesso"];
+  cursoSimuladoId: string | null;
+  cursosDisponiveis: CursoSimples[];
+  mudarVisaoSimulada: (nivel: UsuarioSistema["nivel_acesso"]) => void;
+  mudarCursoSimulado: (cursoId: string | null) => void;
 }
 
 const UserContext = createContext<UserContextData>({
@@ -24,6 +37,14 @@ const UserContext = createContext<UserContextData>({
   isCoordenador: false,
   isProfessorTAE: false,
   hasAccessAtLeast: () => false,
+  isRealAdmin: false,
+  visualizarComoProfessor: false,
+  toggleVisualizacaoProfessor: () => {},
+  visaoSimulada: "ADMINISTRADOR",
+  cursoSimuladoId: null,
+  cursosDisponiveis: [],
+  mudarVisaoSimulada: () => {},
+  mudarCursoSimulado: () => {},
 });
 
 // Helper for hierarchy
@@ -122,9 +143,108 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
+  const isRealAdmin = !!user && user.nivel_acesso === "ADMINISTRADOR";
+
+  const [visaoSimulada, setVisaoSimulada] = useState<UsuarioSistema["nivel_acesso"]>("ADMINISTRADOR");
+  const [cursoSimuladoId, setCursoSimuladoId] = useState<string | null>(null);
+  const [cursosDisponiveis, setCursosDisponiveis] = useState<CursoSimples[]>([]);
+
+  // Carrega cursos se o usuário for administrador real
+  useEffect(() => {
+    if (!isRealAdmin) return;
+    const buscarCursos = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("cursos")
+          .select("id, nome")
+          .order("nome");
+        if (!error && data) {
+          setCursosDisponiveis(data as CursoSimples[]);
+        }
+      } catch (e) {
+        console.error("Erro ao buscar cursos para simulação:", e);
+      }
+    };
+    buscarCursos();
+  }, [isRealAdmin]);
+
+  // Recupera configurações salvas do localStorage
+  useEffect(() => {
+    try {
+      const visaoSalva = localStorage.getItem("sgh_visao_simulada") as UsuarioSistema["nivel_acesso"] | null;
+      if (visaoSalva && ["ADMINISTRADOR", "DIRECAO", "COMISSAO", "COORDENADOR", "PROFESSOR_TAE"].includes(visaoSalva)) {
+        setVisaoSimulada(visaoSalva);
+      } else {
+        const salvoProf = localStorage.getItem("sgh_visualizar_como_professor");
+        if (salvoProf === "true") {
+          setVisaoSimulada("PROFESSOR_TAE");
+        }
+      }
+
+      const cursoSalvo = localStorage.getItem("sgh_curso_simulado_id");
+      if (cursoSalvo) {
+        setCursoSimuladoId(cursoSalvo);
+      }
+    } catch (e) {
+      // Ignora erro de acesso ao localStorage
+    }
+  }, []);
+
+  const mudarVisaoSimulada = (novoNivel: UsuarioSistema["nivel_acesso"]) => {
+    setVisaoSimulada(novoNivel);
+    try {
+      localStorage.setItem("sgh_visao_simulada", novoNivel);
+      if (novoNivel === "PROFESSOR_TAE") {
+        localStorage.setItem("sgh_visualizar_como_professor", "true");
+      } else {
+        localStorage.removeItem("sgh_visualizar_como_professor");
+      }
+    } catch (e) {}
+  };
+
+  const mudarCursoSimulado = (cursoId: string | null) => {
+    setCursoSimuladoId(cursoId);
+    try {
+      if (cursoId) {
+        localStorage.setItem("sgh_curso_simulado_id", cursoId);
+      } else {
+        localStorage.removeItem("sgh_curso_simulado_id");
+      }
+    } catch (e) {}
+  };
+
+  // Se mudar para coordenador e não tiver curso selecionado, seleciona o primeiro disponível
+  useEffect(() => {
+    if (visaoSimulada === "COORDENADOR" && !cursoSimuladoId && cursosDisponiveis.length > 0) {
+      mudarCursoSimulado(String(cursosDisponiveis[0].id));
+    }
+  }, [visaoSimulada, cursoSimuladoId, cursosDisponiveis]);
+
+  const toggleVisualizacaoProfessor = () => {
+    if (visaoSimulada === "PROFESSOR_TAE") {
+      mudarVisaoSimulada("ADMINISTRADOR");
+    } else {
+      mudarVisaoSimulada("PROFESSOR_TAE");
+    }
+  };
+
+  const visualizarComoProfessor = visaoSimulada === "PROFESSOR_TAE";
+
+  const userEfetivo = React.useMemo(() => {
+    if (!user) return null;
+    if (isRealAdmin && visaoSimulada !== "ADMINISTRADOR") {
+      return {
+        ...user,
+        nivel_acesso: visaoSimulada,
+        curso_id: visaoSimulada === "COORDENADOR" ? (cursoSimuladoId || user.curso_id) : user.curso_id,
+      };
+    }
+    return user;
+  }, [user, isRealAdmin, visaoSimulada, cursoSimuladoId]);
+
   const hasAccessAtLeast = (level: UsuarioSistema["nivel_acesso"]) => {
-    if (!user) return false;
-    return accessLevels[user.nivel_acesso] >= accessLevels[level];
+    if (!userEfetivo) return false;
+    return accessLevels[userEfetivo.nivel_acesso] >= accessLevels[level];
   };
 
   const isAdmin = hasAccessAtLeast("ADMINISTRADOR");
@@ -136,14 +256,22 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <UserContext.Provider
       value={{
-        user,
+        user: userEfetivo,
         loading,
         isAdmin,
         isDirecao,
         isComissao,
         isCoordenador,
         isProfessorTAE,
-        hasAccessAtLeast
+        hasAccessAtLeast,
+        isRealAdmin,
+        visualizarComoProfessor,
+        toggleVisualizacaoProfessor,
+        visaoSimulada,
+        cursoSimuladoId,
+        cursosDisponiveis,
+        mudarVisaoSimulada,
+        mudarCursoSimulado,
       }}
     >
       {children}
