@@ -23,6 +23,8 @@ import {
   Save,
   XCircle,
   UserCheck,
+  Clipboard,
+  Upload,
 } from "lucide-react";
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────
@@ -41,6 +43,7 @@ interface Feedback {
   usuario_email: string | null;
   nivel_acesso: string | null;
   status: StatusFeedback;
+  solucao?: string | null;
   criado_em: string;
 }
 
@@ -171,6 +174,14 @@ export default function FeedbacksPage() {
   const [imagemAmpliada, setImagemAmpliada] = useState<string | null>(null);
   const [atualizandoId, setAtualizandoId] = useState<string | null>(null);
 
+  // Modal de alteração de status e solução (admin)
+  const [modalStatus, setModalStatus] = useState<{
+    feedback: Feedback;
+    novoStatus: StatusFeedback;
+    solucao: string;
+  } | null>(null);
+  const [salvandoStatus, setSalvandoStatus] = useState(false);
+
   // Estado de edição
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editTipo, setEditTipo] = useState<TipoFeedback>("BUG");
@@ -207,22 +218,50 @@ export default function FeedbacksPage() {
     carregar();
   }, [carregar]);
 
-  // ── Alterar status (apenas admin) ────────────────────────────────────────
-  const atualizarStatus = async (id: string, novoStatus: StatusFeedback) => {
-    if (!isAdmin) return;
-    setAtualizandoId(id);
+  // ── Abertura e confirmação da modal de status/solução (apenas admin) ─────
+  const abrirModalStatus = (fb: Feedback, novoStatus: StatusFeedback) => {
+    setModalStatus({
+      feedback: fb,
+      novoStatus,
+      solucao: fb.solucao || "",
+    });
+  };
+
+  const fecharModalStatus = () => {
+    if (salvandoStatus) return;
+    setModalStatus(null);
+  };
+
+  const confirmarAtualizacaoStatus = async () => {
+    if (!modalStatus || !isAdmin) return;
+    const { feedback, novoStatus, solucao } = modalStatus;
+    setSalvandoStatus(true);
+    setAtualizandoId(feedback.id);
     try {
+      const payload = {
+        status: novoStatus,
+        solucao: solucao.trim() || null,
+      };
       const { error } = await supabase
         .from("feedbacks")
-        .update({ status: novoStatus })
-        .eq("id", id);
+        .update(payload)
+        .eq("id", feedback.id);
+
       if (error) throw error;
+
       setFeedbacks((prev) =>
-        prev.map((f) => (f.id === id ? { ...f, status: novoStatus } : f))
+        prev.map((f) =>
+          f.id === feedback.id
+            ? { ...f, status: novoStatus, solucao: payload.solucao }
+            : f
+        )
       );
+      setModalStatus(null);
     } catch (err) {
-      console.error("Erro ao atualizar status:", err);
+      console.error("Erro ao atualizar status e solução:", err);
+      alert("Falha ao atualizar o feedback. Certifique-se de que a coluna 'solucao' exista no banco.");
     } finally {
+      setSalvandoStatus(false);
       setAtualizandoId(null);
     }
   };
@@ -249,9 +288,7 @@ export default function FeedbacksPage() {
     setErroEdicao(null);
   };
 
-  const handleEditImagemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processarArquivoEditImagem = (file: File) => {
     if (!file.type.startsWith("image/")) {
       setErroEdicao("O arquivo deve ser uma imagem.");
       return;
@@ -266,6 +303,56 @@ export default function FeedbacksPage() {
     if (editImagemNovaPreview) URL.revokeObjectURL(editImagemNovaPreview);
     setEditImagemNovaPreview(URL.createObjectURL(file));
   };
+
+  const handleEditImagemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processarArquivoEditImagem(file);
+  };
+
+  const colarImagemEditClipboard = async () => {
+    try {
+      if (!navigator.clipboard?.read) {
+        setErroEdicao("Seu navegador não suporta leitura direta da área de transferência pelo botão.");
+        return;
+      }
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        const imageType = item.types.find((t) => t.startsWith("image/"));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          const ext = imageType.split("/")[1] || "png";
+          const file = new File([blob], `captura_${Date.now()}.${ext}`, { type: imageType });
+          processarArquivoEditImagem(file);
+          return;
+        }
+      }
+      setErroEdicao("Nenhuma imagem encontrada na área de transferência. Copie ou tire um print primeiro.");
+    } catch (err: any) {
+      console.warn("Falha ao ler área de transferência:", err);
+      setErroEdicao("Não foi possível acessar a área de transferência. Verifique a permissão do navegador.");
+    }
+  };
+
+  useEffect(() => {
+    if (!editandoId) return;
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith("image/")) {
+          const file = items[i].getAsFile();
+          if (file) {
+            e.preventDefault();
+            processarArquivoEditImagem(file);
+            break;
+          }
+        }
+      }
+    };
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [editandoId]);
 
   // ── Salvar edição (reseta para ABERTO) ────────────────────────────────────
   const salvarEdicao = async (id: string) => {
@@ -352,27 +439,28 @@ export default function FeedbacksPage() {
 
   // ── Filtros ───────────────────────────────────────────────────────────────
   const feedbacksFiltrados = feedbacks.filter((f) => {
-    // Feedbacks descartados só são visíveis para administradores
-    if (!isAdmin && f.status === "DESCARTADO") return false;
-    if (filtroStatus !== "TODOS" && f.status !== filtroStatus) return false;
+    // Feedbacks descartados só devem ser exibidos quando o filtro selecionado for expressamente "DESCARTADO"
+    if (f.status === "DESCARTADO") {
+      if (!isAdmin || filtroStatus !== "DESCARTADO") return false;
+    } else {
+      if (filtroStatus !== "TODOS" && f.status !== filtroStatus) return false;
+    }
     if (filtroTipo !== "TODOS" && f.tipo !== filtroTipo) return false;
     if (apenasEuFiltro && f.usuario_id !== user?.id) return false;
     return true;
   });
 
   // Contagens por status (sobre todos, ou filtrados por "Meus" se ativo)
-  // Feedbacks descartados são excluídos da base de contagem para não-admins
-  const baseCont = (apenasEuFiltro
+  const baseCont = apenasEuFiltro
     ? feedbacks.filter((f) => f.usuario_id === user?.id)
-    : feedbacks
-  ).filter((f) => isAdmin || f.status !== "DESCARTADO");
+    : feedbacks;
   const contagens = baseCont.reduce(
     (acc, f) => { acc[f.status] = (acc[f.status] || 0) + 1; return acc; },
     {} as Record<string, number>
   );
 
   const meusFeedbacksCount = feedbacks
-    .filter((f) => f.usuario_id === user?.id && (isAdmin || f.status !== "DESCARTADO"))
+    .filter((f) => f.usuario_id === user?.id && f.status !== "DESCARTADO")
     .length;
 
   return (
@@ -385,9 +473,7 @@ export default function FeedbacksPage() {
           </h1>
           <p className="text-[10px] text-green-200 font-medium uppercase tracking-wider mt-1">
             {(() => {
-              const total = isAdmin
-                ? feedbacks.length
-                : feedbacks.filter((f) => f.status !== "DESCARTADO").length;
+              const total = feedbacks.filter((f) => f.status !== "DESCARTADO").length;
               return `${total} registro${total !== 1 ? "s" : ""} no total`;
             })()}
             {!isAdmin && ` · ${meusFeedbacksCount} enviado${meusFeedbacksCount !== 1 ? "s" : ""} por você`}
@@ -648,9 +734,18 @@ export default function FeedbacksPage() {
                                 {/* Trocar imagem */}
                                 <button
                                   type="button"
+                                  onClick={colarImagemEditClipboard}
+                                  className="bg-white/95 hover:bg-green-50 border border-gray-200 hover:border-green-300 text-gray-700 hover:text-green-700 rounded-full p-1.5 shadow-sm transition-all"
+                                  title="Colar imagem da área de transferência"
+                                >
+                                  <Clipboard className="w-3.5 h-3.5" />
+                                </button>
+                                {/* Trocar imagem via arquivo */}
+                                <button
+                                  type="button"
                                   onClick={() => fileEditRef.current?.click()}
                                   className="bg-white/90 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 text-gray-600 hover:text-blue-600 rounded-full p-1.5 shadow-sm transition-all"
-                                  title="Substituir imagem"
+                                  title="Substituir arquivo de imagem"
                                 >
                                   <ImageIcon className="w-3.5 h-3.5" />
                                 </button>
@@ -685,7 +780,7 @@ export default function FeedbacksPage() {
                                 onClick={() => {
                                   setEditRemoverImagem(false);
                                 }}
-                                className="text-xs text-red-600 underline hover:no-underline"
+                                className="text-xs text-red-600 underline hover:no-underline cursor-pointer"
                               >
                                 Desfazer
                               </button>
@@ -694,16 +789,36 @@ export default function FeedbacksPage() {
 
                           {/* Botão de adicionar imagem (quando não há nenhuma) */}
                           {!editImagemNovaPreview && !editImagemAtual && !editRemoverImagem && (
-                            <button
-                              type="button"
-                              onClick={() => fileEditRef.current?.click()}
-                              className="w-full border-2 border-dashed border-gray-200 hover:border-green-400 hover:bg-green-50/30 rounded-xl p-4 text-center transition-all group"
-                            >
-                              <div className="flex items-center justify-center gap-2 text-gray-400 group-hover:text-green-600 transition-colors text-xs font-bold">
-                                <ImageIcon className="w-4 h-4" />
-                                Anexar imagem (PNG, JPEG, GIF, WEBP)
+                            <div className="border-2 border-dashed border-gray-200 hover:border-green-400 hover:bg-green-50/20 rounded-xl p-5 text-center transition-all">
+                              <div className="flex flex-col items-center gap-2 text-gray-400">
+                                <ImageIcon className="w-8 h-8 text-gray-300" />
+                                <div>
+                                  <p className="font-bold text-xs text-gray-600">
+                                    Adicionar captura de tela ao feedback
+                                  </p>
+                                  <p className="text-[11px] text-gray-400 mt-0.5">PNG, JPEG, GIF, WEBP (máx. 5MB)</p>
+                                </div>
+                                <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
+                                  <button
+                                    type="button"
+                                    onClick={colarImagemEditClipboard}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                                  >
+                                    <Clipboard className="w-3.5 h-3.5" />
+                                    <span>Colar Imagem</span>
+                                  </button>
+                                  <span className="text-xs text-gray-300 font-bold">ou</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => fileEditRef.current?.click()}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                                  >
+                                    <Upload className="w-3.5 h-3.5 text-gray-500" />
+                                    <span>Selecionar Arquivo</span>
+                                  </button>
+                                </div>
                               </div>
-                            </button>
+                            </div>
                           )}
 
                           <input
@@ -777,6 +892,50 @@ export default function FeedbacksPage() {
                           </div>
                         )}
 
+                        {/* ── Bloco de Solução / Resposta da Administração ── */}
+                        {fb.solucao ? (
+                          <div className="mx-4 mb-4 p-4 rounded-xl bg-green-50/80 border border-green-200/90 shadow-xs">
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-green-900">
+                                <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                                <span>Solução / Resposta da Administração</span>
+                              </div>
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    abrirModalStatus(fb, fb.status);
+                                  }}
+                                  className="text-[11px] font-bold text-green-700 hover:text-green-800 hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                  Editar resposta
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-xs sm:text-sm text-green-950 whitespace-pre-wrap leading-relaxed font-normal">
+                              {fb.solucao}
+                            </p>
+                          </div>
+                        ) : (
+                          isAdmin && (
+                            <div className="mx-4 mb-3">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  abrirModalStatus(fb, fb.status);
+                                }}
+                                className="text-xs text-gray-400 hover:text-green-700 font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                              >
+                                <MessageSquarePlus className="w-3.5 h-3.5" />
+                                Adicionar resposta / solução da administração
+                              </button>
+                            </div>
+                          )
+                        )}
+
                         {/* ── Rodapé do card: ações ── */}
                         <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center gap-2">
                           {/* Editar — apenas o próprio, exceto se estiver resolvido/descartado */}
@@ -806,10 +965,10 @@ export default function FeedbacksPage() {
                                     key={s}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      atualizarStatus(fb.id, s);
+                                      abrirModalStatus(fb, s);
                                     }}
                                     disabled={atualizandoId === fb.id}
-                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border hover:shadow-sm disabled:opacity-50 ${cfg.bg} ${cfg.border} ${cfg.cor} hover:brightness-95`}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border hover:shadow-sm disabled:opacity-50 cursor-pointer ${cfg.bg} ${cfg.border} ${cfg.cor} hover:brightness-95`}
                                   >
                                     {atualizandoId === fb.id ? (
                                       <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -863,6 +1022,125 @@ export default function FeedbacksPage() {
               className="w-full rounded-xl shadow-2xl max-h-[85vh] object-contain"
               onClick={(e) => e.stopPropagation()}
             />
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de Alteração de Status e Solução (Apenas Admin) ── */}
+      {modalStatus && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={fecharModalStatus}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl border border-gray-100 max-w-lg w-full overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-5 border-b border-gray-100 bg-gray-50/70 flex items-center justify-between">
+              <div>
+                <h3 className="font-black text-gray-800 text-base">
+                  Atualizar Feedback
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Altere o status e descreva a solução ou justificativa
+                </p>
+              </div>
+              <button
+                onClick={fecharModalStatus}
+                disabled={salvandoStatus}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-200/50 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Seleção do Novo Status */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-gray-500 mb-2">
+                  Status
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {TODOS_STATUS.map((s) => {
+                    const cfg = STATUS_CONFIG[s];
+                    const selecionado = modalStatus.novoStatus === s;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() =>
+                          setModalStatus((prev) =>
+                            prev ? { ...prev, novoStatus: s } : null
+                          )
+                        }
+                        className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                          selecionado
+                            ? `${cfg.bg} ${cfg.border} ${cfg.cor} ring-2 ring-current/20 shadow-xs`
+                            : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        {cfg.icon}
+                        <span>{cfg.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Campo de Texto da Solução */}
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-gray-700 mb-1.5">
+                  Descrição da Solução / Resposta
+                  <span className="text-gray-400 normal-case font-normal ml-1">
+                    (visível para quem consultar o feedback)
+                  </span>
+                </label>
+                <textarea
+                  value={modalStatus.solucao}
+                  onChange={(e) =>
+                    setModalStatus((prev) =>
+                      prev ? { ...prev, solucao: e.target.value } : null
+                    )
+                  }
+                  rows={4}
+                  placeholder="Ex: Corrigido na versão 1.2; Ajustamos a carga horária na grade; Não foi possível reproduzir o erro pois..."
+                  className="w-full border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 resize-none transition-all"
+                />
+              </div>
+
+              {modalStatus.novoStatus === "RESOLVIDO" && (
+                <p className="text-xs text-green-700 bg-green-50 border border-green-200 p-2.5 rounded-lg flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600" />
+                  <span>
+                    Ao marcar como <strong>Resolvido</strong>, descreva como o problema foi solucionado para orientar o usuário.
+                  </span>
+                </p>
+              )}
+            </div>
+
+            <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={fecharModalStatus}
+                disabled={salvandoStatus}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-200/60 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmarAtualizacaoStatus}
+                disabled={salvandoStatus}
+                className="inline-flex items-center gap-1.5 px-5 py-2 bg-green-700 hover:bg-green-600 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+              >
+                {salvandoStatus ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Save className="w-3.5 h-3.5" />
+                )}
+                Salvar Alterações
+              </button>
+            </div>
           </div>
         </div>
       )}

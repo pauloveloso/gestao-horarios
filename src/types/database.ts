@@ -120,6 +120,7 @@ export interface Feedback {
   usuario_email: string | null;
   nivel_acesso: NivelAcesso | null;
   status: StatusFeedback;
+  solucao?: string | null;
   criado_em: string;
 }
 
