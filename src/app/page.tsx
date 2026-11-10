@@ -7,6 +7,37 @@ import { BotaoExportarPDF } from "./components/BotaoExportarPDF";
 import { PDFPublicoDocument } from "./components/PDFPublicoDocument";
 import { Download, CalendarDays, Inbox, ArrowLeft, Lock } from "lucide-react";
 
+function agruparAulasCompartilhadas(aulas: any[], tipoFiltro: string, idSelecionado: string) {
+  if (tipoFiltro === "PROFESSOR") return aulas;
+
+  const grupos = new Map<string, any[]>();
+  for (const aula of aulas) {
+    const chave = `${aula.dia_semana}|${aula.slot_horario_id}|${aula.turma_id}|${aula.disciplina_id}`;
+    grupos.set(chave, [...(grupos.get(chave) || []), aula]);
+  }
+
+  return Array.from(grupos.entries()).flatMap(([chave, grupo]) => {
+    if (tipoFiltro === "ESPACO" && !grupo.some((aula) => String(aula.espaco_id) === String(idSelecionado))) {
+      return [];
+    }
+
+    const professoresIds = Array.from(new Set(grupo.map((aula) => aula.professor_id)));
+    const professoresDefinidos = new Set(
+      grupo.filter((aula) => aula.professor_id != null).map((aula) => String(aula.professor_id)),
+    );
+    if (professoresDefinidos.size < 2) return grupo;
+
+    const salasIds = Array.from(new Set(grupo.map((aula) => aula.espaco_id).filter((id) => id != null)));
+    return [{
+      ...grupo[0],
+      id: `compartilhada-${chave}`,
+      professor_ids: professoresIds,
+      espaco_ids: salasIds,
+      ...(tipoFiltro === "ESPACO" ? { espaco_id: idSelecionado } : {}),
+    }];
+  });
+}
+
 export default function HomePage() {
   const [carregando, setCarregando] = useState(true);
   const [gerandoPDF, setGerandoPDF] = useState(false);
@@ -186,7 +217,7 @@ export default function HomePage() {
     tipoFiltro === "ESPACO";
 
   const getAulasPublico = (diaId: string, slotId: string) => {
-    return dados.aulas.filter(
+    const aulasFiltradas = dados.aulas.filter(
       (a: any) =>
         a.dia_semana === diaId &&
         String(a.slot_horario_id) === String(slotId) &&
@@ -209,6 +240,23 @@ export default function HomePage() {
             ? String(a.professor_id) === String(idSelecionado)
             : String(a.espaco_id) === String(idSelecionado)),
     );
+    if (tipoFiltro === "PROFESSOR") return aulasFiltradas;
+
+    const aulasParaAgrupar = dados.aulas.filter(
+      (a: any) =>
+        a.dia_semana === diaId &&
+        String(a.slot_horario_id) === String(slotId) &&
+        (filtroModulo === "TODOS_HORARIOS" ||
+          (tipoFiltro === "TURMA" && filtroModulo === "INTEGRAL"
+            ? (a.modulo || "INTEGRAL") === "INTEGRAL"
+            : filtroModulo === "INTEGRAL" ||
+              (a.modulo || "INTEGRAL") === filtroModulo ||
+              (a.modulo || "INTEGRAL") === "INTEGRAL")) &&
+        (tipoFiltro === "TURMA"
+          ? String(a.turma_id) === String(idSelecionado)
+          : true),
+    );
+    return agruparAulasCompartilhadas(aulasParaAgrupar, tipoFiltro, idSelecionado);
   };
 
   const aulasDoFiltro = dados.aulas.filter((a: any) => {
@@ -609,13 +657,14 @@ export default function HomePage() {
                                             (d: any) =>
                                               d.id === aula.disciplina_id,
                                           );
-                                          const prof = dados.professores.find(
-                                            (p: any) =>
-                                              p.id === aula.professor_id,
-                                          );
-                                          const sala = dados.espacos.find(
-                                            (e: any) => e.id === aula.espaco_id,
-                                          );
+                                          const professoresDaAula = (aula.professor_ids || [aula.professor_id])
+                                            .map((professorId: any) => dados.professores.find(
+                                              (p: any) => String(p.id) === String(professorId),
+                                            )?.nome || "A DEFINIR");
+                                          const salasDaAula = (aula.espaco_ids || [aula.espaco_id])
+                                            .map((espacoId: any) => dados.espacos.find(
+                                              (e: any) => String(e.id) === String(espacoId),
+                                            )?.nome || "S/S");
                                           const turma = dados.turmas.find(
                                             (t: any) => t.id === aula.turma_id,
                                           );
@@ -643,19 +692,23 @@ export default function HomePage() {
 
                                               {tipoFiltro !== "PROFESSOR" && (
                                                 <span
-                                                  className="text-[10px] text-gray-800 font-medium leading-[1.1] uppercase"
-                                                  title={prof?.nome}
+                                                  className="flex flex-col text-[10px] text-gray-800 font-medium leading-[1.1] uppercase"
+                                                  title={professoresDaAula.join("\n")}
                                                 >
-                                                  {prof?.nome || "A DEFINIR"}
+                                                  {professoresDaAula.map((nome: string, indice: number) => (
+                                                    <span key={`${aula.id}-prof-${indice}`}>{nome}</span>
+                                                  ))}
                                                 </span>
                                               )}
 
                                               {tipoFiltro !== "ESPACO" && (
                                                 <span
-                                                  className="text-[10px] text-gray-600 leading-[1.1] uppercase"
-                                                  title={sala?.nome}
+                                                  className="flex flex-col text-[10px] text-gray-600 leading-[1.1] uppercase"
+                                                  title={salasDaAula.join("\n")}
                                                 >
-                                                  {sala?.nome || "S/S"}
+                                                  {salasDaAula.map((nome: string, indice: number) => (
+                                                    <span key={`${aula.id}-sala-${indice}`}>{nome}</span>
+                                                  ))}
                                                 </span>
                                               )}
 
