@@ -191,7 +191,9 @@ export default function HomePage() {
         a.dia_semana === diaId &&
         String(a.slot_horario_id) === String(slotId) &&
         (
-          tipoFiltro === "TURMA"
+          filtroModulo === "TODOS_HORARIOS"
+            ? true
+            : tipoFiltro === "TURMA"
             ? (filtroModulo === "INTEGRAL"
                 ? (a.modulo || "INTEGRAL") === "INTEGRAL"
                 : (a.modulo || "INTEGRAL") === filtroModulo ||
@@ -211,7 +213,9 @@ export default function HomePage() {
 
   const aulasDoFiltro = dados.aulas.filter((a: any) => {
     const matchModulo =
-      tipoFiltro === "TURMA"
+      filtroModulo === "TODOS_HORARIOS"
+        ? true
+        : tipoFiltro === "TURMA"
         ? (filtroModulo === "INTEGRAL"
             ? (a.modulo || "INTEGRAL") === "INTEGRAL"
             : (a.modulo || "INTEGRAL") === filtroModulo ||
@@ -427,6 +431,7 @@ export default function HomePage() {
               <option value="MODULO_1">1º Trimestre (M1)</option>
               <option value="MODULO_2">2º Trimestre (M2)</option>
               <option value="MODULO_3">3º Trimestre (M3)</option>
+              <option value="TODOS_HORARIOS">Todos os horários</option>
             </select>
 
             <div className="flex gap-2 w-full xl:w-auto mt-4 xl:mt-0">

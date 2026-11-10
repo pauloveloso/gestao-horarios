@@ -228,7 +228,9 @@ export default function VisualizarHorariosAdminPage() {
         (
           // Para TURMA integrado: filtra pelo módulo exato ou INTEGRAL (anuais aparecem em todos)
           // Para PROFESSOR/ESPACO: INTEGRAL = mostra todos; M1/M2/M3 = só aquele módulo + anuais
-          tipoFiltro === "TURMA"
+          filtroModulo === "TODOS_HORARIOS"
+            ? true
+            : tipoFiltro === "TURMA"
             ? (filtroModulo === "INTEGRAL"
                 ? (a.modulo || "INTEGRAL") === "INTEGRAL"
                 : (a.modulo || "INTEGRAL") === filtroModulo ||
@@ -248,7 +250,9 @@ export default function VisualizarHorariosAdminPage() {
 
   const aulasDoFiltro = dados.aulas.filter((a: any) => {
     const matchModulo =
-      tipoFiltro === "TURMA"
+      filtroModulo === "TODOS_HORARIOS"
+        ? true
+        : tipoFiltro === "TURMA"
         ? (filtroModulo === "INTEGRAL"
             ? (a.modulo || "INTEGRAL") === "INTEGRAL"
             : (a.modulo || "INTEGRAL") === filtroModulo ||
@@ -434,6 +438,7 @@ export default function VisualizarHorariosAdminPage() {
               <option value="MODULO_1">1º Trimestre (M1)</option>
               <option value="MODULO_2">2º Trimestre (M2)</option>
               <option value="MODULO_3">3º Trimestre (M3)</option>
+              <option value="TODOS_HORARIOS">Todos os horários</option>
             </select>
 
           <div className="shrink-0">
