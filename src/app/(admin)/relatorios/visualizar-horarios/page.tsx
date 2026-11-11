@@ -7,16 +7,30 @@ import { supabase } from "@/lib/supabase";
 import { BotaoExportarPDF } from "@/app/components/BotaoExportarPDF";
 import { PDFPublicoDocument } from "@/app/components/PDFPublicoDocument";
 
+function ordenarAulasPorModulo(aulas: any[]) {
+  const ordem: Record<string, number> = {
+    MODULO_1: 1,
+    MODULO_2: 2,
+    MODULO_3: 3,
+    INTEGRAL: 4,
+  };
+  return [...aulas].sort(
+    (a, b) =>
+      (ordem[a.modulo || "INTEGRAL"] ?? 4) -
+      (ordem[b.modulo || "INTEGRAL"] ?? 4),
+  );
+}
+
 function agruparAulasCompartilhadas(aulas: any[], tipoFiltro: string, idSelecionado: string) {
-  if (tipoFiltro === "PROFESSOR") return aulas;
+  if (tipoFiltro === "PROFESSOR") return ordenarAulasPorModulo(aulas);
 
   const grupos = new Map<string, any[]>();
   for (const aula of aulas) {
-    const chave = `${aula.dia_semana}|${aula.slot_horario_id}|${aula.turma_id}|${aula.disciplina_id}`;
+    const chave = `${aula.dia_semana}|${aula.slot_horario_id}|${aula.turma_id}|${aula.disciplina_id}|${aula.modulo || "INTEGRAL"}`;
     grupos.set(chave, [...(grupos.get(chave) || []), aula]);
   }
 
-  return Array.from(grupos.entries()).flatMap(([chave, grupo]) => {
+  const aulasAgrupadas = Array.from(grupos.entries()).flatMap(([chave, grupo]) => {
     if (tipoFiltro === "ESPACO" && !grupo.some((aula) => String(aula.espaco_id) === String(idSelecionado))) {
       return [];
     }
@@ -36,6 +50,7 @@ function agruparAulasCompartilhadas(aulas: any[], tipoFiltro: string, idSelecion
       ...(tipoFiltro === "ESPACO" ? { espaco_id: idSelecionado } : {}),
     }];
   });
+  return ordenarAulasPorModulo(aulasAgrupadas);
 }
 
 export default function VisualizarHorariosAdminPage() {
@@ -277,7 +292,7 @@ export default function VisualizarHorariosAdminPage() {
             ? String(a.professor_id) === String(idSelecionado)
             : String(a.espaco_id) === String(idSelecionado)),
     );
-    if (tipoFiltro === "PROFESSOR") return aulasFiltradas;
+    if (tipoFiltro === "PROFESSOR") return ordenarAulasPorModulo(aulasFiltradas);
 
     const aulasParaAgrupar = dados.aulas.filter(
       (a: any) =>
@@ -686,6 +701,16 @@ export default function VisualizarHorariosAdminPage() {
                                                   ))}
                                                 </span>
                                               )}
+
+                                              <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 leading-tight uppercase mt-0.5">
+                                                {aula.modulo === "MODULO_1"
+                                                  ? "1º Trim"
+                                                  : aula.modulo === "MODULO_2"
+                                                    ? "2º Trim"
+                                                    : aula.modulo === "MODULO_3"
+                                                      ? "3º Trim"
+                                                      : "Anual / Semestral"}
+                                              </span>
                                             </div>
                                           );
                                         },
