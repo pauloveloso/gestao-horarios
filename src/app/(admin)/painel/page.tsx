@@ -56,7 +56,7 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (versaoSelecionada && dadosMestres) {
+    if (versaoSelecionada && dadosMestres && user) {
       if (user?.nivel_acesso === "PROFESSOR_TAE") {
         carregarDadosProfessor();
       } else {
@@ -99,6 +99,8 @@ export default function DashboardPage() {
 
   const carregarDadosProfessor = async () => {
     setCarregandoAulas(true);
+    setChoquesCriticos([]);
+    setAlertasSecundarios([]);
     try {
       // Função auxiliar para remover acentos, TODOS os espaços e deixar minúsculo
       const limparString = (str: any) => {
@@ -117,6 +119,7 @@ export default function DashboardPage() {
       );
 
       setProfessorVinculado(prof || null);
+      let aulasDoProfessor: any[] = [];
 
       if (prof) {
         const { data: aulas } = await supabase
@@ -124,8 +127,25 @@ export default function DashboardPage() {
           .select("*")
           .eq("versao_id", versaoSelecionada)
           .eq("professor_id", prof.id);
-        setAulasProfessor(aulas || []);
+        aulasDoProfessor = aulas || [];
       }
+      setAulasProfessor(aulasDoProfessor);
+
+      const alertas = prof
+        ? await buscarAlertasVersao(
+            versaoSelecionada,
+            aulasDoProfessor.map((aula) => String(aula.id)),
+          )
+        : [];
+      diagnosticarGrade(
+        aulasDoProfessor,
+        alertas,
+        dadosMestres?.turmas || [],
+        dadosMestres?.professores || [],
+        dadosMestres?.disciplinas || [],
+        dadosMestres?.espacos || [],
+        dadosMestres?.slots || [],
+      );
 
       const hoje = new Date().toISOString().split("T")[0];
       const { data: reservas } = await supabase
@@ -136,6 +156,8 @@ export default function DashboardPage() {
         .order("data_reserva", { ascending: true })
         .limit(5);
       setReservasProfessor(reservas || []);
+    } catch (error) {
+      console.error("Erro ao carregar o painel do professor:", error);
     } finally {
       setCarregandoAulas(false);
     }
@@ -144,26 +166,35 @@ export default function DashboardPage() {
   const carregarDadosEDiagnosticar = async () => {
     if (!dadosMestres) return;
     setCarregandoAulas(true);
+    setChoquesCriticos([]);
+    setAlertasSecundarios([]);
     try {
-      const { data: aulas } = await supabase
-        .from("aulas")
-        .select("*")
-        .eq("versao_id", versaoSelecionada)
-        .limit(5000);
-
-      if (!aulas || !dadosMestres.slots) return;
-
-      let aulasParaDiagnostico = aulas;
-
-      if (user?.nivel_acesso === "COORDENADOR" && user.curso_id) {
-        const turmasDoCurso = (dadosMestres.turmas || [])
-          .filter(t => String(t.curso_id) === String(user.curso_id))
-          .map(t => String(t.id));
-        aulasParaDiagnostico = aulas.filter(a => turmasDoCurso.includes(String(a.turma_id)));
+      let idsTurmasDoCurso: string[] | undefined;
+      if (user?.nivel_acesso === "COORDENADOR") {
+        idsTurmasDoCurso = (dadosMestres.turmas || [])
+          .filter((turma) => String(turma.curso_id) === String(user.curso_id))
+          .map((turma) => String(turma.id));
+        if (!user.curso_id || idsTurmasDoCurso.length === 0) {
+          diagnosticarGrade([], [], dadosMestres.turmas || [], dadosMestres.professores || [], dadosMestres.disciplinas || [], dadosMestres.espacos || [], dadosMestres.slots || []);
+          return;
+        }
       }
 
+      const aulas = await buscarAulasVersao(versaoSelecionada, idsTurmasDoCurso);
+
+      if (!dadosMestres.slots) {
+        diagnosticarGrade([], [], dadosMestres.turmas || [], dadosMestres.professores || [], dadosMestres.disciplinas || [], dadosMestres.espacos || [], dadosMestres.slots || []);
+        return;
+      }
+
+      const idsAulasDoCurso = user?.nivel_acesso === "COORDENADOR"
+        ? aulas.map((aula) => String(aula.id))
+        : undefined;
+      const alertas = await buscarAlertasVersao(versaoSelecionada, idsAulasDoCurso);
+
       diagnosticarGrade(
-        aulasParaDiagnostico,
+        aulas,
+        alertas,
         dadosMestres.turmas || [],
         dadosMestres.professores || [],
         dadosMestres.disciplinas || [],
@@ -182,8 +213,68 @@ export default function DashboardPage() {
     return item ? item[campo] || item.codigo : "Desconhecido";
   };
 
+  const buscarAulasVersao = async (versaoId: string, idsTurmas?: string[]) => {
+    if (idsTurmas && idsTurmas.length === 0) return [];
+
+    const aulas: any[] = [];
+    const tamanhoPagina = 1000;
+    for (let inicio = 0; ; inicio += tamanhoPagina) {
+      let query = supabase
+        .from("aulas")
+        .select("*")
+        .eq("versao_id", versaoId)
+        .order("id", { ascending: true })
+        .range(inicio, inicio + tamanhoPagina - 1);
+
+      if (idsTurmas) query = query.in("turma_id", idsTurmas);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const pagina = data || [];
+      aulas.push(...pagina);
+      if (pagina.length < tamanhoPagina) break;
+    }
+    return aulas;
+  };
+
+  const buscarAlertasVersao = async (versaoId: string, idsAulas?: string[]) => {
+    if (idsAulas && idsAulas.length === 0) return [];
+
+    const alertas: any[] = [];
+    const tamanhoPagina = 1000;
+    const filtrosIds = idsAulas
+      ? Array.from({ length: Math.ceil(idsAulas.length / 100) }, (_, index) =>
+          idsAulas.slice(index * 100, (index + 1) * 100),
+        )
+      : [undefined];
+
+    for (const filtroIds of filtrosIds) {
+      for (let inicio = 0; ; inicio += tamanhoPagina) {
+        let query = supabase
+          .from("vw_choques_horarios")
+          .select("*")
+          .eq("versao_id", versaoId)
+          .order("id_aula_foco", { ascending: true })
+          .order("tipo_choque", { ascending: true })
+          .range(inicio, inicio + tamanhoPagina - 1);
+
+        if (filtroIds) query = query.in("id_aula_foco", filtroIds);
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        const pagina = data || [];
+        alertas.push(...pagina);
+        if (pagina.length < tamanhoPagina) break;
+      }
+    }
+    return alertas;
+  };
+
   const diagnosticarGrade = (
     aulas: any[],
+    alertasView: any[],
     turmas: any[],
     professores: any[],
     disciplinas: any[],
@@ -194,83 +285,97 @@ export default function DashboardPage() {
       (a) => a.dia_semana && a.slot_horario_id && a.turma_id && a.disciplina_id,
     );
 
-    let semProf = 0;
-    let semSala = 0;
-    let criticos: any[] = [];
-    let secundarios: any[] = [];
-
-    const formatarHorario = (dia: string, slotId: string) => {
-      const slot = slots.find((s) => String(s.id) === String(slotId));
-      return `${dia} às ${slot ? slot.hora_inicio.substring(0, 5) : ""}`;
+    const semProf = aulasAlocadas.filter((aula) => !aula.professor_id).length;
+    const semSala = aulasAlocadas.filter((aula) => !aula.espaco_id).length;
+    const aulasPorId = new Map<string, any>(aulas.map((aula) => [String(aula.id), aula]));
+    const tiposCriticos = new Set([
+      "CHOQUE_TURMA",
+      "CHOQUE_ESPACO",
+      "CHOQUE_DOCENTE",
+      "DESCANSO_DOCENTE",
+      "LIMITE_TURNOS",
+      "INDISPONIBILIDADE",
+    ]);
+    const nomesTipos: Record<string, string> = {
+      CHOQUE_TURMA: "Choque de Turma",
+      CHOQUE_ESPACO: "Choque de Sala",
+      CHOQUE_DOCENTE: "Choque de Professor",
+      DESCANSO_DOCENTE: "Descanso entre jornadas",
+      LIMITE_TURNOS: "Limite de turnos",
+      INDISPONIBILIDADE: "Indisponibilidade do professor",
+      DIA_PLANEJAMENTO: "Dia de planejamento",
+      AULAS_GEMINADAS: "Aulas geminadas",
+      FIM_DE_SEMANA: "Descanso no fim de semana",
+      CARGA_INCOMPLETA: "Carga horária incompleta",
+      EXCESSO_CARGA: "Excesso de carga horária",
+      CARGA_HORARIA: "Excesso de carga horária",
     };
+    const mensagensTipos: Record<string, string> = {
+      CHOQUE_TURMA: "A turma possui mais de uma aula simultânea.",
+      CHOQUE_ESPACO: "A sala ou laboratório está ocupado por outra aula simultânea.",
+      CHOQUE_DOCENTE: "O professor está alocado em outra aula no mesmo horário.",
+      DESCANSO_DOCENTE: "O intervalo entre jornadas é inferior a 10 horas.",
+      LIMITE_TURNOS: "O professor está alocado em três ou mais turnos no mesmo dia.",
+      INDISPONIBILIDADE: "A aula coincide com uma indisponibilidade cadastrada do professor.",
+      DIA_PLANEJAMENTO: "O professor está alocado no dia de planejamento.",
+      AULAS_GEMINADAS: "A turma tem mais de duas aulas desta disciplina no mesmo dia.",
+      FIM_DE_SEMANA: "O professor tem aula na sexta à noite e na segunda de manhã.",
+      CARGA_INCOMPLETA: "Faltam aulas para completar a carga horária semanal.",
+      EXCESSO_CARGA: "A carga horária semanal desta disciplina foi excedida.",
+      CARGA_HORARIA: "A carga horária semanal desta disciplina foi excedida.",
+    };
+    const alertasUnicos = new Set<string>();
+    const criticosUnicos: any[] = [];
+    const secUnicos: any[] = [];
 
-    aulasAlocadas.forEach((aulaAtual, index) => {
-      if (!aulaAtual.professor_id) semProf++;
-      if (!aulaAtual.espaco_id) semSala++;
+    for (const alerta of alertasView) {
+      const aula = aulasPorId.get(String(alerta.id_aula_foco));
+      if (!aula) continue;
 
-      if (aulaAtual.professor_id) {
-        const prof = professores.find(
-          (p) => String(p.id) === String(aulaAtual.professor_id),
-        );
-        if (
-          prof &&
-          String(prof.dia_planejamento).toUpperCase() ===
-          String(aulaAtual.dia_semana).toUpperCase()
-        ) {
-          secundarios.push({
-            tipo: "Dia de Planejamento",
-            msg: `Professor(a) ${prof.nome} está alocado(a) no dia de planejamento (${aulaAtual.dia_semana}).`,
-            local: `Turma ${getNome(turmas, aulaAtual.turma_id, "codigo")} - ${getNome(disciplinas, aulaAtual.disciplina_id)}`,
-          });
-        }
+      const tipo = String(alerta.tipo_choque);
+      const idsConflito = [alerta.id_aula_foco, alerta.id_aula_conflito]
+        .filter(Boolean)
+        .map(String)
+        .sort();
+      let escopo = idsConflito.length > 1
+        ? idsConflito.join("|")
+        : String(alerta.id_aula_foco);
+
+      if (["EXCESSO_CARGA", "CARGA_HORARIA", "CARGA_INCOMPLETA"].includes(tipo)) {
+        escopo = [aula.turma_id, aula.disciplina_id, aula.modulo || "INTEGRAL"].join("|");
+      } else if (tipo === "AULAS_GEMINADAS") {
+        escopo = [aula.turma_id, aula.disciplina_id, aula.dia_semana, aula.modulo || "INTEGRAL"].join("|");
+      } else if (tipo === "LIMITE_TURNOS") {
+        escopo = [aula.professor_id, aula.dia_semana, aula.modulo || "INTEGRAL"].join("|");
       }
 
-      for (let i = index + 1; i < aulasAlocadas.length; i++) {
-        const outraAula = aulasAlocadas[i];
-        if (
-          aulaAtual.dia_semana === outraAula.dia_semana &&
-          String(aulaAtual.slot_horario_id) === String(outraAula.slot_horario_id)
-        ) {
-          const horarioStr = formatarHorario(aulaAtual.dia_semana, aulaAtual.slot_horario_id);
+      const chave = `${tipo}|${escopo}`;
+      if (alertasUnicos.has(chave)) continue;
+      alertasUnicos.add(chave);
 
-          if (
-            aulaAtual.espaco_id &&
-            String(aulaAtual.espaco_id) === String(outraAula.espaco_id) &&
-            String(aulaAtual.turma_id) !== String(outraAula.turma_id)
-          ) {
-            criticos.push({
-              tipo: "Choque de Sala",
-              msg: `${getNome(espacos, aulaAtual.espaco_id)} ocupada por duas turmas.`,
-              detalhe: `${getNome(turmas, aulaAtual.turma_id, "codigo")} e ${getNome(turmas, outraAula.turma_id, "codigo")} (${horarioStr})`,
-            });
-          }
-          if (
-            aulaAtual.professor_id &&
-            String(aulaAtual.professor_id) === String(outraAula.professor_id) &&
-            String(aulaAtual.turma_id) !== String(outraAula.turma_id)
-          ) {
-            criticos.push({
-              tipo: "Choque de Professor",
-              msg: `Prof(a). ${getNome(professores, aulaAtual.professor_id)} em duas turmas.`,
-              detalhe: `${getNome(turmas, aulaAtual.turma_id, "codigo")} e ${getNome(turmas, outraAula.turma_id, "codigo")} (${horarioStr})`,
-            });
-          }
-          if (
-            String(aulaAtual.turma_id) === String(outraAula.turma_id) &&
-            String(aulaAtual.disciplina_id) !== String(outraAula.disciplina_id)
-          ) {
-            criticos.push({
-              tipo: "Choque na Turma",
-              msg: `Turma ${getNome(turmas, aulaAtual.turma_id, "codigo")} com duas matérias.`,
-              detalhe: `${getNome(disciplinas, aulaAtual.disciplina_id)} e ${getNome(disciplinas, outraAula.disciplina_id)} (${horarioStr})`,
-            });
-          }
-        }
-      }
-    });
+      const turma = getNome(turmas, aula.turma_id, "codigo");
+      const disciplina = getNome(disciplinas, aula.disciplina_id);
+      const professor = getNome(professores, aula.professor_id);
+      const espaco = aula.espaco_id ? getNome(espacos, aula.espaco_id) : null;
+      const slot = slots.find((item) => String(item.id) === String(aula.slot_horario_id));
+      const modulo = aula.modulo === "MODULO_1"
+        ? "1º trimestre"
+        : aula.modulo === "MODULO_2"
+          ? "2º trimestre"
+          : aula.modulo === "MODULO_3"
+            ? "3º trimestre"
+            : "Anual / Semestral";
+      const msg = alerta.mensagem_customizada || mensagensTipos[tipo] || "Foi detectado um problema nesta aula.";
+      const item = {
+        tipo: nomesTipos[tipo] || tipo,
+        msg,
+        local: `Turma ${turma} — ${disciplina}`,
+        detalhe: `${aula.dia_semana || "Dia não definido"} às ${slot?.hora_inicio?.substring(0, 5) || "horário não definido"} — ${modulo}${espaco ? ` — ${espaco}` : ""}${professor !== "Desconhecido" ? ` — ${professor}` : ""}`,
+      };
 
-    const criticosUnicos = Array.from(new Set(criticos.map((c) => JSON.stringify(c)))).map((s) => JSON.parse(s));
-    const secUnicos = Array.from(new Set(secundarios.map((c) => JSON.stringify(c)))).map((s) => JSON.parse(s));
+      if (tiposCriticos.has(tipo)) criticosUnicos.push(item);
+      else secUnicos.push(item);
+    }
 
     setChoquesCriticos(criticosUnicos);
     setAlertasSecundarios(secUnicos);
@@ -409,7 +514,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
               <h2 className="font-bold text-gray-700 flex items-center gap-2">
-                <ShieldAlert className="w-5 h-5 text-red-600" /> Impedimentos Físicos
+                <ShieldAlert className="w-5 h-5 text-red-600" /> Impedimentos e Conflitos
               </h2>
               <span className="bg-red-100 text-red-700 font-black text-xs px-2 py-1 rounded-full">{choquesCriticos.length}</span>
             </div>
@@ -443,7 +548,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
               <h2 className="font-bold text-gray-700 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-500" /> Alertas de Planejamento
+                <AlertTriangle className="w-5 h-5 text-yellow-500" /> Alertas e Limites
               </h2>
               <span className="bg-yellow-100 text-yellow-700 font-black text-xs px-2 py-1 rounded-full">{alertasSecundarios.length}</span>
             </div>
@@ -465,6 +570,7 @@ export default function DashboardPage() {
                         <div key={idx} className="p-4 hover:bg-yellow-50/30 transition-colors">
                           <p className="font-bold text-gray-800 text-sm">{alerta.msg}</p>
                           <p className="text-[11px] text-gray-500 font-bold mt-1 uppercase italic">{alerta.local}</p>
+                          <p className="text-[11px] text-gray-400 mt-0.5">{alerta.detalhe}</p>
                         </div>
                       ))}
                     </div>
@@ -627,6 +733,36 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        <div className="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+            <h2 className="font-bold text-gray-700 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-500" /> Alertas das minhas aulas
+            </h2>
+            <span className="bg-yellow-100 text-yellow-700 font-black text-xs px-2 py-1 rounded-full">
+              {choquesCriticos.length + alertasSecundarios.length}
+            </span>
+          </div>
+          {choquesCriticos.length + alertasSecundarios.length === 0 ? (
+            <p className="p-8 text-center text-gray-400 font-medium">Nenhum alerta nas suas aulas nesta versão.</p>
+          ) : (
+            <div className="divide-y divide-gray-100 max-h-[420px] overflow-y-auto">
+              {[...choquesCriticos, ...alertasSecundarios].map((alerta, index) => (
+                <div key={`${alerta.tipo}-${alerta.local}-${index}`} className="p-4">
+                  <div className="flex items-start gap-3">
+                    <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${choquesCriticos.includes(alerta) ? "bg-red-500" : "bg-yellow-500"}`} />
+                    <div>
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-wider">{alerta.tipo}</p>
+                      <p className="font-bold text-gray-800 text-sm mt-0.5">{alerta.msg}</p>
+                      <p className="text-[11px] text-gray-500 font-bold mt-1 uppercase">{alerta.local}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{alerta.detalhe}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
     );
   };
@@ -765,7 +901,7 @@ export default function DashboardPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
               <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
                 <h2 className="font-bold text-gray-700 flex items-center gap-2">
-                  <ShieldAlert className="w-5 h-5 text-red-600 inline" /> Impedimentos Físicos
+                  <ShieldAlert className="w-5 h-5 text-red-600 inline" /> Impedimentos e Conflitos
                 </h2>
                 <span className="bg-red-100 text-red-700 font-black text-xs px-2 py-1 rounded-full">{choquesCriticos.length}</span>
               </div>
@@ -799,7 +935,7 @@ export default function DashboardPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
               <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
                 <h2 className="font-bold text-gray-700 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-yellow-500 inline" /> Alertas de Planejamento
+                  <AlertTriangle className="w-5 h-5 text-yellow-500 inline" /> Alertas e Limites
                 </h2>
                 <span className="bg-yellow-100 text-yellow-700 font-black text-xs px-2 py-1 rounded-full">{alertasSecundarios.length}</span>
               </div>
@@ -807,7 +943,7 @@ export default function DashboardPage() {
                 {alertasSecundarios.length === 0 ? (
                   <div className="p-10 text-center text-gray-400 font-medium h-full flex flex-col items-center justify-center">
                     <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    Nenhum alerta pedagógico.
+                    Nenhum alerta.
                   </div>
                 ) : (
                   Object.keys(alertasAgrupados).sort().map((tipo, tIdx) => (
@@ -821,6 +957,7 @@ export default function DashboardPage() {
                           <div key={idx} className="p-4 hover:bg-yellow-50/30 transition-colors">
                             <p className="font-bold text-gray-800 text-sm">{alerta.msg}</p>
                             <p className="text-[11px] text-gray-500 font-bold mt-1 uppercase italic">{alerta.local}</p>
+                            <p className="text-[11px] text-gray-400 mt-0.5">{alerta.detalhe}</p>
                           </div>
                         ))}
                       </div>

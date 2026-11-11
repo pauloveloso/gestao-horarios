@@ -456,38 +456,23 @@ async function validarCargaHoraria(
   aula: any,
 ): Promise<ValidacaoResultado | null> {
   const supabase = await createClient();
-  // Verificar se a quantidade de aulas semanais da disciplina não excede o previsto
-  // Requer campo 'carga_horaria_semanal' na tabela disciplinas
-  const { data: disciplina } = await supabase
-    .from("disciplinas")
-    .select("carga_horaria, nome")
-    .eq("id", aula.disciplina_id)
-    .single();
+  const { data, error } = await supabase
+    .from("vw_choques_horarios")
+    .select("mensagem_customizada")
+    .eq("id_aula_foco", aula.id)
+    .eq("tipo_choque", "EXCESSO_CARGA")
+    .maybeSingle();
 
-  if (!disciplina || !disciplina.carga_horaria) return null;
+  if (error || !data) return null;
 
-  const { count } = await supabase
-    .from("aulas")
-    .select("*", { head: true, count: "exact" })
-    .eq("disciplina_id", aula.disciplina_id)
-    .eq("turma_id", aula.turma_id)
-    .eq("status", "ATIVO");
-
-  const totalAulas = count || 0;
-
-  // Considerando que carga_horaria seja em horas e cada aula tenha 1h ou 50min
-  // A lógica exata depende de como sua carga horária está definida
-  if (totalAulas > disciplina.carga_horaria * 2) {
-    // Exemplo grosseiro
-    return {
-      regra: "CARGA_HORARIA",
-      gravidade: "ALERTA",
-      mensagem: `A carga horária semanal de "${disciplina.nome}" parece estar sendo excedida.`,
-      dadosConflito: { disciplina_id: aula.disciplina_id },
-    };
-  }
-
-  return null;
+  return {
+    regra: "EXCESSO_CARGA",
+    gravidade: "ALERTA",
+    mensagem:
+      data.mensagem_customizada ||
+      "A carga horária semanal desta disciplina foi excedida.",
+    dadosConflito: { disciplina_id: aula.disciplina_id },
+  };
 }
 
 async function validarFimDeSemana(

@@ -68,6 +68,9 @@ export default function ModoGrade({
         return "[Atenção] Dia de planejamento do professor.";
       case "AULAS_GEMINADAS":
         return "[Limite] Mais de 2 aulas geminadas desta disciplina.";
+      case "EXCESSO_CARGA":
+      case "CARGA_HORARIA":
+        return "[Limite] A carga horária semanal desta disciplina foi excedida.";
       case "FIM_DE_SEMANA":
         return "[Atenção] Professor leciona Sexta à noite e Segunda de manhã.";
       default:
@@ -576,8 +579,7 @@ export default function ModoGrade({
                             const problemas = choques.filter(
                               (c: any) =>
                                 c.id_aula_foco === aula.id &&
-                                c.tipo_choque !== "CARGA_INCOMPLETA" &&
-                                c.tipo_choque !== "EXCESSO_CARGA",
+                                c.tipo_choque !== "CARGA_INCOMPLETA",
                             );
 
                             const temCritico = problemas.some((c: any) =>
@@ -594,6 +596,8 @@ export default function ModoGrade({
                               [
                                 "DIA_PLANEJAMENTO",
                                 "AULAS_GEMINADAS",
+                                "EXCESSO_CARGA",
+                                "CARGA_HORARIA",
                                 "FIM_DE_SEMANA",
                               ].includes(c.tipo_choque),
                             );

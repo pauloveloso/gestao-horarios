@@ -21,7 +21,8 @@ export type TipoValidacao =
   | "LIMITE_TURNOS" // 5. Professor excede limite de turnos no mesmo dia
   | "DIA_PLANEJAMENTO" // 6. Professor tem aula no seu dia de planejamento
   | "AULAS_GEMINADAS" // 7. Turma com mais de 2 aulas da mesma disciplina no dia
-  | "CARGA_HORARIA" // 8. Disciplina não atingiu carga horária semanal
+  | "CARGA_HORARIA" // Código legado de carga horária
+  | "EXCESSO_CARGA" // Disciplina excede a carga horária semanal cadastrada
   | "FIM_DE_SEMANA" // 9. Professor tem aula sexta à noite e segunda manhã
   | "CUSTOM"; // Para regras personalizadas futuras
 

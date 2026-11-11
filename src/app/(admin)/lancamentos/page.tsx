@@ -55,7 +55,7 @@ export default function LancamentosPage() {
     }
 
     if (data) {
-      setChoques(data.filter((c) => c.tipo_choque !== "CARGA_HORARIA"));
+      setChoques(data);
     }
     console.timeEnd("⏱️ Gargalo 2: Tempo da View de Choques");
   };
