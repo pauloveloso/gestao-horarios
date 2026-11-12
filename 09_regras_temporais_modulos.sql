@@ -335,7 +335,17 @@ CREATE VIEW public.vw_choques_horarios AS
     id_aula_conflito,
     tipo_choque,
     mensagem_customizada
-   FROM public.vw_choques_horarios_base;
+   FROM public.vw_choques_horarios_base
+ UNION
+ SELECT
+    id_aula_conflito AS id_aula_foco,
+    versao_id,
+    id_aula_foco AS id_aula_conflito,
+    tipo_choque,
+    mensagem_customizada
+   FROM public.vw_choques_horarios_base
+  WHERE tipo_choque = 'FIM_DE_SEMANA'
+    AND id_aula_conflito IS NOT NULL;
 
 -- Permissões
 GRANT ALL ON TABLE public.vw_choques_horarios_base TO anon, authenticated, service_role;

@@ -7,6 +7,10 @@ import {
   MODALIDADES_CURSO,
   normalizarModalidade,
 } from "@/lib/modalidades";
+import {
+  classificarGravidadePlanilha,
+  normalizarProblemasPlanilha,
+} from "./normalizarProblemas";
 
 export default function ModoGrade({
   versaoId,
@@ -50,8 +54,8 @@ export default function ModoGrade({
   };
 
   const mapearMensagem = (choque: any) => {
-    if (choque.mensagem_customizada) return choque.mensagem_customizada;
-    switch (choque.tipo_choque) {
+    const mensagem = choque.mensagem_customizada || (() => {
+      switch (choque.tipo_choque) {
       case "CHOQUE_TURMA":
         return "[Choque] Turma já possui aula neste horário.";
       case "CHOQUE_ESPACO":
@@ -75,7 +79,16 @@ export default function ModoGrade({
         return "[Atenção] Professor leciona Sexta à noite e Segunda de manhã.";
       default:
         return "[Aviso] Problema detectado.";
-    }
+      }
+    })();
+
+    const gravidade = classificarGravidadePlanilha(choque.tipo_choque);
+    const icone = gravidade === "IMPEDITIVO"
+      ? "🔴"
+      : gravidade === "ALERTA"
+        ? "🟡"
+        : "⚠️";
+    return `${icone} ${mensagem}`;
   };
 
   const getNome = (lista: any[], id: string, campo: string = "nome") => {
@@ -576,30 +589,18 @@ export default function ModoGrade({
                       >
                         <div className="flex flex-col h-full w-full gap-1">
                           {aulasNoSlot.map((aula: any) => {
-                            const problemas = choques.filter(
+                            const problemas = normalizarProblemasPlanilha(choques.filter(
                               (c: any) =>
-                                c.id_aula_foco === aula.id &&
-                                c.tipo_choque !== "CARGA_INCOMPLETA",
-                            );
+                                c.id_aula_foco === aula.id,
+                            ));
 
-                            const temCritico = problemas.some((c: any) =>
-                              [
-                                "CHOQUE_TURMA",
-                                "CHOQUE_ESPACO",
-                                "CHOQUE_DOCENTE",
-                                "DESCANSO_DOCENTE",
-                                "LIMITE_TURNOS",
-                                "INDISPONIBILIDADE",
-                              ].includes(c.tipo_choque),
+                            const temCritico = problemas.some(
+                              (problema: any) =>
+                                classificarGravidadePlanilha(problema.tipo_choque) === "IMPEDITIVO",
                             );
-                            const temAlerta = problemas.some((c: any) =>
-                              [
-                                "DIA_PLANEJAMENTO",
-                                "AULAS_GEMINADAS",
-                                "EXCESSO_CARGA",
-                                "CARGA_HORARIA",
-                                "FIM_DE_SEMANA",
-                              ].includes(c.tipo_choque),
+                            const temAlerta = problemas.some(
+                              (problema: any) =>
+                                classificarGravidadePlanilha(problema.tipo_choque) === "ALERTA",
                             );
 
                             let corBgCard = "bg-green-50/40 border-green-200";

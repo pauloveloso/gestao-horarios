@@ -1,6 +1,7 @@
 "use client";
 
 import React, { memo } from "react";
+import { classificarGravidadePlanilha } from "./normalizarProblemas";
 
 const formatarHora = (hora: string) => {
   if (!hora) return "";
@@ -8,32 +9,41 @@ const formatarHora = (hora: string) => {
 };
 
 const mapearMensagem = (choque: any) => {
-  if (choque.mensagem_customizada) return choque.mensagem_customizada;
-  switch (choque.tipo_choque) {
+  const mensagem = choque.mensagem_customizada || (() => {
+    switch (choque.tipo_choque) {
     case "CHOQUE_TURMA":
-      return "🔴 Choque: Turma já possui aula neste horário.";
+      return "Choque: Turma já possui aula neste horário.";
     case "CHOQUE_ESPACO":
-      return "🔴 Choque: Sala/Laboratório já ocupado.";
+      return "Choque: Sala/Laboratório já ocupado.";
     case "CHOQUE_DOCENTE":
-      return "🔴 Choque: Professor já alocado em outra turma.";
+      return "Choque: Professor já alocado em outra turma.";
     case "DESCANSO_DOCENTE":
-      return "🔴 Alerta Trabalhista: Sem descanso interjornada (Mín. 10h).";
+      return "Alerta Trabalhista: Sem descanso interjornada (Mín. 10h).";
     case "LIMITE_TURNOS":
-      return "🔴 Limite: Professor alocado em 3 turnos hoje.";
+      return "Limite: Professor alocado em 3 turnos hoje.";
     case "INDISPONIBILIDADE":
-      return "🔴 Indisponibilidade: Horário reservado para atendimento especial.";
+      return "Indisponibilidade: Horário reservado para atendimento especial.";
     case "DIA_PLANEJAMENTO":
-      return "🟡 Atenção: Dia de planejamento do professor.";
+      return "Atenção: Dia de planejamento do professor.";
     case "AULAS_GEMINADAS":
-      return "🟡 Limite: Mais de 2 aulas geminadas desta disciplina.";
+      return "Limite: Mais de 2 aulas geminadas desta disciplina.";
     case "EXCESSO_CARGA":
     case "CARGA_HORARIA":
-      return "🟡 Limite: A carga horária semanal desta disciplina foi excedida.";
+      return "Limite: A carga horária semanal desta disciplina foi excedida.";
     case "FIM_DE_SEMANA":
-      return "🟡 Atenção: Professor leciona Sexta à noite e Segunda de manhã.";
+      return "Atenção: Professor leciona Sexta à noite e Segunda de manhã.";
     default:
-      return "⚠️ Problema detectado.";
-  }
+      return "Problema detectado.";
+    }
+  })();
+
+  const gravidade = classificarGravidadePlanilha(choque.tipo_choque);
+  const icone = gravidade === "IMPEDITIVO"
+    ? "🔴"
+    : gravidade === "ALERTA"
+      ? "🟡"
+      : "⚠️";
+  return `${icone} ${mensagem}`;
 };
 
 const isCorEscura = (corBase: string) => {
@@ -102,25 +112,16 @@ const LinhaPlanilha = memo(({
     linha.slot_horario_id;
   const linhaRascunho = temDado && !estaCompleta;
 
-  const temCritico = problemas.some((c: any) =>
-    [
-      "CHOQUE_TURMA",
-      "CHOQUE_ESPACO",
-      "CHOQUE_DOCENTE",
-      "DESCANSO_DOCENTE",
-      "LIMITE_TURNOS",
-      "INDISPONIBILIDADE",
-    ].includes(c.tipo_choque),
+  const problemasCriticos = problemas.filter(
+    (problema: any) =>
+      classificarGravidadePlanilha(problema.tipo_choque) === "IMPEDITIVO",
   );
-  const temAlerta = problemas.some((c: any) =>
-    [
-      "DIA_PLANEJAMENTO",
-      "AULAS_GEMINADAS",
-      "EXCESSO_CARGA",
-      "CARGA_HORARIA",
-      "FIM_DE_SEMANA",
-    ].includes(c.tipo_choque),
+  const problemasAlertas = problemas.filter(
+    (problema: any) =>
+      classificarGravidadePlanilha(problema.tipo_choque) === "ALERTA",
   );
+  const temCritico = problemasCriticos.length > 0;
+  const temAlerta = problemasAlertas.length > 0;
 
   const fundoEscuro = isCorEscura(corHexadecimal);
   const corTexto = fundoEscuro ? "text-white" : "text-gray-900";
@@ -380,14 +381,24 @@ const LinhaPlanilha = memo(({
       <td className="p-2 text-center">
         {linha.id.length > 2 && (
           <div className="inline-flex items-center justify-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-lg shadow-sm border border-gray-100/50 backdrop-blur-sm transition-colors hover:bg-white">
-            {(temCritico || temAlerta) && (
+            {temCritico && (
               <span
                 className="font-bold cursor-help text-lg animate-pulse"
-                title={problemas
+                title={problemasCriticos
                   .map((p: any) => mapearMensagem(p))
                   .join("\n")}
               >
-                {temCritico ? "🔴" : "🟡"}
+                🔴
+              </span>
+            )}
+            {temAlerta && (
+              <span
+                className="font-bold cursor-help text-lg animate-pulse"
+                title={problemasAlertas
+                  .map((p: any) => mapearMensagem(p))
+                  .join("\n")}
+              >
+                🟡
               </span>
             )}
             <button

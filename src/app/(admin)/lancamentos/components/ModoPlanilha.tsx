@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { Trash2, AlertTriangle } from "lucide-react";
 import LinhaPlanilha from "./LinhaPlanilha";
+import { normalizarProblemasPlanilha } from "./normalizarProblemas";
 import {
   normalizarModalidade,
   formatarNomeModalidade,
@@ -719,57 +720,13 @@ export default function ModoPlanilha({
                     </tr>
                   )}
                   {linhasVisualizadas.map((linha: any) => {
-                    const temDado =
-                      linha.turma_id ||
-                      linha.disciplina_id ||
-                      linha.professor_id ||
-                      linha.dia_semana ||
-                      linha.slot_horario_id;
-                    const estaCompleta =
-                      linha.turma_id &&
-                      linha.disciplina_id &&
-                      linha.dia_semana &&
-                      linha.slot_horario_id;
-                    const linhaRascunho = temDado && !estaCompleta;
                     const corHexadecimal =
                       mapaCoresTurma.get(String(linha.turma_id)) || "";
 
-                    const problemas = choques.filter(
+                    const problemas = normalizarProblemasPlanilha(choques.filter(
                       (c: any) =>
-                        c.id_aula_foco === linha.id &&
-                        c.tipo_choque !== "CARGA_INCOMPLETA",
-                    );
-
-                    const temCritico = problemas.some((c: any) =>
-                      [
-                        "CHOQUE_TURMA",
-                        "CHOQUE_ESPACO",
-                        "CHOQUE_DOCENTE",
-                        "DESCANSO_DOCENTE",
-                        "LIMITE_TURNOS",
-                        "INDISPONIBILIDADE",
-                      ].includes(c.tipo_choque),
-                    );
-                    const temAlerta = problemas.some((c: any) =>
-                      [
-                        "DIA_PLANEJAMENTO",
-                        "AULAS_GEMINADAS",
-                        "EXCESSO_CARGA",
-                        "CARGA_HORARIA",
-                        "FIM_DE_SEMANA",
-                      ].includes(c.tipo_choque),
-                    );
-
-                    let classeLinha =
-                      "border-b border-gray-200 transition-all group hover:brightness-95 ";
-                    if (temCritico)
-                      classeLinha +=
-                        " outline outline-2 outline-offset-[-2px] outline-red-600 z-0 relative";
-                    else if (temAlerta)
-                      classeLinha +=
-                        " outline outline-2 outline-offset-[-2px] outline-yellow-400 z-0 relative";
-                    else if (linhaRascunho)
-                      classeLinha += " border-l-4 border-l-yellow-400";
+                        c.id_aula_foco === linha.id,
+                    ));
 
                     const tObj = turmasMap.get(String(linha.turma_id));
                     const dFiltradas = tObj?.curso_id
