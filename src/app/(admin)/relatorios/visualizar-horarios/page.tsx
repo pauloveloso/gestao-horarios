@@ -54,6 +54,8 @@ function agruparAulasCompartilhadas(aulas: any[], tipoFiltro: string, idSelecion
 }
 
 export default function VisualizarHorariosAdminPage() {
+  const { user } = useUser();
+  const somenteVersoesPublicadas = user?.nivel_acesso === "PROFESSOR_TAE";
   const [carregando, setCarregando] = useState(true);
   const [gerandoPDF, setGerandoPDF] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -92,30 +94,59 @@ export default function VisualizarHorariosAdminPage() {
     { id: "SEXTA", nome: "SEXTA" },
   ];
 
-  // 1. CARREGA AS VERSÕES E SELECIONA O RASCUNHO POR PADRÃO
+  // 1. CARREGA AS VERSÕES PERMITIDAS PARA O PERFIL ATUAL
   useEffect(() => {
     async function carregarVersoes() {
-      const { data } = await supabase
+      setCarregando(true);
+      if (somenteVersoesPublicadas) {
+        setVersoes([]);
+        setVersaoSelecionada("");
+        setDados({
+          aulas: [],
+          turmas: [],
+          cursos: [],
+          professores: [],
+          disciplinas: [],
+          espacos: [],
+          categorias: [],
+          slots: [],
+        });
+      }
+
+      let queryVersoes = supabase
         .from("versoes_grade")
         .select("*")
         .order("data_inicio_vigencia", { ascending: false });
+      if (somenteVersoesPublicadas) {
+        queryVersoes = queryVersoes.in("status", ["PUBLICADA", "ARQUIVADA"]);
+      }
+      const { data } = await queryVersoes;
 
       if (data && data.length > 0) {
         setVersoes(data);
 
-        // REGRA DE PADRÃO: Prioriza encontrar um RASCUNHO, senão pega a primeira
-        const rascunho = data.find((v) => v.status === "RASCUNHO");
-        if (rascunho) {
-          setVersaoSelecionada(rascunho.id);
+        if (somenteVersoesPublicadas) {
+          const hoje = new Date().toISOString().split("T")[0];
+          const versaoAtual = data.find(
+            (v) => v.status === "PUBLICADA" && v.data_inicio_vigencia <= hoje,
+          );
+          const primeiraPublicada = data.find((v) => v.status === "PUBLICADA");
+          setVersaoSelecionada(
+            String(versaoAtual?.id || primeiraPublicada?.id || data[0].id),
+          );
         } else {
-          setVersaoSelecionada(data[0].id);
+          // Para os demais perfis, prioriza o rascunho, senão pega a primeira versão.
+          const rascunho = data.find((v) => v.status === "RASCUNHO");
+          setVersaoSelecionada(String(rascunho?.id || data[0].id));
         }
       } else {
+        setVersoes([]);
+        setVersaoSelecionada("");
         setCarregando(false);
       }
     }
     carregarVersoes();
-  }, []);
+  }, [somenteVersoesPublicadas]);
 
   // 2. BUSCA OS DADOS INICIAIS DA ESTRUTURA
   const carregarAulasEStrutura = async () => {

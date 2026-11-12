@@ -9,6 +9,7 @@ import { RefreshCw, Users, Building, ShieldAlert, AlertTriangle, Sparkles, List,
 
 export default function DashboardPage() {
   const { user, isCoordenador } = useUser();
+  const restringirVersoesParaProfessorTAE = user?.nivel_acesso === "PROFESSOR_TAE";
   const { dadosMestres, carregando: carregandoMestre } = useMasterData();
   const [carregandoAulas, setCarregandoAulas] = useState(true);
 
@@ -32,28 +33,63 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function carregarVersoes() {
-      const { data } = await supabase
+      if (restringirVersoesParaProfessorTAE) {
+        setCarregandoAulas(true);
+        setVersoes([]);
+        setVersaoSelecionada("");
+        setProfessorVinculado(null);
+        setAulasProfessor([]);
+        setReservasProfessor([]);
+        setChoquesCriticos([]);
+        setAlertasSecundarios([]);
+        setMetricas({
+          totalAulas: 0,
+          semProfessor: 0,
+          semSala: 0,
+          totalConflitos: 0,
+        });
+      }
+
+      let queryVersoes = supabase
         .from("versoes_grade")
         .select("*")
         .order("data_inicio_vigencia", { ascending: false });
+      if (restringirVersoesParaProfessorTAE) {
+        queryVersoes = queryVersoes.in("status", ["PUBLICADA", "ARQUIVADA"]);
+      }
+      const { data } = await queryVersoes;
 
       if (data && data.length > 0) {
         setVersoes(data);
-        const rascunho = data.find((v) => v.status === "RASCUNHO");
-        if (rascunho) {
-          setVersaoSelecionada(rascunho.id);
-        } else {
+
+        if (restringirVersoesParaProfessorTAE) {
           const hoje = new Date().toISOString().split("T")[0];
-          const ativa =
-            data.find((v) => v.status === "PUBLICADA" && v.data_inicio_vigencia <= hoje) || data[0];
-          setVersaoSelecionada(ativa.id);
+          const versaoAtual = data.find(
+            (v) => v.status === "PUBLICADA" && v.data_inicio_vigencia <= hoje,
+          );
+          const primeiraPublicada = data.find((v) => v.status === "PUBLICADA");
+          setVersaoSelecionada(
+            String(versaoAtual?.id || primeiraPublicada?.id || data[0].id),
+          );
+        } else {
+          const rascunho = data.find((v) => v.status === "RASCUNHO");
+          if (rascunho) {
+            setVersaoSelecionada(rascunho.id);
+          } else {
+            const hoje = new Date().toISOString().split("T")[0];
+            const ativa =
+              data.find((v) => v.status === "PUBLICADA" && v.data_inicio_vigencia <= hoje) || data[0];
+            setVersaoSelecionada(ativa.id);
+          }
         }
       } else {
+        setVersoes([]);
+        setVersaoSelecionada("");
         setCarregandoAulas(false);
       }
     }
     carregarVersoes();
-  }, []);
+  }, [restringirVersoesParaProfessorTAE]);
 
   useEffect(() => {
     if (versaoSelecionada && dadosMestres && user) {

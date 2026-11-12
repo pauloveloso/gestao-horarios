@@ -102,35 +102,50 @@ export default function HomePage() {
       const isLogado = !!session;
       setLogado(isLogado);
 
-      const { data } = await supabase
+      let restringirVersoes = !session;
+      if (session?.user?.id) {
+        const { data: perfil, error: erroPerfil } = await supabase
+          .from("usuarios_sistema")
+          .select("nivel_acesso")
+          .eq("id", session.user.id)
+          .maybeSingle();
+
+        // Sem perfil confirmado, aplica o acesso restrito usado pelo Professor/TAE.
+        restringirVersoes =
+          !!erroPerfil || !perfil || perfil.nivel_acesso === "PROFESSOR_TAE";
+      }
+
+      let queryVersoes = supabase
         .from("versoes_grade")
         .select("*")
         .order("data_inicio_vigencia", { ascending: false });
+      if (restringirVersoes) {
+        queryVersoes = queryVersoes.in("status", ["PUBLICADA", "ARQUIVADA"]);
+      }
+      const { data } = await queryVersoes;
 
       if (data && data.length > 0) {
-        // SEGURANÇA MÁXIMA: Se não estiver logado, extirpa rascunhos da lista
-        const versoesFiltradas = isLogado
-          ? data
-          : data.filter((v) => v.status !== "RASCUNHO");
-        setVersoes(versoesFiltradas);
+        setVersoes(data);
 
         const hoje = new Date().toISOString().split("T")[0];
 
         // Versão vigente = mais recente PUBLICADA com data_inicio_vigencia <= hoje
-        const vigente = versoesFiltradas.find(
+        const vigente = data.find(
           (v) => v.status === "PUBLICADA" && v.data_inicio_vigencia <= hoje,
         );
         if (vigente) setVersaoVigenteId(String(vigente.id));
 
-        // Prévia = PUBLICADA com data_inicio_vigencia > hoje (futura)
-        const previa = versoesFiltradas.find(
+        // Prévia = PUBLICADA com data_inicio_vigencia > hoje (futura), visível para todos.
+        const previa = data.find(
           (v) => v.status === "PUBLICADA" && v.data_inicio_vigencia > hoje,
         );
 
         // Seleciona prévia por padrão se existir; senão, a vigente
-        const padrao = previa || vigente || versoesFiltradas[0];
+        const padrao = previa || vigente || data[0];
         if (padrao) setVersaoSelecionada(String(padrao.id));
       } else {
+        setVersoes([]);
+        setVersaoSelecionada("");
         setCarregando(false);
       }
     }
@@ -375,6 +390,8 @@ export default function HomePage() {
 
                       if (v.status === "RASCUNHO") {
                         sufixo = "(Rascunho)";
+                      } else if (v.status === "ARQUIVADA") {
+                        sufixo = "(Arquivada)";
                       } else if (v.status === "PUBLICADA") {
                         if (v.data_inicio_vigencia > hoje) {
                           sufixo = "(Prévia)";

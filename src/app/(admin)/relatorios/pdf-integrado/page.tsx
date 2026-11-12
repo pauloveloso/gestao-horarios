@@ -6,6 +6,33 @@ import { BotaoExportarPDF } from "@/app/components/BotaoExportarPDF";
 import { PDFIntegradoDocument } from "./components/PDFIntegradoDocument";
 import { Download } from "lucide-react";
 
+function agruparAulasCompartilhadas(aulas: any[]) {
+  const grupos = new Map<string, any[]>();
+
+  for (const aula of aulas) {
+    const chave = `${aula.dia_semana}|${aula.slot_horario_id}|${aula.turma_id}|${aula.disciplina_id}|${aula.modulo || "INTEGRAL"}`;
+    grupos.set(chave, [...(grupos.get(chave) || []), aula]);
+  }
+
+  return Array.from(grupos.entries()).flatMap(([chave, grupo]) => {
+    const professoresDefinidos = new Set(
+      grupo
+        .filter((aula) => aula.professor_id != null)
+        .map((aula) => String(aula.professor_id)),
+    );
+    if (professoresDefinidos.size < 2) return grupo;
+
+    return [{
+      ...grupo[0],
+      id: `compartilhada-${chave}`,
+      professor_ids: Array.from(new Set(grupo.map((aula) => aula.professor_id))),
+      espaco_ids: Array.from(
+        new Set(grupo.map((aula) => aula.espaco_id).filter((id) => id != null)),
+      ),
+    }];
+  });
+}
+
 export default function ExportarPDFIntegradoPage() {
   const [carregando, setCarregando] = useState(true);
   const [gerandoPDF, setGerandoPDF] = useState(false);
@@ -122,7 +149,7 @@ export default function ExportarPDFIntegradoPage() {
       const versaoInfo = versoes.find(v => v.id === versaoSelecionada);
 
       setDados({
-        aulas: aulas || [],
+        aulas: agruparAulasCompartilhadas(aulas || []),
         grupos: gruposParaImpressao,
         professores,
         disciplinas,
@@ -315,15 +342,21 @@ export default function ExportarPDFIntegradoPage() {
                                             String(d.id) ===
                                             String(aula.disciplina_id),
                                         );
-                                        const prof = dados.professores?.find(
-                                          (p: any) =>
-                                            String(p.id) ===
-                                            String(aula.professor_id),
+                                        const professoresDaAula = (
+                                          aula.professor_ids || [aula.professor_id]
+                                        ).map((professorId: any) =>
+                                          dados.professores?.find(
+                                            (p: any) =>
+                                              String(p.id) === String(professorId),
+                                          )?.nome || "A DEFINIR",
                                         );
-                                        const sala = dados.espacos?.find(
-                                          (e: any) =>
-                                            String(e.id) ===
-                                            String(aula.espaco_id),
+                                        const espacoIds = aula.espaco_ids?.length
+                                          ? aula.espaco_ids
+                                          : [aula.espaco_id];
+                                        const salasDaAula = espacoIds.map((espacoId: any) =>
+                                          dados.espacos?.find(
+                                            (e: any) => String(e.id) === String(espacoId),
+                                          )?.nome || "S/S",
                                         );
 
                                         return (
@@ -338,16 +371,20 @@ export default function ExportarPDFIntegradoPage() {
                                               {disc?.nome}
                                             </span>
                                             <span
-                                              className="text-[10px] text-gray-800 font-medium leading-[1.1] uppercase"
-                                              title={prof?.nome}
+                                              className="flex flex-col text-[10px] text-gray-800 font-medium leading-[1.1] uppercase"
+                                              title={professoresDaAula.join("\n")}
                                             >
-                                              {prof?.nome}
+                                              {professoresDaAula.map((nome: string, indice: number) => (
+                                                <span key={`${aula.id}-prof-${indice}`}>{nome}</span>
+                                              ))}
                                             </span>
                                             <span
-                                              className="text-[10px] text-gray-600 leading-[1.1] uppercase"
-                                              title={sala?.nome}
+                                              className="flex flex-col text-[10px] text-gray-600 leading-[1.1] uppercase"
+                                              title={salasDaAula.join("\n")}
                                             >
-                                              {sala?.nome || "S/S"}
+                                              {salasDaAula.map((nome: string, indice: number) => (
+                                                <span key={`${aula.id}-sala-${indice}`}>{nome}</span>
+                                              ))}
                                             </span>
                                           </div>
                                         );

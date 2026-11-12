@@ -294,13 +294,20 @@ export const PDFIntegradoDocument = ({ dados, filtroModulo = "TODOS" }: PDFInteg
                                   (d: any) =>
                                     String(d.id) === String(aula.disciplina_id)
                                 );
-                                const prof = dados.professores?.find(
-                                  (p: any) =>
-                                    String(p.id) === String(aula.professor_id)
+                                const professoresDaAula = (
+                                  aula.professor_ids || [aula.professor_id]
+                                ).map((professorId: any) =>
+                                  dados.professores?.find(
+                                    (p: any) => String(p.id) === String(professorId)
+                                  )?.nome || "A DEFINIR"
                                 );
-                                const sala = dados.espacos?.find(
-                                  (e: any) =>
-                                    String(e.id) === String(aula.espaco_id)
+                                const espacoIds = aula.espaco_ids?.length
+                                  ? aula.espaco_ids
+                                  : [aula.espaco_id];
+                                const salasDaAula = espacoIds.map((espacoId: any) =>
+                                  dados.espacos?.find(
+                                    (e: any) => String(e.id) === String(espacoId)
+                                  )?.nome || "S/S"
                                 );
 
                                 const isSplit = aulasNoSlot.length > 1;
@@ -318,12 +325,16 @@ export const PDFIntegradoDocument = ({ dados, filtroModulo = "TODOS" }: PDFInteg
                                     <Text style={styles.discText}>
                                       {disc?.nome}
                                     </Text>
-                                    <Text style={styles.profText}>
-                                      {prof?.nome}
-                                    </Text>
-                                    <Text style={styles.salaText}>
-                                      {sala?.nome || "S/S"}
-                                    </Text>
+                                    {professoresDaAula.map((nome: string, indice: number) => (
+                                      <Text key={`${aula.id}-prof-${indice}`} style={styles.profText}>
+                                        {nome}
+                                      </Text>
+                                    ))}
+                                    {salasDaAula.map((nome: string, indice: number) => (
+                                      <Text key={`${aula.id}-sala-${indice}`} style={styles.salaText}>
+                                        {nome}
+                                      </Text>
+                                    ))}
                                   </View>
                                 );
                               })}
