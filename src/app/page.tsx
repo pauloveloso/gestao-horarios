@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { BotaoExportarPDF } from "./components/BotaoExportarPDF";
 import { PDFPublicoDocument } from "./components/PDFPublicoDocument";
-import { Download, CalendarDays, Inbox, ArrowLeft, Lock } from "lucide-react";
+import { Download, CalendarDays, Inbox, ArrowLeft, Lock, ChevronDown, ChevronRight } from "lucide-react";
 
 function ordenarAulasPorModulo(aulas: any[]) {
   const ordem: Record<string, number> = {
@@ -83,8 +84,56 @@ export default function HomePage() {
   >("TURMA");
   const [idSelecionado, setIdSelecionado] = useState<string>("");
   const [filtroModulo, setFiltroModulo] = useState<string>("INTEGRAL");
+  const [seletorPublicoAberto, setSeletorPublicoAberto] = useState(false);
+  const [grupoPublicoExpandidoId, setGrupoPublicoExpandidoId] = useState<string | null>(null);
+  const seletorPublicoRef = useRef<HTMLDivElement>(null);
+  const menuPublicoRef = useRef<HTMLDivElement>(null);
+  const [posicaoMenuPublico, setPosicaoMenuPublico] = useState({ top: 0, left: 0, width: 250, maxHeight: 320 });
 
   const relatorioRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!seletorPublicoAberto) return;
+    const fecharAoClicarFora = (event: PointerEvent) => {
+      if (
+        !seletorPublicoRef.current?.contains(event.target as Node) &&
+        !menuPublicoRef.current?.contains(event.target as Node)
+      ) setSeletorPublicoAberto(false);
+    };
+    const fecharComEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSeletorPublicoAberto(false);
+    };
+    document.addEventListener("pointerdown", fecharAoClicarFora);
+    document.addEventListener("keydown", fecharComEscape);
+    return () => {
+      document.removeEventListener("pointerdown", fecharAoClicarFora);
+      document.removeEventListener("keydown", fecharComEscape);
+    };
+  }, [seletorPublicoAberto]);
+
+  const alternarSeletorPublico = () => {
+    if (seletorPublicoAberto) {
+      setSeletorPublicoAberto(false);
+      return;
+    }
+    const campo = seletorPublicoRef.current;
+    if (campo) {
+      const rect = campo.getBoundingClientRect();
+      const width = Math.min(Math.max(rect.width, 250), window.innerWidth - 16);
+      const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+      const spaceAbove = rect.top - 8;
+      const spaceBelow = window.innerHeight - rect.bottom - 8;
+      const opensAbove = spaceBelow < 320 && spaceAbove > spaceBelow;
+      const maxHeight = Math.max(120, Math.min(320, (opensAbove ? spaceAbove : spaceBelow) - 8));
+      setPosicaoMenuPublico({
+        top: opensAbove ? Math.max(8, rect.top - maxHeight - 4) : rect.bottom + 4,
+        left,
+        width,
+        maxHeight,
+      });
+    }
+    setSeletorPublicoAberto(true);
+  };
 
   const diasSemana = [
     { id: "SEGUNDA", nome: "SEGUNDA" },
@@ -435,6 +484,8 @@ export default function HomePage() {
                     setTipoFiltro(t);
                     setIdSelecionado("");
                     setFiltroModulo("INTEGRAL"); // reseta o módulo ao trocar o tipo
+                    setSeletorPublicoAberto(false);
+                    setGrupoPublicoExpandidoId(null);
                   }}
                   className={`px-4 py-2 rounded-md text-xs font-bold transition-all ${tipoFiltro === t ? "bg-green-600 text-white shadow-sm" : "text-green-400 hover:text-white"}`}
                 >
@@ -447,54 +498,178 @@ export default function HomePage() {
               ))}
             </div>
 
-            <select
-              value={idSelecionado}
-              onChange={(e) => setIdSelecionado(e.target.value)}
-              className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-full sm:w-[250px] truncate h-10 shadow-sm"
-            >
-              <option value="">Escolha...</option>
-              {tipoFiltro === "TURMA" &&
-                dados.cursos.map((curso: any, cIdx: number) => {
-                  const turmasDoCurso = dados.turmas.filter(
-                    (t: any) => String(t.curso_id) === String(curso.id),
-                  );
-                  if (turmasDoCurso.length === 0) return null;
-                  return (
-                    <optgroup
-                      key={`curso-${curso.id || cIdx}`}
-                      label={curso.nome}
-                    >
-                      {turmasDoCurso.map((t: any, tIdx: number) => (
-                        <option key={`turma-${t.id || tIdx}`} value={t.id}>
-                          {t.codigo}
-                        </option>
-                      ))}
-                    </optgroup>
-                  );
-                })}
-              {tipoFiltro === "PROFESSOR" &&
-                dados.professores.map((p: any, pIdx: number) => (
-                  <option key={`prof-${p.id || pIdx}`} value={p.id}>
-                    {p.nome}
-                  </option>
+            {tipoFiltro === "PROFESSOR" ? (
+              <select
+                value={idSelecionado}
+                onChange={(e) => setIdSelecionado(e.target.value)}
+                className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-full sm:w-[250px] truncate h-10 shadow-sm"
+              >
+                <option value="">Escolha...</option>
+                {dados.professores.map((p: any, pIdx: number) => (
+                  <option key={`prof-${p.id || pIdx}`} value={p.id}>{p.nome}</option>
                 ))}
-              {tipoFiltro === "ESPACO" &&
-                dados.categorias.map((cat: any, catIdx: number) => {
-                  const espacosDaCat = dados.espacos.filter(
-                    (e: any) => String(e.categoria_id) === String(cat.id),
-                  );
-                  if (espacosDaCat.length === 0) return null;
-                  return (
-                    <optgroup key={`cat-${cat.id || catIdx}`} label={cat.nome}>
-                      {espacosDaCat.map((e: any, eIdx: number) => (
-                        <option key={`espaco-${e.id || eIdx}`} value={e.id}>
-                          {e.nome}
-                        </option>
-                      ))}
-                    </optgroup>
-                  );
-                })}
-            </select>
+              </select>
+            ) : (
+              <div className="relative w-full sm:w-[250px]" ref={seletorPublicoRef}>
+                <button
+                  type="button"
+                  aria-expanded={seletorPublicoAberto}
+                  onClick={alternarSeletorPublico}
+                  className="bg-white text-green-800 border border-transparent rounded-lg p-2 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-full truncate h-10 shadow-sm flex items-center justify-between gap-1"
+                >
+                  <span className="truncate">
+                    {tipoFiltro === "TURMA"
+                      ? dados.turmas.find((turma: any) => String(turma.id) === String(idSelecionado))?.codigo || "Escolha..."
+                      : dados.espacos.find((espaco: any) => String(espaco.id) === String(idSelecionado))?.nome || "Escolha..."}
+                  </span>
+                  <ChevronDown className={`h-3 w-3 shrink-0 transition-transform ${seletorPublicoAberto ? "rotate-180" : ""}`} />
+                </button>
+                {seletorPublicoAberto && createPortal(
+                  <div
+                    ref={menuPublicoRef}
+                    className="fixed z-[1000] overflow-y-auto rounded-lg border border-gray-200 bg-white p-1 shadow-xl"
+                    style={{
+                      top: `${posicaoMenuPublico.top}px`,
+                      left: `${posicaoMenuPublico.left}px`,
+                      width: `${posicaoMenuPublico.width}px`,
+                      maxHeight: `${posicaoMenuPublico.maxHeight}px`,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="block w-full rounded px-3 py-2 text-left text-xs text-gray-700 hover:bg-green-50"
+                      onClick={() => {
+                        setIdSelecionado("");
+                        setSeletorPublicoAberto(false);
+                      }}
+                    >
+                      Escolha...
+                    </button>
+                    {tipoFiltro === "TURMA" ? (
+                      dados.cursos.map((curso: any, cIdx: number) => {
+                        const turmasDoCurso = dados.turmas.filter(
+                          (turma: any) => String(turma.curso_id) === String(curso.id),
+                        );
+                        if (turmasDoCurso.length === 0) return null;
+                        const expandido = grupoPublicoExpandidoId === String(curso.id);
+                        return (
+                          <div key={`curso-${curso.id || cIdx}`} className="border-t border-gray-100">
+                            <button
+                              type="button"
+                              aria-expanded={expandido}
+                              className="flex w-full items-center gap-1 rounded px-3 py-2 text-left text-xs font-bold text-gray-800 hover:bg-green-50"
+                              onClick={() => setGrupoPublicoExpandidoId(expandido ? null : String(curso.id))}
+                            >
+                              {expandido ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronRight className="h-3 w-3 shrink-0" />}
+                              <span className="flex-1">{curso.nome}</span>
+                              <span className="text-[10px] font-normal text-gray-500">{turmasDoCurso.length}</span>
+                            </button>
+                            {expandido && (
+                              <div className="pb-1 pl-6">
+                                {turmasDoCurso.map((turma: any, tIdx: number) => (
+                                  <button
+                                    key={`turma-${turma.id || tIdx}`}
+                                    type="button"
+                                    aria-selected={String(idSelecionado) === String(turma.id)}
+                                    className={`block w-full rounded px-3 py-1.5 text-left text-xs hover:bg-green-50 ${String(idSelecionado) === String(turma.id) ? "font-bold text-green-800" : "text-gray-700"}`}
+                                    onClick={() => {
+                                      setIdSelecionado(String(turma.id));
+                                      setSeletorPublicoAberto(false);
+                                    }}
+                                  >
+                                    {turma.codigo}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <>
+                        {dados.categorias.map((categoria: any, catIdx: number) => {
+                          const espacosDaCategoria = dados.espacos.filter(
+                            (espaco: any) => String(espaco.categoria_id) === String(categoria.id),
+                          );
+                          if (espacosDaCategoria.length === 0) return null;
+                          const expandida = grupoPublicoExpandidoId === String(categoria.id);
+                          return (
+                            <div key={`categoria-${categoria.id || catIdx}`} className="border-t border-gray-100">
+                              <button
+                                type="button"
+                                aria-expanded={expandida}
+                                className="flex w-full items-center gap-1 rounded px-3 py-2 text-left text-xs font-bold text-gray-800 hover:bg-green-50"
+                                onClick={() => setGrupoPublicoExpandidoId(expandida ? null : String(categoria.id))}
+                              >
+                                {expandida ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronRight className="h-3 w-3 shrink-0" />}
+                                <span className="flex-1">{categoria.nome}</span>
+                                <span className="text-[10px] font-normal text-gray-500">{espacosDaCategoria.length}</span>
+                              </button>
+                              {expandida && (
+                                <div className="pb-1 pl-6">
+                                  {espacosDaCategoria.map((espaco: any, eIdx: number) => (
+                                    <button
+                                      key={`espaco-${espaco.id || eIdx}`}
+                                      type="button"
+                                      aria-selected={String(idSelecionado) === String(espaco.id)}
+                                      className={`block w-full rounded px-3 py-1.5 text-left text-xs hover:bg-green-50 ${String(idSelecionado) === String(espaco.id) ? "font-bold text-green-800" : "text-gray-700"}`}
+                                      onClick={() => {
+                                        setIdSelecionado(String(espaco.id));
+                                        setSeletorPublicoAberto(false);
+                                      }}
+                                    >
+                                      {espaco.nome}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {(() => {
+                          const espacosSemCategoria = dados.espacos.filter((espaco: any) => !espaco.categoria_id);
+                          if (espacosSemCategoria.length === 0) return null;
+                          const expandida = grupoPublicoExpandidoId === "__SEM_CATEGORIA__";
+                          return (
+                            <div className="border-t border-gray-100">
+                              <button
+                                type="button"
+                                aria-expanded={expandida}
+                                className="flex w-full items-center gap-1 rounded px-3 py-2 text-left text-xs font-bold text-gray-800 hover:bg-green-50"
+                                onClick={() => setGrupoPublicoExpandidoId(expandida ? null : "__SEM_CATEGORIA__")}
+                              >
+                                {expandida ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronRight className="h-3 w-3 shrink-0" />}
+                                <span className="flex-1">Outros / Sem Categoria</span>
+                                <span className="text-[10px] font-normal text-gray-500">{espacosSemCategoria.length}</span>
+                              </button>
+                              {expandida && (
+                                <div className="pb-1 pl-6">
+                                  {espacosSemCategoria.map((espaco: any, eIdx: number) => (
+                                    <button
+                                      key={`espaco-sem-cat-${espaco.id || eIdx}`}
+                                      type="button"
+                                      aria-selected={String(idSelecionado) === String(espaco.id)}
+                                      className={`block w-full rounded px-3 py-1.5 text-left text-xs hover:bg-green-50 ${String(idSelecionado) === String(espaco.id) ? "font-bold text-green-800" : "text-gray-700"}`}
+                                      onClick={() => {
+                                        setIdSelecionado(String(espaco.id));
+                                        setSeletorPublicoAberto(false);
+                                      }}
+                                    >
+                                      {espaco.nome}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </>
+                    )}
+                  </div>,
+                  document.body,
+                )}
+              </div>
+            )}
 
             <select
               value={filtroModulo}
