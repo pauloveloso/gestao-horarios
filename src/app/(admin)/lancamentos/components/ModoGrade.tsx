@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { CircleX, AlertCircle, Trash2, MapPin, Clipboard, AlertTriangle, Users, X, ChevronDown, ChevronRight } from "lucide-react";
 import {
@@ -29,13 +29,16 @@ export default function ModoGrade({
 }: any) {
   const [filtroTurma, setFiltroTurma] = useState("");
   const [seletorTurmaAberto, setSeletorTurmaAberto] = useState(false);
+  const seletorTurmaRef = useRef<HTMLDivElement>(null);
   const [seletorCategoriaAberto, setSeletorCategoriaAberto] = useState(false);
+  const seletorCategoriaRef = useRef<HTMLDivElement>(null);
   const [cursoExpandidoId, setCursoExpandidoId] = useState<string | null>(null);
   const [filtroCategoria, setFiltroCategoria] = useState<string>("TODAS");
   const [filtroModulo, setFiltroModulo] = useState<string>("TODOS");
   const [modalAberto, setModalAberto] = useState(false);
   const [dadosModal, setDadosModal] = useState<any>(null);
   const [seletorEspacoAberto, setSeletorEspacoAberto] = useState(false);
+  const seletorEspacoRef = useRef<HTMLDivElement>(null);
   const [categoriaEspacoExpandidaId, setCategoriaEspacoExpandidaId] = useState<string | null>(null);
   const [aulaCopiada, setAulaCopiada] = useState<any>(null);
   const [aulaArrastada, setAulaArrastada] = useState<any>(null);
@@ -44,6 +47,54 @@ export default function ModoGrade({
   const [modalLimpezaAberto, setModalLimpezaAberto] = useState(false);
   const [textoConfirmacao, setTextoConfirmacao] = useState("");
   const [limpando, setLimpando] = useState(false);
+
+  useEffect(() => {
+    if (!seletorTurmaAberto) return;
+
+    const fecharAoClicarFora = (event: PointerEvent) => {
+      if (!seletorTurmaRef.current?.contains(event.target as Node)) {
+        setSeletorTurmaAberto(false);
+      }
+    };
+    const fecharComEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSeletorTurmaAberto(false);
+    };
+
+    document.addEventListener("pointerdown", fecharAoClicarFora);
+    document.addEventListener("keydown", fecharComEscape);
+    return () => {
+      document.removeEventListener("pointerdown", fecharAoClicarFora);
+      document.removeEventListener("keydown", fecharComEscape);
+    };
+  }, [seletorTurmaAberto]);
+
+  useEffect(() => {
+    if (!seletorCategoriaAberto && !seletorEspacoAberto) return;
+
+    const fecharAoClicarFora = (event: PointerEvent) => {
+      if (
+        seletorCategoriaAberto &&
+        !seletorCategoriaRef.current?.contains(event.target as Node)
+      ) setSeletorCategoriaAberto(false);
+      if (
+        seletorEspacoAberto &&
+        !seletorEspacoRef.current?.contains(event.target as Node)
+      ) setSeletorEspacoAberto(false);
+    };
+    const fecharComEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSeletorCategoriaAberto(false);
+        setSeletorEspacoAberto(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", fecharAoClicarFora);
+    document.addEventListener("keydown", fecharComEscape);
+    return () => {
+      document.removeEventListener("pointerdown", fecharAoClicarFora);
+      document.removeEventListener("keydown", fecharComEscape);
+    };
+  }, [seletorCategoriaAberto, seletorEspacoAberto]);
 
   const diasDaSemana = [
     { id: "SEGUNDA", label: "Segunda" },
@@ -456,7 +507,7 @@ export default function ModoGrade({
             <label className="text-xs text-gray-500 font-bold uppercase hidden md:block">
               Categoria:
             </label>
-            <div className="relative w-full md:w-max md:min-w-64 md:shrink-0">
+            <div className="relative w-full md:w-max md:min-w-64 md:shrink-0" ref={seletorCategoriaRef}>
             <button
               type="button"
               className="px-4 py-2 bg-white border border-green-500 text-green-700 rounded outline-none w-full md:w-max md:min-w-64 text-base font-bold shadow-sm cursor-pointer flex items-center justify-between gap-2 whitespace-nowrap"
@@ -523,7 +574,7 @@ export default function ModoGrade({
           <label className="text-xs text-gray-500 font-bold uppercase hidden md:block ml-2">
             Visualizando Turma:
           </label>
-          <div className="relative w-full md:w-64">
+          <div className="relative w-full md:w-64" ref={seletorTurmaRef}>
             <button
               type="button"
               className="px-4 py-2 bg-white border border-green-500 text-green-700 rounded outline-none w-full text-base font-bold shadow-sm cursor-pointer flex items-center justify-between gap-2"
@@ -1026,7 +1077,7 @@ export default function ModoGrade({
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
                       Sala / Espaço
                     </label>
-                    <div className="relative">
+                    <div className="relative" ref={seletorEspacoRef}>
                       <button
                         type="button"
                         className="w-full border rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900 flex items-center justify-between gap-2"
