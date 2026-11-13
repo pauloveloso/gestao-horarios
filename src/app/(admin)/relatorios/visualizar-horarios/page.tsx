@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import { useUser } from "../../components/UserContext";
-import { Download, Eye, Inbox, ChevronDown, ChevronRight } from "lucide-react";
+import { Download, Eye, Inbox } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { BotaoExportarPDF } from "@/app/components/BotaoExportarPDF";
 import { PDFPublicoDocument } from "@/app/components/PDFPublicoDocument";
@@ -84,58 +83,8 @@ export default function VisualizarHorariosAdminPage() {
   >("TURMA");
   const [idSelecionado, setIdSelecionado] = useState<string>("");
   const [filtroModulo, setFiltroModulo] = useState<string>("INTEGRAL");
-  const [seletorEntidadeAberto, setSeletorEntidadeAberto] = useState(false);
-  const [grupoEntidadeExpandidoId, setGrupoEntidadeExpandidoId] = useState<string | null>(null);
-  const seletorEntidadeRef = useRef<HTMLDivElement>(null);
-  const menuEntidadeRef = useRef<HTMLDivElement>(null);
-  const [posicaoMenuEntidade, setPosicaoMenuEntidade] = useState({ top: 0, left: 0, width: 180, maxHeight: 320 });
 
   const relatorioRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!seletorEntidadeAberto) return;
-    const fecharAoClicarFora = (event: PointerEvent) => {
-      if (
-        !seletorEntidadeRef.current?.contains(event.target as Node) &&
-        !menuEntidadeRef.current?.contains(event.target as Node)
-      ) {
-        setSeletorEntidadeAberto(false);
-      }
-    };
-    const fecharComEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSeletorEntidadeAberto(false);
-    };
-    document.addEventListener("pointerdown", fecharAoClicarFora);
-    document.addEventListener("keydown", fecharComEscape);
-    return () => {
-      document.removeEventListener("pointerdown", fecharAoClicarFora);
-      document.removeEventListener("keydown", fecharComEscape);
-    };
-  }, [seletorEntidadeAberto]);
-
-  const alternarSeletorEntidade = () => {
-    if (seletorEntidadeAberto) {
-      setSeletorEntidadeAberto(false);
-      return;
-    }
-    const campo = seletorEntidadeRef.current;
-    if (campo) {
-      const rect = campo.getBoundingClientRect();
-      const largura = Math.min(Math.max(rect.width, 220), window.innerWidth - 16);
-      const left = Math.max(8, Math.min(rect.left, window.innerWidth - largura - 8));
-      const espacoAcima = rect.top - 8;
-      const espacoAbaixo = window.innerHeight - rect.bottom - 8;
-      const maxHeight = Math.max(120, Math.min(320, espacoAbaixo < 320 && espacoAcima > espacoAbaixo ? espacoAcima - 8 : espacoAbaixo - 8));
-      const abrirAcima = espacoAbaixo < 320 && espacoAcima > espacoAbaixo;
-      setPosicaoMenuEntidade({
-        top: abrirAcima ? Math.max(8, rect.top - maxHeight - 4) : rect.bottom + 4,
-        left,
-        width: largura,
-        maxHeight,
-      });
-    }
-    setSeletorEntidadeAberto(true);
-  };
 
   const diasSemana = [
     { id: "SEGUNDA", nome: "SEGUNDA" },
@@ -521,178 +470,51 @@ export default function VisualizarHorariosAdminPage() {
             ))}
           </div>
 
-          {tipoFiltro === "PROFESSOR" ? (
-            <select
-              value={idSelecionado}
-              onChange={(e) => setIdSelecionado(e.target.value)}
-              className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-[180px] truncate h-9 shadow-sm shrink-0"
-            >
-              <option value="">Escolha...</option>
-              {dados.professores.map((p: any) => (
-                <option key={p.id} value={p.id}>{p.nome}</option>
+          <select
+            value={idSelecionado}
+            onChange={(e) => setIdSelecionado(e.target.value)}
+            className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-[180px] truncate h-9 shadow-sm shrink-0"
+          >
+            <option value="">Escolha...</option>
+            {tipoFiltro === "TURMA" &&
+              dados.cursos.map((curso: any) => {
+                const turmasDoCurso = dados.turmas.filter(
+                  (t: any) => String(t.curso_id) === String(curso.id),
+                );
+                if (turmasDoCurso.length === 0) return null;
+                return (
+                  <optgroup key={curso.id} label={curso.nome}>
+                    {turmasDoCurso.map((t: any) => (
+                      <option key={t.id} value={t.id}>
+                        {t.codigo}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
+            {tipoFiltro === "PROFESSOR" &&
+              dados.professores.map((p: any) => (
+                <option key={p.id} value={p.id}>
+                  {p.nome}
+                </option>
               ))}
-            </select>
-          ) : (
-            <div className="relative w-[180px] shrink-0" ref={seletorEntidadeRef}>
-              <button
-                type="button"
-                aria-expanded={seletorEntidadeAberto}
-                onClick={alternarSeletorEntidade}
-                className="bg-white text-green-800 border border-transparent rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer hover:border-green-300 transition-all w-full truncate h-9 shadow-sm flex items-center justify-between gap-1"
-              >
-                <span className="truncate">
-                  {tipoFiltro === "TURMA"
-                    ? dados.turmas.find((turma: any) => String(turma.id) === String(idSelecionado))?.codigo || "Escolha..."
-                    : dados.espacos.find((espaco: any) => String(espaco.id) === String(idSelecionado))?.nome || "Escolha..."}
-                </span>
-                <ChevronDown className={`h-3 w-3 shrink-0 transition-transform ${seletorEntidadeAberto ? "rotate-180" : ""}`} />
-              </button>
-              {seletorEntidadeAberto && createPortal(
-                <div
-                  ref={menuEntidadeRef}
-                  className="fixed z-[1000] overflow-y-auto rounded-lg border border-gray-200 bg-white p-1 shadow-xl"
-                  style={{
-                    top: `${posicaoMenuEntidade.top}px`,
-                    left: `${posicaoMenuEntidade.left}px`,
-                    width: `${posicaoMenuEntidade.width}px`,
-                    maxHeight: `${posicaoMenuEntidade.maxHeight}px`,
-                  }}
-                >
-                  <button
-                    type="button"
-                    className="block w-full rounded px-2 py-1.5 text-left text-xs text-gray-700 hover:bg-green-50"
-                    onClick={() => {
-                      setIdSelecionado("");
-                      setSeletorEntidadeAberto(false);
-                    }}
-                  >
-                    Escolha...
-                  </button>
-                  {tipoFiltro === "TURMA" ? (
-                    dados.cursos.map((curso: any) => {
-                      const turmasDoCurso = dados.turmas.filter(
-                        (turma: any) => String(turma.curso_id) === String(curso.id),
-                      );
-                      if (turmasDoCurso.length === 0) return null;
-                      const expandido = grupoEntidadeExpandidoId === String(curso.id);
-                      return (
-                        <div key={curso.id} className="border-t border-gray-100">
-                          <button
-                            type="button"
-                            aria-expanded={expandido}
-                            className="flex w-full items-center gap-1 rounded px-2 py-1.5 text-left text-xs font-bold text-gray-800 hover:bg-green-50"
-                            onClick={() => setGrupoEntidadeExpandidoId(expandido ? null : String(curso.id))}
-                          >
-                            {expandido ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronRight className="h-3 w-3 shrink-0" />}
-                            <span className="flex-1">{curso.nome}</span>
-                            <span className="text-[10px] font-normal text-gray-500">{turmasDoCurso.length}</span>
-                          </button>
-                          {expandido && (
-                            <div className="pb-1 pl-5">
-                              {turmasDoCurso.map((turma: any) => (
-                                <button
-                                  key={turma.id}
-                                  type="button"
-                                  aria-selected={String(idSelecionado) === String(turma.id)}
-                                  className={`block w-full rounded px-2 py-1 text-left text-xs hover:bg-green-50 ${String(idSelecionado) === String(turma.id) ? "font-bold text-green-800" : "text-gray-700"}`}
-                                  onClick={() => {
-                                    setIdSelecionado(String(turma.id));
-                                    setSeletorEntidadeAberto(false);
-                                  }}
-                                >
-                                  {turma.codigo}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <>
-                      {dados.categorias.map((categoria: any) => {
-                        const espacosDaCategoria = dados.espacos.filter(
-                          (espaco: any) => String(espaco.categoria_id) === String(categoria.id),
-                        );
-                        if (espacosDaCategoria.length === 0) return null;
-                        const expandida = grupoEntidadeExpandidoId === String(categoria.id);
-                        return (
-                          <div key={categoria.id} className="border-t border-gray-100">
-                            <button
-                              type="button"
-                              aria-expanded={expandida}
-                              className="flex w-full items-center gap-1 rounded px-2 py-1.5 text-left text-xs font-bold text-gray-800 hover:bg-green-50"
-                              onClick={() => setGrupoEntidadeExpandidoId(expandida ? null : String(categoria.id))}
-                            >
-                              {expandida ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronRight className="h-3 w-3 shrink-0" />}
-                              <span className="flex-1">{categoria.nome}</span>
-                              <span className="text-[10px] font-normal text-gray-500">{espacosDaCategoria.length}</span>
-                            </button>
-                            {expandida && (
-                              <div className="pb-1 pl-5">
-                                {espacosDaCategoria.map((espaco: any) => (
-                                  <button
-                                    key={espaco.id}
-                                    type="button"
-                                    aria-selected={String(idSelecionado) === String(espaco.id)}
-                                    className={`block w-full rounded px-2 py-1 text-left text-xs hover:bg-green-50 ${String(idSelecionado) === String(espaco.id) ? "font-bold text-green-800" : "text-gray-700"}`}
-                                    onClick={() => {
-                                      setIdSelecionado(String(espaco.id));
-                                      setSeletorEntidadeAberto(false);
-                                    }}
-                                  >
-                                    {espaco.nome}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                      {(() => {
-                        const espacosSemCategoria = dados.espacos.filter((espaco: any) => !espaco.categoria_id);
-                        if (espacosSemCategoria.length === 0) return null;
-                        const expandida = grupoEntidadeExpandidoId === "__SEM_CATEGORIA__";
-                        return (
-                          <div className="border-t border-gray-100">
-                            <button
-                              type="button"
-                              aria-expanded={expandida}
-                              className="flex w-full items-center gap-1 rounded px-2 py-1.5 text-left text-xs font-bold text-gray-800 hover:bg-green-50"
-                              onClick={() => setGrupoEntidadeExpandidoId(expandida ? null : "__SEM_CATEGORIA__")}
-                            >
-                              {expandida ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronRight className="h-3 w-3 shrink-0" />}
-                              <span className="flex-1">Outros / Sem Categoria</span>
-                              <span className="text-[10px] font-normal text-gray-500">{espacosSemCategoria.length}</span>
-                            </button>
-                            {expandida && (
-                              <div className="pb-1 pl-5">
-                                {espacosSemCategoria.map((espaco: any) => (
-                                  <button
-                                    key={espaco.id}
-                                    type="button"
-                                    aria-selected={String(idSelecionado) === String(espaco.id)}
-                                    className={`block w-full rounded px-2 py-1 text-left text-xs hover:bg-green-50 ${String(idSelecionado) === String(espaco.id) ? "font-bold text-green-800" : "text-gray-700"}`}
-                                    onClick={() => {
-                                      setIdSelecionado(String(espaco.id));
-                                      setSeletorEntidadeAberto(false);
-                                    }}
-                                  >
-                                    {espaco.nome}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </>
-                  )}
-                </div>,
-                document.body,
-              )}
-            </div>
-          )}
+            {tipoFiltro === "ESPACO" &&
+              dados.categorias.map((cat: any) => {
+                const espacosDaCat = dados.espacos.filter(
+                  (e: any) => String(e.categoria_id) === String(cat.id),
+                );
+                if (espacosDaCat.length === 0) return null;
+                return (
+                  <optgroup key={cat.id} label={cat.nome}>
+                    {espacosDaCat.map((e: any) => (
+                      <option key={e.id} value={e.id}>
+                        {e.nome}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
+          </select>
 
           <select
               value={filtroModulo}

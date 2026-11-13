@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { CircleX, AlertCircle, Trash2, MapPin, Clipboard, AlertTriangle, Users, X, ChevronDown, ChevronRight } from "lucide-react";
+import { CircleX, AlertCircle, Trash2, MapPin, Clipboard, AlertTriangle, Users, X } from "lucide-react";
 import {
   MODALIDADES_CURSO,
   normalizarModalidade,
@@ -29,20 +28,10 @@ export default function ModoGrade({
   atualizarAulaLocal,
 }: any) {
   const [filtroTurma, setFiltroTurma] = useState("");
-  const [seletorTurmaAberto, setSeletorTurmaAberto] = useState(false);
-  const seletorTurmaRef = useRef<HTMLDivElement>(null);
-  const [seletorCategoriaAberto, setSeletorCategoriaAberto] = useState(false);
-  const seletorCategoriaRef = useRef<HTMLDivElement>(null);
-  const [cursoExpandidoId, setCursoExpandidoId] = useState<string | null>(null);
   const [filtroCategoria, setFiltroCategoria] = useState<string>("TODAS");
   const [filtroModulo, setFiltroModulo] = useState<string>("TODOS");
   const [modalAberto, setModalAberto] = useState(false);
   const [dadosModal, setDadosModal] = useState<any>(null);
-  const [seletorEspacoAberto, setSeletorEspacoAberto] = useState(false);
-  const seletorEspacoRef = useRef<HTMLDivElement>(null);
-  const menuEspacoRef = useRef<HTMLDivElement>(null);
-  const [posicaoMenuEspaco, setPosicaoMenuEspaco] = useState({ top: 0, left: 0, width: 240, maxHeight: 440 });
-  const [categoriaEspacoExpandidaId, setCategoriaEspacoExpandidaId] = useState<string | null>(null);
   const [aulaCopiada, setAulaCopiada] = useState<any>(null);
   const [aulaArrastada, setAulaArrastada] = useState<any>(null);
 
@@ -50,79 +39,6 @@ export default function ModoGrade({
   const [modalLimpezaAberto, setModalLimpezaAberto] = useState(false);
   const [textoConfirmacao, setTextoConfirmacao] = useState("");
   const [limpando, setLimpando] = useState(false);
-
-  useEffect(() => {
-    if (!seletorTurmaAberto) return;
-
-    const fecharAoClicarFora = (event: PointerEvent) => {
-      if (!seletorTurmaRef.current?.contains(event.target as Node)) {
-        setSeletorTurmaAberto(false);
-      }
-    };
-    const fecharComEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSeletorTurmaAberto(false);
-    };
-
-    document.addEventListener("pointerdown", fecharAoClicarFora);
-    document.addEventListener("keydown", fecharComEscape);
-    return () => {
-      document.removeEventListener("pointerdown", fecharAoClicarFora);
-      document.removeEventListener("keydown", fecharComEscape);
-    };
-  }, [seletorTurmaAberto]);
-
-  useEffect(() => {
-    if (!seletorCategoriaAberto && !seletorEspacoAberto) return;
-
-    const fecharAoClicarFora = (event: PointerEvent) => {
-      if (
-        seletorCategoriaAberto &&
-        !seletorCategoriaRef.current?.contains(event.target as Node)
-      ) setSeletorCategoriaAberto(false);
-      if (
-        seletorEspacoAberto &&
-        !seletorEspacoRef.current?.contains(event.target as Node) &&
-        !menuEspacoRef.current?.contains(event.target as Node)
-      ) setSeletorEspacoAberto(false);
-    };
-    const fecharComEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setSeletorCategoriaAberto(false);
-        setSeletorEspacoAberto(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", fecharAoClicarFora);
-    document.addEventListener("keydown", fecharComEscape);
-    return () => {
-      document.removeEventListener("pointerdown", fecharAoClicarFora);
-      document.removeEventListener("keydown", fecharComEscape);
-    };
-  }, [seletorCategoriaAberto, seletorEspacoAberto]);
-
-  const alternarSeletorEspaco = () => {
-    if (seletorEspacoAberto) {
-      setSeletorEspacoAberto(false);
-      return;
-    }
-    const campo = seletorEspacoRef.current;
-    if (campo) {
-      const rect = campo.getBoundingClientRect();
-      const width = Math.min(Math.max(rect.width, 240), window.innerWidth - 16);
-      const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
-      const spaceAbove = rect.top - 8;
-      const spaceBelow = window.innerHeight - rect.bottom - 8;
-      const opensAbove = spaceBelow < 440 && spaceAbove > spaceBelow;
-      const maxHeight = Math.max(120, Math.min(440, (opensAbove ? spaceAbove : spaceBelow) - 8));
-      setPosicaoMenuEspaco({
-        top: opensAbove ? Math.max(8, rect.top - maxHeight - 4) : rect.bottom + 4,
-        left,
-        width,
-        maxHeight,
-      });
-    }
-    setSeletorEspacoAberto(true);
-  };
 
   const diasDaSemana = [
     { id: "SEGUNDA", label: "Segunda" },
@@ -469,7 +385,15 @@ export default function ModoGrade({
         .sort((a: any, b: any) => a.nome.localeCompare(b.nome))
     : [];
 
-  const cursosComTurmas = (() => {
+  const renderOpcoesTurmas = () => {
+    if (!cursos || cursos.length === 0) {
+      return turmas.map((t: any) => (
+        <option key={t.id} value={t.id}>
+          {t.codigo}
+        </option>
+      ));
+    }
+
     const cursosFiltrados = cursos.filter((c: any) => {
       if (filtroCategoria === "TODAS") return true;
       return normalizarModalidade(c.modalidade) === filtroCategoria;
@@ -479,32 +403,24 @@ export default function ModoGrade({
       a.nome.localeCompare(b.nome),
     );
 
-    return cursosOrdenados.map((curso: any) => {
+    return cursosOrdenados.map((curso) => {
       const turmasDoCurso = turmas
         .filter((t: any) => String(t.curso_id) === String(curso.id))
         .sort((a: any, b: any) => a.codigo.localeCompare(b.codigo));
-      return { ...curso, turmas: turmasDoCurso };
-    });
-  })();
 
-  const turmaSelecionada = turmas.find(
-    (turma: any) => String(turma.id) === String(filtroTurma),
-  );
-  const categoriaSelecionada = MODALIDADES_CURSO.find(
-    (modalidade) => modalidade.valor === filtroCategoria,
-  );
-  const espacoSelecionado = espacos.find(
-    (espaco: any) => String(espaco.id) === String(dadosModal?.espaco_id),
-  );
-  const categoriasComEspacos = categorias
-    .map((categoria: any) => ({
-      ...categoria,
-      espacos: espacos.filter(
-        (espaco: any) => String(espaco.categoria_id) === String(categoria.id),
-      ),
-    }))
-    .filter((categoria: any) => categoria.espacos.length > 0);
-  const espacosSemCategoria = espacos.filter((espaco: any) => !espaco.categoria_id);
+      if (turmasDoCurso.length === 0) return null;
+
+      return (
+        <optgroup key={curso.id} label={curso.nome}>
+          {turmasDoCurso.map((t: any) => (
+            <option key={t.id} value={t.id}>
+              {t.codigo}
+            </option>
+          ))}
+        </optgroup>
+      );
+    });
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">
@@ -531,52 +447,27 @@ export default function ModoGrade({
             </button>
           )}
 
-          <div className="flex w-full items-center gap-1.5 md:w-auto">
+          <div className="flex items-center gap-1.5">
             <label className="text-xs text-gray-500 font-bold uppercase hidden md:block">
               Categoria:
             </label>
-            <div className="relative w-full md:w-max md:min-w-64 md:shrink-0" ref={seletorCategoriaRef}>
-            <button
-              type="button"
-              className="px-4 py-2 bg-white border border-green-500 text-green-700 rounded outline-none w-full md:w-max md:min-w-64 text-base font-bold shadow-sm cursor-pointer flex items-center justify-between gap-2 whitespace-nowrap"
-              aria-expanded={seletorCategoriaAberto}
+            <select
+              className="px-3 py-2 bg-white border border-gray-300 focus:border-green-500 text-gray-700 rounded outline-none text-sm font-bold shadow-sm cursor-pointer"
+              value={filtroCategoria}
+              onChange={(e) => {
+                setFiltroCategoria(e.target.value);
+                setFiltroTurma("");
+                setAulaCopiada(null);
+              }}
               title="Filtrar turmas por Categoria / Modalidade de Curso"
-              onClick={() => setSeletorCategoriaAberto((aberto) => !aberto)}
             >
-              <span className="whitespace-nowrap">
-                {categoriaSelecionada
-                  ? `${categoriaSelecionada.ordem} - ${categoriaSelecionada.nomeExibicao}`
-                  : "Todas as Categorias"}
-              </span>
-              <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${seletorCategoriaAberto ? "rotate-180" : ""}`} />
-            </button>
-            {seletorCategoriaAberto && (
-              <div className="absolute left-0 top-full z-40 mt-1 max-h-80 w-max min-w-full overflow-y-auto rounded-lg border border-gray-200 bg-white p-1 shadow-xl">
-                {[
-                  { valor: "TODAS", label: "Todas as Categorias" },
-                  ...MODALIDADES_CURSO.map((modalidade) => ({
-                    valor: modalidade.valor,
-                    label: `${modalidade.ordem} - ${modalidade.nomeExibicao}`,
-                  })),
-                ].map((opcao) => (
-                  <button
-                    key={opcao.valor}
-                    type="button"
-                    className={`block w-full whitespace-nowrap rounded px-3 py-2 text-left text-base hover:bg-green-50 ${filtroCategoria === opcao.valor ? "bg-green-50 font-bold text-green-800" : "text-gray-700"}`}
-                    aria-selected={filtroCategoria === opcao.valor}
-                    onClick={() => {
-                      setFiltroCategoria(opcao.valor);
-                      setFiltroTurma("");
-                      setAulaCopiada(null);
-                      setSeletorCategoriaAberto(false);
-                    }}
-                  >
-                    {opcao.label}
-                  </button>
-                ))}
-              </div>
-            )}
-            </div>
+              <option value="TODAS">Todas as Categorias</option>
+              {MODALIDADES_CURSO.map((m) => (
+                <option key={m.valor} value={m.valor}>
+                  {m.ordem} - {m.nomeExibicao}
+                </option>
+              ))}
+            </select>
           </div>
 
           {isIntegrado && (
@@ -602,80 +493,17 @@ export default function ModoGrade({
           <label className="text-xs text-gray-500 font-bold uppercase hidden md:block ml-2">
             Visualizando Turma:
           </label>
-          <div className="relative w-full md:w-64" ref={seletorTurmaRef}>
-            <button
-              type="button"
-              className="px-4 py-2 bg-white border border-green-500 text-green-700 rounded outline-none w-full text-base font-bold shadow-sm cursor-pointer flex items-center justify-between gap-2"
-              aria-haspopup="listbox"
-              aria-expanded={seletorTurmaAberto}
-              onClick={() => setSeletorTurmaAberto((aberto) => !aberto)}
-            >
-              <span className="truncate">
-                {turmaSelecionada?.codigo || "Selecione uma turma..."}
-              </span>
-              <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${seletorTurmaAberto ? "rotate-180" : ""}`} />
-            </button>
-
-            {seletorTurmaAberto && (
-              <div className="absolute right-0 top-full z-40 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white p-1 shadow-xl md:w-80">
-                {cursos.length > 0 ? (
-                  cursosComTurmas.map((curso: any) => {
-                    if (curso.turmas.length === 0) return null;
-                    const expandido = String(cursoExpandidoId) === String(curso.id);
-                    return (
-                      <div key={curso.id} className="border-b border-gray-100 last:border-0">
-                        <button
-                          type="button"
-                          className="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-base font-bold text-gray-700 hover:bg-green-50 hover:text-green-800"
-                          aria-expanded={expandido}
-                          onClick={() => setCursoExpandidoId(expandido ? null : String(curso.id))}
-                        >
-                          {expandido ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
-                          <span className="flex-1">{curso.nome}</span>
-                          <span className="text-xs font-medium text-gray-400">{curso.turmas.length}</span>
-                        </button>
-                        {expandido && (
-                          <div className="pb-1 pl-8">
-                            {curso.turmas.map((turma: any) => (
-                              <button
-                                key={turma.id}
-                                type="button"
-                                role="option"
-                                aria-selected={String(filtroTurma) === String(turma.id)}
-                                className={`block w-full rounded px-3 py-1.5 text-left text-base hover:bg-green-50 ${String(filtroTurma) === String(turma.id) ? "bg-green-50 font-bold text-green-800" : "text-gray-600"}`}
-                                onClick={() => {
-                                  setFiltroTurma(String(turma.id));
-                                  setAulaCopiada(null);
-                                  setSeletorTurmaAberto(false);
-                                }}
-                              >
-                                {turma.codigo}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  turmas.map((turma: any) => (
-                    <button
-                      key={turma.id}
-                      type="button"
-                      className="block w-full rounded px-3 py-2 text-left text-base text-gray-700 hover:bg-green-50"
-                      onClick={() => {
-                        setFiltroTurma(String(turma.id));
-                        setAulaCopiada(null);
-                        setSeletorTurmaAberto(false);
-                      }}
-                    >
-                      {turma.codigo}
-                    </button>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
+          <select
+            className="px-4 py-2 bg-white border border-green-500 text-green-700 rounded outline-none w-full md:w-64 text-base font-bold shadow-sm cursor-pointer"
+            value={filtroTurma}
+            onChange={(e) => {
+              setFiltroTurma(e.target.value);
+              setAulaCopiada(null);
+            }}
+          >
+            <option value="">Selecione uma turma...</option>
+            {renderOpcoesTurmas()}
+          </select>
         </div>
       </div>
 
@@ -1105,107 +933,48 @@ export default function ModoGrade({
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
                       Sala / Espaço
                     </label>
-                    <div className="relative" ref={seletorEspacoRef}>
-                      <button
-                        type="button"
-                        className="w-full border rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900 flex items-center justify-between gap-2"
-                        aria-expanded={seletorEspacoAberto}
-                        onClick={alternarSeletorEspaco}
-                      >
-                        <span className="truncate">{espacoSelecionado?.nome || "(A definir)"}</span>
-                        <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${seletorEspacoAberto ? "rotate-180" : ""}`} />
-                      </button>
-                      {seletorEspacoAberto && createPortal(
-                        <div
-                          ref={menuEspacoRef}
-                          className="fixed z-[1000] overflow-y-auto rounded-lg border border-gray-200 bg-white p-1 shadow-xl"
-                          style={{
-                            top: `${posicaoMenuEspaco.top}px`,
-                            left: `${posicaoMenuEspaco.left}px`,
-                            width: `${posicaoMenuEspaco.width}px`,
-                            maxHeight: `${posicaoMenuEspaco.maxHeight}px`,
-                          }}
-                        >
-                          <button
-                            type="button"
-                            className="w-full rounded px-3 py-2 text-left text-base text-gray-600 hover:bg-green-50"
-                            onClick={() => {
-                              setDadosModal({ ...dadosModal, espaco_id: "" });
-                              setSeletorEspacoAberto(false);
-                              setCategoriaEspacoExpandidaId(null);
-                            }}
-                          >
-                            (A definir)
-                          </button>
-                          {categoriasComEspacos.map((categoria: any) => {
-                            const expandido = categoriaEspacoExpandidaId === String(categoria.id);
-                            return (
-                              <div key={categoria.id} className="border-t border-gray-100">
-                                <button
-                                  type="button"
-                                  className="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-base font-bold text-gray-700 hover:bg-green-50 hover:text-green-800"
-                                  aria-expanded={expandido}
-                                  onClick={() => setCategoriaEspacoExpandidaId(expandido ? null : String(categoria.id))}
-                                >
-                                  {expandido ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
-                                  {categoria.nome}
-                                </button>
-                                {expandido && (
-                                  <div className="pb-1 pl-8">
-                                    {categoria.espacos.map((espaco: any) => (
-                                      <button
-                                        key={espaco.id}
-                                        type="button"
-                                        className={`block w-full rounded px-3 py-1.5 text-left text-base hover:bg-green-50 ${String(dadosModal.espaco_id) === String(espaco.id) ? "bg-green-50 font-bold text-green-800" : "text-gray-600"}`}
-                                        onClick={() => {
-                                          setDadosModal({ ...dadosModal, espaco_id: String(espaco.id) });
-                                          setSeletorEspacoAberto(false);
-                                          setCategoriaEspacoExpandidaId(null);
-                                        }}
-                                      >
-                                        {espaco.nome}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                          {espacosSemCategoria.length > 0 && (
-                            <div className="border-t border-gray-100">
-                              <button
-                                type="button"
-                                className="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-base font-bold text-gray-700 hover:bg-green-50 hover:text-green-800"
-                                aria-expanded={categoriaEspacoExpandidaId === "__SEM_CATEGORIA__"}
-                                onClick={() => setCategoriaEspacoExpandidaId((id) => id === "__SEM_CATEGORIA__" ? null : "__SEM_CATEGORIA__")}
-                              >
-                                {categoriaEspacoExpandidaId === "__SEM_CATEGORIA__" ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
-                                Outros / Sem Categoria
-                              </button>
-                              {categoriaEspacoExpandidaId === "__SEM_CATEGORIA__" && (
-                                <div className="pb-1 pl-8">
-                                  {espacosSemCategoria.map((espaco: any) => (
-                                    <button
-                                      key={espaco.id}
-                                      type="button"
-                                      className={`block w-full rounded px-3 py-1.5 text-left text-base hover:bg-green-50 ${String(dadosModal.espaco_id) === String(espaco.id) ? "bg-green-50 font-bold text-green-800" : "text-gray-600"}`}
-                                      onClick={() => {
-                                        setDadosModal({ ...dadosModal, espaco_id: String(espaco.id) });
-                                        setSeletorEspacoAberto(false);
-                                        setCategoriaEspacoExpandidaId(null);
-                                      }}
-                                    >
-                                      {espaco.nome}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>,
-                        document.body,
-                      )}
-                    </div>
+                    <select
+                      className="w-full border rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                      value={dadosModal.espaco_id}
+                      onChange={(e) =>
+                        setDadosModal({
+                          ...dadosModal,
+                          espaco_id: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">(A definir)</option>
+                      {categorias.map((cat: any) => {
+                        const espacosDaCat = espacos.filter(
+                          (e: any) => String(e.categoria_id) === String(cat.id),
+                        );
+                        if (espacosDaCat.length === 0) return null;
+                        return (
+                          <optgroup key={cat.id} label={cat.nome}>
+                            {espacosDaCat.map((e: any) => (
+                              <option key={e.id} value={e.id}>
+                                {e.nome}
+                              </option>
+                            ))}
+                          </optgroup>
+                        );
+                      })}
+                      {(() => {
+                        const semCat = espacos.filter(
+                          (e: any) => !e.categoria_id,
+                        );
+                        if (semCat.length === 0) return null;
+                        return (
+                          <optgroup label="Outros / Sem Categoria">
+                            {semCat.map((e: any) => (
+                              <option key={e.id} value={e.id}>
+                                {e.nome}
+                              </option>
+                            ))}
+                          </optgroup>
+                        );
+                      })()}
+                    </select>
                   </div>
                 </div>
 

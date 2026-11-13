@@ -1,7 +1,6 @@
 "use client";
 
-import React, { memo, useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import React, { memo } from "react";
 import { classificarGravidadePlanilha } from "./normalizarProblemas";
 
 const formatarHora = (hora: string) => {
@@ -99,42 +98,6 @@ const LinhaPlanilha = memo(({
   getCategoriaCurso,
   linhaSendoEditada
 }: LinhaPlanilhaProps) => {
-  const [seletorTurmaAberto, setSeletorTurmaAberto] = useState(false);
-  const [cursoExpandidoId, setCursoExpandidoId] = useState<string | null>(null);
-  const [seletorTurmaAcima, setSeletorTurmaAcima] = useState(false);
-  const [alturaMaximaSeletorTurma, setAlturaMaximaSeletorTurma] = useState(288);
-  const seletorTurmaRef = useRef<HTMLDivElement>(null);
-  const [seletorEspacoAberto, setSeletorEspacoAberto] = useState(false);
-  const [categoriaEspacoExpandidaId, setCategoriaEspacoExpandidaId] = useState<string | null>(null);
-  const [seletorEspacoAcima, setSeletorEspacoAcima] = useState(false);
-  const [alturaMaximaSeletorEspaco, setAlturaMaximaSeletorEspaco] = useState(288);
-  const seletorEspacoRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!seletorTurmaAberto && !seletorEspacoAberto) return;
-
-    const fecharAoClicarFora = (event: PointerEvent) => {
-      if (seletorTurmaAberto && !seletorTurmaRef.current?.contains(event.target as Node)) {
-        setSeletorTurmaAberto(false);
-      }
-      if (seletorEspacoAberto && !seletorEspacoRef.current?.contains(event.target as Node)) {
-        setSeletorEspacoAberto(false);
-      }
-    };
-    const fecharComEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setSeletorTurmaAberto(false);
-        setSeletorEspacoAberto(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", fecharAoClicarFora);
-    document.addEventListener("keydown", fecharComEscape);
-    return () => {
-      document.removeEventListener("pointerdown", fecharAoClicarFora);
-      document.removeEventListener("keydown", fecharComEscape);
-    };
-  }, [seletorTurmaAberto, seletorEspacoAberto]);
   
   const temDado =
     linha.turma_id ||
@@ -163,72 +126,6 @@ const LinhaPlanilha = memo(({
   const fundoEscuro = isCorEscura(corHexadecimal);
   const corTexto = fundoEscuro ? "text-white" : "text-gray-900";
 
-  const alternarSeletorTurma = () => {
-    if (seletorTurmaAberto) {
-      setSeletorTurmaAberto(false);
-      return;
-    }
-
-    const seletor = seletorTurmaRef.current;
-    if (seletor) {
-      const seletorRect = seletor.getBoundingClientRect();
-      let limiteSuperior = 0;
-      let limiteInferior = window.innerHeight;
-      let ancestral: HTMLElement | null = seletor.parentElement;
-      while (ancestral && ancestral !== document.body) {
-        const overflowY = window.getComputedStyle(ancestral).overflowY;
-        if (overflowY === "auto" || overflowY === "scroll") {
-          const limites = ancestral.getBoundingClientRect();
-          limiteSuperior = Math.max(limiteSuperior, limites.top);
-          limiteInferior = Math.min(limiteInferior, limites.bottom);
-          break;
-        }
-        ancestral = ancestral.parentElement;
-      }
-
-      const espacoAcima = seletorRect.top - limiteSuperior;
-      const espacoAbaixo = limiteInferior - seletorRect.bottom;
-      const abrirAcima = espacoAbaixo < 288 && espacoAcima > espacoAbaixo;
-      const espacoDisponivel = abrirAcima ? espacoAcima : espacoAbaixo;
-      setSeletorTurmaAcima(abrirAcima);
-      setAlturaMaximaSeletorTurma(Math.max(96, Math.min(288, espacoDisponivel - 12)));
-    }
-    setSeletorTurmaAberto(true);
-  };
-
-  const alternarSeletorEspaco = () => {
-    if (seletorEspacoAberto) {
-      setSeletorEspacoAberto(false);
-      return;
-    }
-
-    const seletor = seletorEspacoRef.current;
-    if (seletor) {
-      const seletorRect = seletor.getBoundingClientRect();
-      let limiteSuperior = 0;
-      let limiteInferior = window.innerHeight;
-      let ancestral: HTMLElement | null = seletor.parentElement;
-      while (ancestral && ancestral !== document.body) {
-        const overflowY = window.getComputedStyle(ancestral).overflowY;
-        if (overflowY === "auto" || overflowY === "scroll") {
-          const limites = ancestral.getBoundingClientRect();
-          limiteSuperior = Math.max(limiteSuperior, limites.top);
-          limiteInferior = Math.min(limiteInferior, limites.bottom);
-          break;
-        }
-        ancestral = ancestral.parentElement;
-      }
-
-      const espacoAcima = seletorRect.top - limiteSuperior;
-      const espacoAbaixo = limiteInferior - seletorRect.bottom;
-      const abrirAcima = espacoAbaixo < 288 && espacoAcima > espacoAbaixo;
-      const espacoDisponivel = abrirAcima ? espacoAcima : espacoAbaixo;
-      setSeletorEspacoAcima(abrirAcima);
-      setAlturaMaximaSeletorEspaco(Math.max(96, Math.min(288, espacoDisponivel - 12)));
-    }
-    setSeletorEspacoAberto(true);
-  };
-
   let classeLinha =
     "border-b border-gray-200 transition-all group hover:brightness-95 ";
   if (temCritico)
@@ -243,7 +140,6 @@ const LinhaPlanilha = memo(({
   if (linhaSendoEditada === linha.id) {
     classeLinha += " ring-2 ring-orange-500 shadow-md z-50 relative brightness-95 !transition-all !duration-500";
   }
-  if (seletorTurmaAberto || seletorEspacoAberto) classeLinha += " z-50 relative";
 
   return (
     <tr
@@ -251,86 +147,43 @@ const LinhaPlanilha = memo(({
       className={classeLinha}
       style={corHexadecimal ? { backgroundColor: corHexadecimal } : {}}
     >
-      <td className="p-2 border-r border-gray-300 overflow-visible text-center relative">
+      <td className="p-2 border-r border-gray-300 overflow-hidden text-center">
         {linha.turma_id === undefined ? (
           ""
         ) : (
-          <div className="relative" ref={seletorTurmaRef}>
-            <button
-              type="button"
-              title={
-                turmas.find(
-                  (t: any) => String(t.id) === String(linha.turma_id),
-                )?.codigo || "Selecione..."
-              }
-              aria-expanded={seletorTurmaAberto}
-              onClick={alternarSeletorTurma}
-              className={`w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold ${corTexto} flex items-center justify-between gap-1 text-left`}
-            >
-              <span className="truncate">
-                {turmas.find((t: any) => String(t.id) === String(linha.turma_id))?.codigo || "Selecione..."}
-              </span>
-              <ChevronDown className={`h-3 w-3 shrink-0 transition-transform ${seletorTurmaAberto ? "rotate-180" : ""}`} />
-            </button>
-            {seletorTurmaAberto && (
-              <div
-                className={`absolute left-0 z-50 min-w-56 overflow-y-auto rounded border border-gray-300 bg-white p-1 text-left shadow-lg ${seletorTurmaAcima ? "bottom-full mb-1" : "top-full mt-1"}`}
-                style={{ maxHeight: `${alturaMaximaSeletorTurma}px` }}
-              >
-                <button
-                  type="button"
-                  className="block w-full rounded px-2 py-1.5 text-left text-[13px] text-gray-900 hover:bg-green-50"
-                  onClick={() => {
-                    atualizarCampo(linha.id, "turma_id", "");
-                    setSeletorTurmaAberto(false);
-                  }}
-                >
-                  Selecione...
-                </button>
-                {cursos
-                  .filter((curso: any) => getCategoriaCurso(curso) === categoriaFiltro)
-                  .map((curso: any) => {
-                    const turmasDoCurso = turmas
-                      .filter((turma: any) => String(turma.curso_id) === String(curso.id))
-                      .sort((a: any, b: any) => a.codigo.localeCompare(b.codigo));
-                    if (turmasDoCurso.length === 0) return null;
-                    const expandido = String(cursoExpandidoId) === String(curso.id);
-                    return (
-                      <div key={curso.id} className="border-t border-gray-100">
-                        <button
-                          type="button"
-                          aria-expanded={expandido}
-                          className="flex w-full items-center gap-1 rounded px-2 py-1.5 text-left text-[13px] font-bold text-gray-900 hover:bg-green-50"
-                          onClick={() => setCursoExpandidoId(expandido ? null : String(curso.id))}
-                        >
-                          {expandido ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronRight className="h-3 w-3 shrink-0" />}
-                          <span className="flex-1">{curso.nome}</span>
-                          <span className="text-[11px] font-normal text-gray-500">{turmasDoCurso.length}</span>
-                        </button>
-                        {expandido && (
-                          <div className="pb-1 pl-5">
-                            {turmasDoCurso.map((turma: any) => (
-                              <button
-                                key={turma.id}
-                                type="button"
-                                aria-selected={String(linha.turma_id) === String(turma.id)}
-                                className={`block w-full rounded px-2 py-1 text-left text-[13px] hover:bg-green-50 ${String(linha.turma_id) === String(turma.id) ? "font-bold text-green-800" : "text-gray-700"}`}
-                                onClick={() => {
-                                  atualizarCampo(linha.id, "turma_id", String(turma.id));
-                                  setSeletorTurmaAberto(false);
-                                }}
-                              >
-                                {turma.codigo}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
+          <select
+            title={
+              turmas.find(
+                (t: any) => String(t.id) === String(linha.turma_id),
+              )?.codigo || "Selecione..."
+            }
+            value={linha.turma_id || ""}
+            onChange={(e) =>
+              atualizarCampo(linha.id, "turma_id", e.target.value)
+            }
+            className={`w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold ${corTexto}`}
+          >
+            <option value="" className="text-gray-900 bg-white">Selecione...</option>
+            {cursos
+              .filter(
+                (c: any) =>
+                  getCategoriaCurso(c) === categoriaFiltro,
+              )
+              .map((curso: any) => (
+                <optgroup key={curso.id} label={curso.nome} className="text-gray-900 bg-white">
+                  {turmas
+                    .filter(
+                      (t: any) =>
+                        String(t.curso_id) === String(curso.id),
+                    )
+                    .map((t: any) => (
+                      <option key={t.id} value={t.id} className="text-gray-900 bg-white">
+                        {t.codigo}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
+          </select>
         )}
       </td>
 
@@ -421,117 +274,54 @@ const LinhaPlanilha = memo(({
         </td>
       )}
 
-      <td className="p-2 border-r border-gray-300 overflow-visible relative">
+      <td className="p-2 border-r border-gray-300 overflow-hidden">
         {linha.id.length > 2 && (
-          <div className="relative" ref={seletorEspacoRef}>
-            <button
-              type="button"
-              title={espacos.find((espaco: any) => String(espaco.id) === String(linha.espaco_id))?.nome || "(Nenhum)"}
-              aria-expanded={seletorEspacoAberto}
-              onClick={alternarSeletorEspaco}
-              className={`w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold ${corTexto} flex items-center justify-between gap-1 text-left`}
-            >
-              <span className="truncate">
-                {espacos.find((espaco: any) => String(espaco.id) === String(linha.espaco_id))?.nome || "(Nenhum)"}
-              </span>
-              <ChevronDown className={`h-3 w-3 shrink-0 transition-transform ${seletorEspacoAberto ? "rotate-180" : ""}`} />
-            </button>
-            {seletorEspacoAberto && (
-              <div
-                className={`absolute left-0 z-50 min-w-56 overflow-y-auto rounded border border-gray-300 bg-white p-1 text-left shadow-lg ${seletorEspacoAcima ? "bottom-full mb-1" : "top-full mt-1"}`}
-                style={{ maxHeight: `${alturaMaximaSeletorEspaco}px` }}
-              >
-                <button
-                  type="button"
-                  className="block w-full rounded px-2 py-1.5 text-left text-[13px] text-gray-900 hover:bg-green-50"
-                  onClick={() => {
-                    atualizarCampo(linha.id, "espaco_id", "");
-                    setSeletorEspacoAberto(false);
-                  }}
-                >
-                  (Nenhum)
-                </button>
-                {categorias.map((categoria: any) => {
-                  const espacosDaCategoria = espacos
-                    .filter((espaco: any) => String(espaco.categoria_id) === String(categoria.id))
-                    .sort((a: any, b: any) => a.nome.localeCompare(b.nome));
-                  if (espacosDaCategoria.length === 0) return null;
-                  const expandida = categoriaEspacoExpandidaId === String(categoria.id);
-                  return (
-                    <div key={categoria.id} className="border-t border-gray-100">
-                      <button
-                        type="button"
-                        aria-expanded={expandida}
-                        className="flex w-full items-center gap-1 rounded px-2 py-1.5 text-left text-[13px] font-bold text-gray-900 hover:bg-green-50"
-                        onClick={() => setCategoriaEspacoExpandidaId(expandida ? null : String(categoria.id))}
-                      >
-                        {expandida ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronRight className="h-3 w-3 shrink-0" />}
-                        <span className="flex-1">{categoria.nome}</span>
-                        <span className="text-[11px] font-normal text-gray-500">{espacosDaCategoria.length}</span>
-                      </button>
-                      {expandida && (
-                        <div className="pb-1 pl-5">
-                          {espacosDaCategoria.map((espaco: any) => (
-                            <button
-                              key={espaco.id}
-                              type="button"
-                              aria-selected={String(linha.espaco_id) === String(espaco.id)}
-                              className={`block w-full rounded px-2 py-1 text-left text-[13px] hover:bg-green-50 ${String(linha.espaco_id) === String(espaco.id) ? "font-bold text-green-800" : "text-gray-700"}`}
-                              onClick={() => {
-                                atualizarCampo(linha.id, "espaco_id", String(espaco.id));
-                                setSeletorEspacoAberto(false);
-                              }}
-                            >
-                              {espaco.nome}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                {(() => {
-                  const espacosSemCategoria = espacos
-                    .filter((espaco: any) => !espaco.categoria_id)
-                    .sort((a: any, b: any) => a.nome.localeCompare(b.nome));
-                  if (espacosSemCategoria.length === 0) return null;
-                  const expandida = categoriaEspacoExpandidaId === "__SEM_CATEGORIA__";
-                  return (
-                    <div className="border-t border-gray-100">
-                      <button
-                        type="button"
-                        aria-expanded={expandida}
-                        className="flex w-full items-center gap-1 rounded px-2 py-1.5 text-left text-[13px] font-bold text-gray-900 hover:bg-green-50"
-                        onClick={() => setCategoriaEspacoExpandidaId(expandida ? null : "__SEM_CATEGORIA__")}
-                      >
-                        {expandida ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronRight className="h-3 w-3 shrink-0" />}
-                        <span className="flex-1">Outros / Sem Categoria</span>
-                        <span className="text-[11px] font-normal text-gray-500">{espacosSemCategoria.length}</span>
-                      </button>
-                      {expandida && (
-                        <div className="pb-1 pl-5">
-                          {espacosSemCategoria.map((espaco: any) => (
-                            <button
-                              key={espaco.id}
-                              type="button"
-                              aria-selected={String(linha.espaco_id) === String(espaco.id)}
-                              className={`block w-full rounded px-2 py-1 text-left text-[13px] hover:bg-green-50 ${String(linha.espaco_id) === String(espaco.id) ? "font-bold text-green-800" : "text-gray-700"}`}
-                              onClick={() => {
-                                atualizarCampo(linha.id, "espaco_id", String(espaco.id));
-                                setSeletorEspacoAberto(false);
-                              }}
-                            >
-                              {espaco.nome}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-          </div>
+          <select
+            title={
+              espacos.find(
+                (e: any) =>
+                  String(e.id) === String(linha.espaco_id),
+              )?.nome || "(Nenhum)"
+            }
+            value={linha.espaco_id || ""}
+            onChange={(e) =>
+              atualizarCampo(linha.id, "espaco_id", e.target.value)
+            }
+            className={`w-full truncate bg-transparent border-0 border-b border-transparent focus:border-green-500 focus:ring-0 text-[13px] p-1 outline-none font-bold ${corTexto}`}
+          >
+            <option value="" className="text-gray-900 bg-white">(Nenhum)</option>
+            {categorias.map((cat: any) => {
+              const espacosDaCat = espacos.filter(
+                (e: any) =>
+                  String(e.categoria_id) === String(cat.id),
+              );
+              if (espacosDaCat.length === 0) return null;
+              return (
+                <optgroup key={cat.id} label={cat.nome} className="text-gray-900 bg-white">
+                  {espacosDaCat.map((e: any) => (
+                    <option key={e.id} value={e.id} className="text-gray-900 bg-white">
+                      {e.nome}
+                    </option>
+                  ))}
+                </optgroup>
+              );
+            })}
+            {(() => {
+              const semCat = espacos.filter(
+                (e: any) => !e.categoria_id,
+              );
+              if (semCat.length === 0) return null;
+              return (
+                <optgroup label="Outros / Sem Categoria" className="text-gray-900 bg-white">
+                  {semCat.map((e: any) => (
+                    <option key={e.id} value={e.id} className="text-gray-900 bg-white">
+                      {e.nome}
+                    </option>
+                  ))}
+                </optgroup>
+              );
+            })()}
+          </select>
         )}
       </td>
 
