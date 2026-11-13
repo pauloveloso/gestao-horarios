@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import { CircleX, AlertCircle, Trash2, MapPin, Clipboard, AlertTriangle, Users, X, ChevronDown, ChevronRight } from "lucide-react";
 import {
@@ -39,6 +40,8 @@ export default function ModoGrade({
   const [dadosModal, setDadosModal] = useState<any>(null);
   const [seletorEspacoAberto, setSeletorEspacoAberto] = useState(false);
   const seletorEspacoRef = useRef<HTMLDivElement>(null);
+  const menuEspacoRef = useRef<HTMLDivElement>(null);
+  const [posicaoMenuEspaco, setPosicaoMenuEspaco] = useState({ top: 0, left: 0, width: 240, maxHeight: 440 });
   const [categoriaEspacoExpandidaId, setCategoriaEspacoExpandidaId] = useState<string | null>(null);
   const [aulaCopiada, setAulaCopiada] = useState<any>(null);
   const [aulaArrastada, setAulaArrastada] = useState<any>(null);
@@ -78,7 +81,8 @@ export default function ModoGrade({
       ) setSeletorCategoriaAberto(false);
       if (
         seletorEspacoAberto &&
-        !seletorEspacoRef.current?.contains(event.target as Node)
+        !seletorEspacoRef.current?.contains(event.target as Node) &&
+        !menuEspacoRef.current?.contains(event.target as Node)
       ) setSeletorEspacoAberto(false);
     };
     const fecharComEscape = (event: KeyboardEvent) => {
@@ -95,6 +99,30 @@ export default function ModoGrade({
       document.removeEventListener("keydown", fecharComEscape);
     };
   }, [seletorCategoriaAberto, seletorEspacoAberto]);
+
+  const alternarSeletorEspaco = () => {
+    if (seletorEspacoAberto) {
+      setSeletorEspacoAberto(false);
+      return;
+    }
+    const campo = seletorEspacoRef.current;
+    if (campo) {
+      const rect = campo.getBoundingClientRect();
+      const width = Math.min(Math.max(rect.width, 240), window.innerWidth - 16);
+      const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+      const spaceAbove = rect.top - 8;
+      const spaceBelow = window.innerHeight - rect.bottom - 8;
+      const opensAbove = spaceBelow < 440 && spaceAbove > spaceBelow;
+      const maxHeight = Math.max(120, Math.min(440, (opensAbove ? spaceAbove : spaceBelow) - 8));
+      setPosicaoMenuEspaco({
+        top: opensAbove ? Math.max(8, rect.top - maxHeight - 4) : rect.bottom + 4,
+        left,
+        width,
+        maxHeight,
+      });
+    }
+    setSeletorEspacoAberto(true);
+  };
 
   const diasDaSemana = [
     { id: "SEGUNDA", label: "Segunda" },
@@ -1082,13 +1110,22 @@ export default function ModoGrade({
                         type="button"
                         className="w-full border rounded p-2 text-base outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900 flex items-center justify-between gap-2"
                         aria-expanded={seletorEspacoAberto}
-                        onClick={() => setSeletorEspacoAberto((aberto) => !aberto)}
+                        onClick={alternarSeletorEspaco}
                       >
                         <span className="truncate">{espacoSelecionado?.nome || "(A definir)"}</span>
                         <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${seletorEspacoAberto ? "rotate-180" : ""}`} />
                       </button>
-                      {seletorEspacoAberto && (
-                        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-lg border border-gray-200 bg-white p-1 shadow-xl">
+                      {seletorEspacoAberto && createPortal(
+                        <div
+                          ref={menuEspacoRef}
+                          className="fixed z-[1000] overflow-y-auto rounded-lg border border-gray-200 bg-white p-1 shadow-xl"
+                          style={{
+                            top: `${posicaoMenuEspaco.top}px`,
+                            left: `${posicaoMenuEspaco.left}px`,
+                            width: `${posicaoMenuEspaco.width}px`,
+                            maxHeight: `${posicaoMenuEspaco.maxHeight}px`,
+                          }}
+                        >
                           <button
                             type="button"
                             className="w-full rounded px-3 py-2 text-left text-base text-gray-600 hover:bg-green-50"
@@ -1165,7 +1202,8 @@ export default function ModoGrade({
                               )}
                             </div>
                           )}
-                        </div>
+                        </div>,
+                        document.body,
                       )}
                     </div>
                   </div>
